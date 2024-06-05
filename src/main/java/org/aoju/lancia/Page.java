@@ -29,9 +29,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.core.toolkit.CollKit;
-import org.aoju.bus.core.toolkit.StringKit;
 import org.aoju.lancia.events.DefaultBrowserListener;
 import org.aoju.lancia.events.EventEmitter;
 import org.aoju.lancia.events.EventHandler;
@@ -66,6 +63,9 @@ import org.aoju.lancia.worker.Connection;
 import org.aoju.lancia.worker.exception.PageCrashException;
 import org.aoju.lancia.worker.exception.TerminateException;
 import org.aoju.lancia.worker.exception.TimeoutException;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -1799,13 +1799,14 @@ public class Page extends EventEmitter {
         JSONObject historyNode = this.client.send("Page.getNavigationHistory", null, true);
         GetNavigationHistoryReturnValue history = JSON.toJavaObject(historyNode, GetNavigationHistoryReturnValue.class);
         NavigationEntry entry = history.getEntries().get(history.getCurrentIndex() + delta);
-        if (entry == null)
+        if (entry == null) {
             return null;
-        Response response = this.waitForNavigation(options, null);
+        }
+
         Map<String, Object> params = new HashMap<>();
         params.put("entryId", entry.getId());
         this.client.send("Page.navigateToHistoryEntry", params, true);
-        return response;
+        return this.waitForNavigation(options, null);
     }
 
     /**

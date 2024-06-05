@@ -25,13 +25,13 @@
  ********************************************************************************/
 package org.aoju.lancia;
 
-import org.aoju.bus.core.toolkit.StringKit;
 import org.aoju.lancia.kernel.Variables;
 import org.aoju.lancia.kernel.browser.Fetcher;
 import org.aoju.lancia.launch.ChromeLauncher;
 import org.aoju.lancia.launch.FirefoxLauncher;
 import org.aoju.lancia.option.*;
 import org.aoju.lancia.worker.Transport;
+import org.miaixz.bus.core.xyz.StringKit;
 
 import java.io.IOException;
 import java.util.List;

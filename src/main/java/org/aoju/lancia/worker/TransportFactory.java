@@ -49,8 +49,8 @@
  ********************************************************************************/
 package org.aoju.lancia.worker;
 
-import org.aoju.bus.core.exception.InternalException;
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.core.lang.exception.InternalException;
+import org.miaixz.bus.logger.Logger;
 
 import java.net.URI;
 

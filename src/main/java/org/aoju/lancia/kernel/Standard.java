@@ -25,7 +25,7 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel;
 
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.logger.Logger;
 
 import java.util.HashMap;
 import java.util.Map;

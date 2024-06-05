@@ -28,9 +28,6 @@ package org.aoju.lancia.launch;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import org.aoju.bus.core.toolkit.CollKit;
-import org.aoju.bus.core.toolkit.StringKit;
-import org.aoju.bus.logger.Logger;
 import org.aoju.lancia.Browser;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.Launcher;
@@ -45,8 +42,12 @@ import org.aoju.lancia.worker.Connection;
 import org.aoju.lancia.worker.Transport;
 import org.aoju.lancia.worker.TransportFactory;
 import org.aoju.lancia.worker.exception.LaunchException;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.logger.Logger;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -266,7 +267,10 @@ public class ChromeLauncher implements Launcher {
                 return null;
             };
 
-            browserContextIds = result.getObject("browserContextIds", TypeReference.LIST_STRING);
+            Type LIST_STRING = (new TypeReference<List<String>>() {
+            }).getType();
+
+            browserContextIds = result.getObject("browserContextIds", LIST_STRING);
             return Browser.create(connection, browserContextIds, options.getIgnoreHTTPSErrors(), options.getViewport(), null, closeFunction);
         } catch (IOException e) {
             throw new RuntimeException(e);

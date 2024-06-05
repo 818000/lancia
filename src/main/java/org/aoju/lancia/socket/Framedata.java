@@ -25,8 +25,8 @@
  ********************************************************************************/
 package org.aoju.lancia.socket;
 
-import org.aoju.bus.core.lang.Charset;
-import org.aoju.bus.core.lang.Normal;
+import org.miaixz.bus.core.lang.Charset;
+import org.miaixz.bus.core.lang.Normal;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.worker.exception.SocketException;
 

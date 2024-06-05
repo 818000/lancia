@@ -25,7 +25,7 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.page;
 
-import org.aoju.bus.core.lang.Normal;
+import org.miaixz.bus.core.lang.Normal;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.nimble.PageEvaluateType;
 import org.aoju.lancia.nimble.page.FramePayload;

@@ -25,7 +25,7 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.page;
 
-import org.aoju.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.Assert;
 import org.aoju.lancia.nimble.page.FileChooserOpenedPayload;
 import org.aoju.lancia.worker.CDPSession;
 

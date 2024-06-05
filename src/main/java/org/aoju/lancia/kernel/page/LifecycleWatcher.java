@@ -25,7 +25,7 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.page;
 
-import org.aoju.bus.core.toolkit.CollKit;
+import org.miaixz.bus.core.xyz.CollKit;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.events.BrowserListenerWrapper;
 import org.aoju.lancia.events.DefaultBrowserListener;

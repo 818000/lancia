@@ -25,8 +25,8 @@
  ********************************************************************************/
 package org.aoju.lancia.worker;
 
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.logger.Logger;
 import org.aoju.lancia.socket.Draft_6455;
 import org.aoju.lancia.socket.HandshakeBuilder;
 import org.aoju.lancia.socket.SocketClient;

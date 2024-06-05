@@ -26,12 +26,12 @@
 package org.aoju.lancia;
 
 import com.alibaba.fastjson.JSONObject;
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.core.toolkit.CollKit;
-import org.aoju.bus.core.toolkit.ObjectKit;
-import org.aoju.bus.core.toolkit.StringKit;
-import org.aoju.bus.health.Platform;
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.ObjectKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.health.Platform;
+import org.miaixz.bus.logger.Logger;
 import org.aoju.lancia.events.DefaultBrowserListener;
 import org.aoju.lancia.events.EventEmitter;
 import org.aoju.lancia.events.EventHandler;

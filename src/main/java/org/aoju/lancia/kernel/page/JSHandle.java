@@ -28,7 +28,7 @@ package org.aoju.lancia.kernel.page;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import org.aoju.bus.core.toolkit.StringKit;
+import org.miaixz.bus.core.xyz.StringKit;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.nimble.runtime.RemoteObject;
 import org.aoju.lancia.worker.CDPSession;

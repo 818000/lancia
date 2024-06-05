@@ -26,7 +26,7 @@
 package org.aoju.lancia.worker;
 
 import com.alibaba.fastjson.JSONObject;
-import org.aoju.bus.core.toolkit.StringKit;
+import org.miaixz.bus.core.xyz.StringKit;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.events.EventEmitter;
 import org.aoju.lancia.events.Events;

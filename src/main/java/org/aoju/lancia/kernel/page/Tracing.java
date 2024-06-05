@@ -26,7 +26,7 @@
 package org.aoju.lancia.kernel.page;
 
 import com.alibaba.fastjson.JSONObject;
-import org.aoju.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.Assert;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.events.DefaultBrowserListener;
 import org.aoju.lancia.worker.CDPSession;

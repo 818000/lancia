@@ -28,13 +28,6 @@ package org.aoju.lancia;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.core.lang.Normal;
-import org.aoju.bus.core.thread.NamedThreadFactory;
-import org.aoju.bus.core.toolkit.CollKit;
-import org.aoju.bus.core.toolkit.IoKit;
-import org.aoju.bus.core.toolkit.StringKit;
-import org.aoju.bus.logger.Logger;
 import org.aoju.lancia.events.BrowserListenerWrapper;
 import org.aoju.lancia.events.DefaultBrowserListener;
 import org.aoju.lancia.events.EventEmitter;
@@ -45,6 +38,13 @@ import org.aoju.lancia.nimble.runtime.CallFrame;
 import org.aoju.lancia.nimble.runtime.ExceptionDetails;
 import org.aoju.lancia.nimble.runtime.RemoteObject;
 import org.aoju.lancia.worker.CDPSession;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.Normal;
+import org.miaixz.bus.core.lang.thread.NamedThreadFactory;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.IoKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.logger.Logger;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -846,7 +846,7 @@ public class Builder {
                     } else {
                         threadNum = Math.max(1, Runtime.getRuntime().availableProcessors());
                     }
-                    COMMON_EXECUTOR = new ThreadPoolExecutor(threadNum, threadNum, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>(), new NamedThreadFactory("common-pool-"));
+                    COMMON_EXECUTOR = new ThreadPoolExecutor(threadNum, threadNum, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>(), new NamedThreadFactory("common-pool-", true));
                 }
             }
         }

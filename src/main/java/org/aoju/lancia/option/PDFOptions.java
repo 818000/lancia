@@ -25,7 +25,7 @@
  ********************************************************************************/
 package org.aoju.lancia.option;
 
-import org.aoju.bus.core.lang.Normal;
+import org.miaixz.bus.core.lang.Normal;
 import org.aoju.lancia.nimble.dom.Margin;
 
 /**

@@ -25,9 +25,9 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.browser;
 
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.core.toolkit.StringKit;
-import org.aoju.bus.health.Platform;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.health.Platform;
 
 /**
  * @author Kimi Liu

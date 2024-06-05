@@ -25,8 +25,8 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.page;
 
-import org.aoju.bus.core.toolkit.CollKit;
-import org.aoju.bus.core.toolkit.StringKit;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
 import org.aoju.lancia.nimble.accessbility.AXProperty;
 import org.aoju.lancia.nimble.accessbility.SerializedAXNode;
 

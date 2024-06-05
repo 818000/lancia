@@ -25,8 +25,8 @@
  ********************************************************************************/
 package org.aoju.lancia.socket;
 
-import org.aoju.bus.core.thread.NamedThreadFactory;
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.core.lang.thread.NamedThreadFactory;
+import org.miaixz.bus.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -152,7 +152,7 @@ public abstract class ListenerBuilder implements SocketListener {
     private void restartConnectionLostTimer() {
         cancelConnectionLostTimer();
         connectionLostCheckerService = Executors
-                .newSingleThreadScheduledExecutor(new NamedThreadFactory("connectionLostChecker"));
+                .newSingleThreadScheduledExecutor(new NamedThreadFactory("connectionLostChecker",true));
         Runnable connectionLostChecker = new Runnable() {
 
             /**

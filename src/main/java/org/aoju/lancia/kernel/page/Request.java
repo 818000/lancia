@@ -26,10 +26,10 @@
 package org.aoju.lancia.kernel.page;
 
 import com.alibaba.fastjson.JSONObject;
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.core.lang.Charset;
-import org.aoju.bus.core.toolkit.CollKit;
-import org.aoju.bus.core.toolkit.StringKit;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.Charset;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
 import org.aoju.lancia.ErrorCode;
 import org.aoju.lancia.nimble.fetch.HeaderEntry;
 import org.aoju.lancia.nimble.network.RequestWillBeSentPayload;

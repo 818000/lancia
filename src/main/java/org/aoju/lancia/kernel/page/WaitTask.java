@@ -25,9 +25,9 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.page;
 
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.core.toolkit.StringKit;
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.logger.Logger;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.nimble.PageEvaluateType;
 

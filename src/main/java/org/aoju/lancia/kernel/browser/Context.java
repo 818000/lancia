@@ -25,8 +25,8 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.browser;
 
-import org.aoju.bus.core.lang.Assert;
-import org.aoju.bus.core.toolkit.StringKit;
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.StringKit;
 import org.aoju.lancia.Browser;
 import org.aoju.lancia.Page;
 import org.aoju.lancia.events.EventEmitter;

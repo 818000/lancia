@@ -25,8 +25,8 @@
  ********************************************************************************/
 package org.aoju.lancia.worker;
 
-import org.aoju.bus.core.toolkit.IoKit;
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.core.xyz.IoKit;
+import org.miaixz.bus.logger.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;

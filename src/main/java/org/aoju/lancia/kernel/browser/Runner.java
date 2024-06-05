@@ -25,10 +25,10 @@
  ********************************************************************************/
 package org.aoju.lancia.kernel.browser;
 
-import org.aoju.bus.core.toolkit.IoKit;
-import org.aoju.bus.core.toolkit.StringKit;
-import org.aoju.bus.health.Platform;
-import org.aoju.bus.logger.Logger;
+import org.miaixz.bus.core.xyz.IoKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.health.Platform;
+import org.miaixz.bus.logger.Logger;
 import org.aoju.lancia.Builder;
 import org.aoju.lancia.events.BrowserListenerWrapper;
 import org.aoju.lancia.events.DefaultBrowserListener;
