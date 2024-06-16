@@ -1,25 +1,3 @@
-<p align="center">
-	<a target="_blank" href="https://www.mit-license.org">
-		<img src="https://img.shields.io/badge/license-MIT-green.svg">
-	</a>
-	<a target="_blank" href="https://nodejs.org">
-		<img src="https://img.shields.io/badge/node-%3E=8.0.0-brightgreen.svg">
-	</a>
-	<a target="_blank" href="https://www.npmjs.com">
-		<img src="https://img.shields.io/badge/npm-%3E=7.0.0-green.svg">
-	</a>
-		<a target="_blank" href="https://eslint.org">
-		<img src="https://img.shields.io/badge/eslint-%5E3.0.0-blue.svg">
-	</a>
-	<a target="_blank" href="https://travis-ci.org/839128/lancia">
-		<img src="https://travis-ci.org/839128/lancia.svg?branch=master">
-	</a>
-</p>
-
-<p align="center">
-	-- QQ群：<a href="https://shang.qq.com/wpa/qunwpa?idkey=17fadd02891457034c6536c984f0d7db29b73ea14c9b86bba39ce18ed7a90e18">839128</a> --
-</p>
-
 ---
 
 ## Lancia
