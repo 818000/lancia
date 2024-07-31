@@ -87,14 +87,14 @@ public class Standard implements Variables {
             // retry to uppercase
             actualName = resolvePropertyName(name.toUpperCase(), source);
             if (actualName == null) {
-                if (Logger.isDebug()) {
+                if (Logger.isDebugEnabled()) {
                     Logger.debug("PropertySource ' " + sourceName + " ' does not contain property '" + name);
                 }
                 return null;
             }
         }
 
-        if (Logger.isDebug() && !name.equals(actualName)) {
+        if (Logger.isDebugEnabled() && !name.equals(actualName)) {
             Logger.debug("PropertySource ' " + sourceName + " ' does not contain property '" + name +
                     "', but found equivalent '" + actualName + "'");
         }

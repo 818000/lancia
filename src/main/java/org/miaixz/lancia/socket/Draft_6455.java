@@ -290,7 +290,7 @@ public class Draft_6455 {
     }
 
     public ByteBuffer createBinaryFrame(Framedata framedata) {
-        if (Logger.isTrace()) {
+        if (Logger.isTraceEnabled()) {
             Logger.trace("afterEnconding({}): {}", framedata.getPayloadData().remaining(),
                     (framedata.getPayloadData().remaining() > 1000 ? "too big to display"
                             : new String(framedata.getPayloadData().array())));
@@ -456,7 +456,7 @@ public class Draft_6455 {
         payload.flip();
         frame.setPayload(payload);
 
-        if (Logger.isTrace()) {
+        if (Logger.isTraceEnabled()) {
             Logger.trace("afterDecoding({}): {}", frame.getPayloadData().remaining(),
                     (frame.getPayloadData().remaining() > 1000 ? "too big to display"
                             : new String(frame.getPayloadData().array())));
