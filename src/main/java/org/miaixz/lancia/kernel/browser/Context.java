@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.browser;
 
 import org.miaixz.bus.core.lang.Assert;
@@ -33,7 +35,7 @@ import org.miaixz.lancia.events.EventEmitter;
 import org.miaixz.lancia.events.EventHandler;
 import org.miaixz.lancia.events.Events;
 import org.miaixz.lancia.kernel.page.Target;
-import org.miaixz.lancia.option.ChromeArgOptions;
+import org.miaixz.lancia.option.ArgumentOptions;
 import org.miaixz.lancia.worker.Connection;
 
 import java.util.HashMap;
@@ -47,8 +49,7 @@ import java.util.stream.Collectors;
  * 浏览器上下文
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Context extends EventEmitter {
 
@@ -97,9 +98,7 @@ public class Context extends EventEmitter {
     }
 
     /**
-     * 监听浏览器事件targetchanged
-     * 浏览器一共有四种事件
-     * method ="disconnected","targetchanged","targetcreated","targetdestroyed"
+     * 监听浏览器事件targetchanged 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
      *
      * @param handler 事件处理器
      */
@@ -108,9 +107,7 @@ public class Context extends EventEmitter {
     }
 
     /**
-     * 监听浏览器事件targetcreated
-     * 浏览器一共有四种事件
-     * method ="disconnected","targetchanged","targetcreated","targetdestroyed"
+     * 监听浏览器事件targetcreated 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
      *
      * @param handler 事件处理器
      */
@@ -150,17 +147,19 @@ public class Context extends EventEmitter {
     }
 
     public List<Page> pages() {
-        return this.targets().stream().filter(target -> "page".equals(target.type())).map(Target::page).filter(Objects::nonNull).collect(Collectors.toList());
+        return this.targets().stream().filter(target -> "page".equals(target.type())).map(Target::page)
+                .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     /**
      * @return 目标的集合
      */
     public List<Target> targets() {
-        return this.browser.targets().stream().filter(target -> target.browserContext() == this).collect(Collectors.toList());
+        return this.browser.targets().stream().filter(target -> target.browserContext() == this)
+                .collect(Collectors.toList());
     }
 
-    public Target waitForTarget(Predicate<Target> predicate, ChromeArgOptions options) {
+    public Target waitForTarget(Predicate<Target> predicate, ArgumentOptions options) {
         return this.browser.waitForTarget(target -> target.browserContext() == this && predicate.test(target), options);
     }
 

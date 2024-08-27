@@ -1,30 +1,31 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
-
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -47,14 +48,14 @@ import java.util.regex.Pattern;
 
 /**
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class ExecutionContext {
 
     public static final String EVALUATION_SCRIPT_URL = "__puppeteer_evaluation_script__";
 
-    public static final Pattern SOURCE_URL_REGEX = Pattern.compile("^[\\040\\t]*//[@#] sourceURL=\\s*(\\S*?)\\s*$", Pattern.MULTILINE);
+    public static final Pattern SOURCE_URL_REGEX = Pattern.compile("^[\\040\\t]*//[@#] sourceURL=\\s*(\\S*?)\\s*$",
+            Pattern.MULTILINE);
     private final int contextId;
     private CDPSession client;
     private DOMWorld world;
@@ -78,7 +79,8 @@ public class ExecutionContext {
     }
 
     public ElementHandle adoptElementHandle(ElementHandle elementHandle) {
-        Assert.isTrue(elementHandle.executionContext() != this, "Cannot adopt handle that already belongs to this execution context");
+        Assert.isTrue(elementHandle.executionContext() != this,
+                "Cannot adopt handle that already belongs to this execution context");
         Assert.isTrue(this.world != null, "Cannot adopt handle without DOMWorld");
         Map<String, Object> params = new HashMap<>();
         params.put("objectId", elementHandle.getRemoteObject().getObjectId());
@@ -87,19 +89,23 @@ public class ExecutionContext {
     }
 
     public Object evaluateHandle(String pageFunction, List<Object> args) {
-        return this.evaluateInternal(false, pageFunction, Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, args);
+        return this.evaluateInternal(false, pageFunction,
+                Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, args);
     }
 
     public Object evaluate(String pageFunction, List<Object> args) {
-        return this.evaluateInternal(true, pageFunction, Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, args);
+        return this.evaluateInternal(true, pageFunction,
+                Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, args);
     }
 
-    private Object evaluateInternal(boolean returnByValue, String pageFunction, PageEvaluateType type, List<Object> args) {
+    private Object evaluateInternal(boolean returnByValue, String pageFunction, PageEvaluateType type,
+            List<Object> args) {
         String suffix = "//# sourceURL=" + ExecutionContext.EVALUATION_SCRIPT_URL;
         if (PageEvaluateType.STRING.equals(type)) {
             int contextId = this.contextId;
             String expression = pageFunction;
-            String expressionWithSourceUrl = ExecutionContext.SOURCE_URL_REGEX.matcher(expression).find() ? expression : expression + "\n" + suffix;
+            String expressionWithSourceUrl = ExecutionContext.SOURCE_URL_REGEX.matcher(expression).find() ? expression
+                    : expression + "\n" + suffix;
             Map<String, Object> params = new HashMap<>();
             params.put("expression", expressionWithSourceUrl);
             params.put("contextId", contextId);
@@ -109,14 +115,16 @@ public class ExecutionContext {
             JSONObject result = this.client.send("Runtime.evaluate", params, true);
             JSONObject exceptionDetails = result.getJSONObject("exceptionDetails");
             if (exceptionDetails != null)
-                throw new RuntimeException("Evaluation failed: " + Builder.getExceptionMessage(JSON.toJavaObject(exceptionDetails, ExceptionDetails.class)));
+                throw new RuntimeException("Evaluation failed: "
+                        + Builder.getExceptionMessage(JSON.toJavaObject(exceptionDetails, ExceptionDetails.class)));
             RemoteObject remoteObject = JSON.toJavaObject(result.getJSONObject("result"), RemoteObject.class);
             return returnByValue ? Builder.valueFromRemoteObject(remoteObject) : createJSHandle(this, remoteObject);
 
         }
 
         if (!PageEvaluateType.FUNCTION.equals(type))
-            throw new IllegalArgumentException("Expected to get |string| or |function| as the first argument, but got " + type.name() + " instead.");
+            throw new IllegalArgumentException("Expected to get |string| or |function| as the first argument, but got "
+                    + type.name() + " instead.");
         String functionText = pageFunction;
         Map<String, Object> params = new HashMap<>();
         List<Object> argList = new ArrayList<>();
@@ -146,7 +154,8 @@ public class ExecutionContext {
         JSONObject exceptionDetails = callFunctionOnPromise.getJSONObject("exceptionDetails");
         RemoteObject remoteObject;
         if (exceptionDetails != null)
-            throw new RuntimeException("Evaluation failed: " + Builder.getExceptionMessage(JSON.toJavaObject(exceptionDetails, ExceptionDetails.class)));
+            throw new RuntimeException("Evaluation failed: "
+                    + Builder.getExceptionMessage(JSON.toJavaObject(exceptionDetails, ExceptionDetails.class)));
         remoteObject = JSON.toJavaObject(callFunctionOnPromise.getJSONObject("result"), RemoteObject.class);
 
         return returnByValue ? Builder.valueFromRemoteObject(remoteObject) : createJSHandle(this, remoteObject);
@@ -154,7 +163,8 @@ public class ExecutionContext {
 
     public JSHandle queryObjects(JSHandle prototypeHandle) {
         Assert.isTrue(!prototypeHandle.getDisposed(), "Prototype JSHandle is disposed!");
-        Assert.isTrue(StringKit.isNotEmpty(prototypeHandle.getRemoteObject().getObjectId()), "Prototype JSHandle must not be referencing primitive value");
+        Assert.isTrue(StringKit.isNotEmpty(prototypeHandle.getRemoteObject().getObjectId()),
+                "Prototype JSHandle must not be referencing primitive value");
         Map<String, Object> params = new HashMap<>();
         params.put("prototypeObjectId", prototypeHandle.getRemoteObject().getObjectId());
         JSONObject response = this.client.send("Runtime.queryObjects", params, true);
@@ -204,7 +214,8 @@ public class ExecutionContext {
         params.put("backendNodeId", backendNodeId);
         params.put("executionContextId", this.contextId);
         JSONObject object = this.client.send("DOM.resolveNode", params, true);
-        return (ElementHandle) createJSHandle(this, JSON.toJavaObject(object.getJSONObject("object"), RemoteObject.class));
+        return (ElementHandle) createJSHandle(this,
+                JSON.toJavaObject(object.getJSONObject("object"), RemoteObject.class));
 
     }
 

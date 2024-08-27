@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.socket;
 
 import org.miaixz.bus.core.codec.binary.Base64;
@@ -45,8 +47,7 @@ import java.util.*;
  * RFC 6455网络套接字的实现这是网络套接符连接的推荐类
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Draft_6455 {
 
@@ -201,13 +202,16 @@ public class Draft_6455 {
      * @param line            整个行
      * @return the {@link HandshakeBuilder}
      */
-    private static HandshakeBuilder translateHandshakeHttpClient(String[] firstLineTokens, String line) throws SocketException {
+    private static HandshakeBuilder translateHandshakeHttpClient(String[] firstLineTokens, String line)
+            throws SocketException {
         // 转换/解析来自SERVER的响应
         if (!"101".equals(firstLineTokens[1])) {
-            throw new SocketException(Framedata.PROTOCOL_ERROR, String.format("Invalid status code received: %s Status line: %s", firstLineTokens[1], line));
+            throw new SocketException(Framedata.PROTOCOL_ERROR,
+                    String.format("Invalid status code received: %s Status line: %s", firstLineTokens[1], line));
         }
         if (!"HTTP/1.1".equalsIgnoreCase(firstLineTokens[0])) {
-            throw new SocketException(Framedata.PROTOCOL_ERROR, String.format("Invalid status line received: %s Status line: %s", firstLineTokens[0], line));
+            throw new SocketException(Framedata.PROTOCOL_ERROR,
+                    String.format("Invalid status line received: %s Status line: %s", firstLineTokens[0], line));
         }
         HandshakeBuilder handshake = new HandshakeBuilder();
         handshake.setStatus(Short.parseShort(firstLineTokens[1]));
@@ -232,7 +236,8 @@ public class Draft_6455 {
     }
 
     protected boolean basicAccept(HandshakeBuilder handshake) {
-        return handshake.getFieldValue("Upgrade").equalsIgnoreCase("websocket") && handshake.getFieldValue("Connection").toLowerCase(Locale.ENGLISH).contains("upgrade");
+        return handshake.getFieldValue("Upgrade").equalsIgnoreCase("websocket")
+                && handshake.getFieldValue("Connection").toLowerCase(Locale.ENGLISH).contains("upgrade");
     }
 
     public String acceptHandshakeAsClient(HandshakeBuilder request, HandshakeBuilder response) {
@@ -240,8 +245,7 @@ public class Draft_6455 {
             Logger.trace("acceptHandshakeAsClient - Missing/wrong upgrade or connection in handshake.");
             return Builder.NOT_MATCHED;
         }
-        if (!request.hasFieldValue(SEC_WEB_SOCKET_KEY) || !response
-                .hasFieldValue(SEC_WEB_SOCKET_ACCEPT)) {
+        if (!request.hasFieldValue(SEC_WEB_SOCKET_KEY) || !response.hasFieldValue(SEC_WEB_SOCKET_ACCEPT)) {
             Logger.trace("acceptHandshakeAsClient - Missing Sec-WebSocket-Key or Sec-WebSocket-Accept");
             return Builder.NOT_MATCHED;
         }
@@ -268,8 +272,7 @@ public class Draft_6455 {
         return Builder.NOT_MATCHED;
     }
 
-    public HandshakeBuilder postProcessHandshakeRequestAsClient(
-            HandshakeBuilder request) {
+    public HandshakeBuilder postProcessHandshakeRequestAsClient(HandshakeBuilder request) {
         request.put(UPGRADE, "websocket");
         // 以响应连接保持活跃
         request.put(CONNECTION, UPGRADE);
@@ -361,8 +364,8 @@ public class Draft_6455 {
         ByteBuffer mes = framedata.getPayloadData();
         boolean mask = true;
         int sizebytes = getSizeBytes(mes);
-        ByteBuffer buf = ByteBuffer.allocate(
-                1 + (sizebytes > 1 ? sizebytes + 1 : sizebytes) + (mask ? 4 : 0) + mes.remaining());
+        ByteBuffer buf = ByteBuffer
+                .allocate(1 + (sizebytes > 1 ? sizebytes + 1 : sizebytes) + (mask ? 4 : 0) + mes.remaining());
         byte optcode = fromOpcode(framedata.getOpcode());
         byte one = (byte) (framedata.isFin() ? -128 : 0);
         one |= optcode;
@@ -399,7 +402,7 @@ public class Draft_6455 {
             }
         } else {
             buf.put(mes);
-            //Reset the position of the bytebuffer e.g. for additional use
+            // Reset the position of the bytebuffer e.g. for additional use
             mes.flip();
         }
         assert (buf.remaining() == 0) : buf.remaining();
@@ -407,27 +410,26 @@ public class Draft_6455 {
         return buf;
     }
 
-    private Framedata translateSingleFrame(ByteBuffer buffer)
-            throws SocketException {
+    private Framedata translateSingleFrame(ByteBuffer buffer) throws SocketException {
         if (buffer == null) {
             throw new IllegalArgumentException();
         }
         int maxpacketsize = buffer.remaining();
         int realpacketsize = 2;
         translateSingleFrameCheckPacketSize(maxpacketsize, realpacketsize);
-        byte b1 = buffer.get(/*0*/);
+        byte b1 = buffer.get(/* 0 */);
         boolean fin = b1 >> 8 != 0;
         boolean rsv1 = (b1 & 0x40) != 0;
         boolean rsv2 = (b1 & 0x20) != 0;
         boolean rsv3 = (b1 & 0x10) != 0;
-        byte b2 = buffer.get(/*1*/);
+        byte b2 = buffer.get(/* 1 */);
         boolean mask = (b2 & -128) != 0;
         int payloadlength = (byte) (b2 & ~(byte) 128);
         String optcode = toOpcode((byte) (b1 & 15));
 
         if (!(payloadlength >= 0 && payloadlength <= 125)) {
-            TranslatedPayloadMetaData payloadData = translateSingleFramePayloadLength(buffer, optcode,
-                    payloadlength, maxpacketsize, realpacketsize);
+            TranslatedPayloadMetaData payloadData = translateSingleFramePayloadLength(buffer, optcode, payloadlength,
+                    maxpacketsize, realpacketsize);
             payloadlength = payloadData.getPayloadLength();
             realpacketsize = payloadData.getRealPackageSize();
         }
@@ -441,7 +443,7 @@ public class Draft_6455 {
             byte[] maskskey = new byte[4];
             buffer.get(maskskey);
             for (int i = 0; i < payloadlength; i++) {
-                payload.put((byte) (buffer.get(/*payloadstart + i*/) ^ maskskey[i % 4]));
+                payload.put((byte) (buffer.get(/* payloadstart + i */) ^ maskskey[i % 4]));
             }
         } else {
             payload.put(buffer.array(), buffer.position(), payload.limit());
@@ -483,9 +485,8 @@ public class Draft_6455 {
      * @return the new payload data containing new payload length and new packet size
      * @throws SocketException if the maxpacketsize is smaller than the realpackagesize
      */
-    private TranslatedPayloadMetaData translateSingleFramePayloadLength(ByteBuffer buffer,
-                                                                        String optcode, int oldPayloadlength, int maxpacketsize, int oldRealpacketsize)
-            throws SocketException {
+    private TranslatedPayloadMetaData translateSingleFramePayloadLength(ByteBuffer buffer, String optcode,
+            int oldPayloadlength, int maxpacketsize, int oldRealpacketsize) throws SocketException {
         int payloadlength = oldPayloadlength;
         int realpacketsize = oldRealpacketsize;
         if (Builder.PING.equals(optcode) || Builder.PONG.equals(optcode) || Builder.CLOSING.equals(optcode)) {
@@ -496,15 +497,15 @@ public class Draft_6455 {
             realpacketsize += 2; // additional length bytes
             translateSingleFrameCheckPacketSize(maxpacketsize, realpacketsize);
             byte[] sizebytes = new byte[3];
-            sizebytes[1] = buffer.get(/*1 + 1*/);
-            sizebytes[2] = buffer.get(/*1 + 2*/);
+            sizebytes[1] = buffer.get(/* 1 + 1 */);
+            sizebytes[2] = buffer.get(/* 1 + 2 */);
             payloadlength = new BigInteger(sizebytes).intValue();
         } else {
             realpacketsize += 8; // additional length bytes
             translateSingleFrameCheckPacketSize(maxpacketsize, realpacketsize);
             byte[] bytes = new byte[8];
             for (int i = 0; i < 8; i++) {
-                bytes[i] = buffer.get(/*1 + i*/);
+                bytes[i] = buffer.get(/* 1 + i */);
             }
             long length = new BigInteger(bytes).longValue();
             translateSingleFrameCheckLengthLimit(length);
@@ -541,8 +542,7 @@ public class Draft_6455 {
      * @param realpacketsize the real packet size
      * @throws SocketException if the maxpacketsize is smaller than the realpackagesize
      */
-    private void translateSingleFrameCheckPacketSize(int maxpacketsize, int realpacketsize)
-            throws SocketException {
+    private void translateSingleFrameCheckPacketSize(int maxpacketsize, int realpacketsize) throws SocketException {
         if (maxpacketsize < realpacketsize) {
             Logger.trace("Incomplete frame: maxpacketsize < realpacketsize");
             throw new SocketException(realpacketsize);
@@ -550,22 +550,22 @@ public class Draft_6455 {
     }
 
     /**
-     * Get a byte that can set RSV bits when OR(|)'d. 0 1 2 3 4 5 6 7 +-+-+-+-+-------+ |F|R|R|R|
-     * opcode| |I|S|S|S|  (4)  | |N|V|V|V|       | | |1|2|3|       |
+     * Get a byte that can set RSV bits when OR(|)'d. 0 1 2 3 4 5 6 7 +-+-+-+-+-------+ |F|R|R|R| opcode| |I|S|S|S| (4)
+     * | |N|V|V|V| | | |1|2|3| |
      *
      * @param rsv Can only be {0, 1, 2, 3}
      * @return byte that represents which RSV bit is set.
      */
     private byte getRSVByte(int rsv) {
         switch (rsv) {
-            case 1: // 0100 0000
-                return 0x40;
-            case 2: // 0010 0000
-                return 0x20;
-            case 3: // 0001 0000
-                return 0x10;
-            default:
-                return 0;
+        case 1: // 0100 0000
+            return 0x40;
+        case 2: // 0010 0000
+            return 0x20;
+        case 3: // 0001 0000
+            return 0x10;
+        default:
+            return 0;
         }
     }
 
@@ -603,8 +603,8 @@ public class Draft_6455 {
                 try {
                     buffer.mark();
                     int availableNextByteCount = buffer.remaining();// The number of bytes received
-                    int expectedNextByteCount = incompleteframe
-                            .remaining();// The number of bytes to complete the incomplete frame
+                    int expectedNextByteCount = incompleteframe.remaining();// The number of bytes to complete the
+                                                                            // incomplete frame
 
                     if (expectedNextByteCount > availableNextByteCount) {
                         // did not receive enough bytes to complete the frame
@@ -710,33 +710,31 @@ public class Draft_6455 {
 
     private String toOpcode(byte opcode) throws SocketException {
         switch (opcode) {
-            case 0:
-                return Builder.CONTINUOUS;
-            case 1:
-                return Builder.TEXT;
-            case 2:
-                return Builder.BINARY;
-            // 3-7 are not yet defined
-            case 8:
-                return Builder.CLOSING;
-            case 9:
-                return Builder.PING;
-            case 10:
-                return Builder.PONG;
-            // 11-15 are not yet defined
-            default:
-                throw new SocketException(Framedata.PROTOCOL_ERROR, "Unknown opcode " + (short) opcode);
+        case 0:
+            return Builder.CONTINUOUS;
+        case 1:
+            return Builder.TEXT;
+        case 2:
+            return Builder.BINARY;
+        // 3-7 are not yet defined
+        case 8:
+            return Builder.CLOSING;
+        case 9:
+            return Builder.PING;
+        case 10:
+            return Builder.PONG;
+        // 11-15 are not yet defined
+        default:
+            throw new SocketException(Framedata.PROTOCOL_ERROR, "Unknown opcode " + (short) opcode);
         }
     }
 
-    public void processFrame(SocketBuilder socketBuilder, Framedata frame)
-            throws SocketException {
+    public void processFrame(SocketBuilder socketBuilder, Framedata frame) throws SocketException {
         if (Builder.TEXT.equals(frame.getOpcode())) {
             processFrameText(socketBuilder, frame);
         } else {
             Logger.error("non control or continious frame expected");
-            throw new SocketException(Framedata.PROTOCOL_ERROR,
-                    "non control or continious frame expected");
+            throw new SocketException(Framedata.PROTOCOL_ERROR, "non control or continious frame expected");
         }
     }
 
@@ -746,11 +744,9 @@ public class Draft_6455 {
      * @param socketBuilder the websocket impl
      * @param frame         the frame
      */
-    private void processFrameText(SocketBuilder socketBuilder, Framedata frame)
-            throws SocketException {
+    private void processFrameText(SocketBuilder socketBuilder, Framedata frame) throws SocketException {
         try {
-            socketBuilder.getListener()
-                    .onWebsocketMessage(socketBuilder, stringUtf8(frame.getPayloadData()));
+            socketBuilder.getListener().onWebsocketMessage(socketBuilder, stringUtf8(frame.getPayloadData()));
         } catch (RuntimeException e) {
             socketBuilder.getListener().onWebsocketError(socketBuilder, new Exception(e.getMessage()));
         }

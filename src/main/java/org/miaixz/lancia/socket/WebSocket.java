@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.socket;
 
 import java.net.InetSocketAddress;
@@ -31,8 +33,7 @@ import java.util.Collection;
 
 /**
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public interface WebSocket {
 
@@ -57,9 +58,8 @@ public interface WebSocket {
     void close();
 
     /**
-     * This will close the connection immediately without a proper close handshake. The code and the
-     * message therefore won't be transferred over the wire also they will be forwarded to
-     * onClose/onWebsocketClose.
+     * This will close the connection immediately without a proper close handshake. The code and the message therefore
+     * won't be transferred over the wire also they will be forwarded to onClose/onWebsocketClose.
      *
      * @param code    the closing code
      * @param message the closing message
@@ -93,14 +93,13 @@ public interface WebSocket {
     void sendPing();
 
     /**
-     * Allows to send continuous/fragmented frames conveniently. <br> For more into on this frame type
-     * see http://tools.ietf.org/html/rfc6455#section-5.4<br>
+     * Allows to send continuous/fragmented frames conveniently. <br>
+     * For more into on this frame type see http://tools.ietf.org/html/rfc6455#section-5.4<br>
      * <p>
-     * If the first frame you send is also the last then it is not a fragmented frame and will
-     * received via onMessage instead of onFragmented even though it was send by this method.
+     * If the first frame you send is also the last then it is not a fragmented frame and will received via onMessage
+     * instead of onFragmented even though it was send by this method.
      *
-     * @param op     This is only important for the first frame in the sequence. TEXT,
-     *               BINARY are allowed.
+     * @param op     This is only important for the first frame in the sequence. TEXT, BINARY are allowed.
      * @param buffer The buffer which contains the payload. It may have no bytes remaining.
      * @param fin    true means the current frame is the last in the sequence.
      **/
@@ -114,16 +113,14 @@ public interface WebSocket {
     boolean hasBufferedData();
 
     /**
-     * Returns the address of the endpoint this socket is connected to, or {@code null} if it is
-     * unconnected.
+     * Returns the address of the endpoint this socket is connected to, or {@code null} if it is unconnected.
      *
      * @return the remote socket address or null, if this socket is unconnected
      */
     InetSocketAddress getRemoteSocketAddress();
 
     /**
-     * Returns the address of the endpoint this socket is bound to, or {@code null} if it is not
-     * bound.
+     * Returns the address of the endpoint this socket is bound to, or {@code null} if it is not bound.
      *
      * @return the local socket address or null, if this socket is not bound
      */
@@ -144,8 +141,8 @@ public interface WebSocket {
     boolean isClosing();
 
     /**
-     * Returns true when no further frames may be submitted<br> This happens before the socket
-     * connection is closed.
+     * Returns true when no further frames may be submitted<br>
+     * This happens before the socket connection is closed.
      *
      * @return true when no further frames may be submitted
      */
@@ -159,8 +156,8 @@ public interface WebSocket {
     boolean isClosed();
 
     /**
-     * Retrieve the WebSocket 'ReadyState'. This represents the state of the connection. It returns a
-     * numerical value, as per W3C WebSockets specs.
+     * Retrieve the WebSocket 'ReadyState'. This represents the state of the connection. It returns a numerical value,
+     * as per W3C WebSockets specs.
      *
      * @return Returns '0 = CONNECTING', '1 = OPEN', '2 = CLOSING' or '3 = CLOSED'
      */

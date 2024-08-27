@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.bus.core.xyz.CollKit;
@@ -43,44 +45,18 @@ import java.util.function.Predicate;
 
 /**
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class AXNode {
 
-    public static final String[] TRISTATE_PROPERTIES = new String[]{
-            "checked",
-            "pressed"
-    };
-    public static final String[] TOKEN_PROPERTIES = new String[]{
-            "autocomplete",
-            "haspopup",
-            "invalid",
-            "orientation"
-    };
-    public static final String[] NUMERICAL_PROPERTIES = new String[]{
-            "level",
-            "valuemax",
-            "valuemin"
-    };
-    private static final String[] USERSTRING_PROPERTIES = new String[]{
-            "name",
-            "value",
-            "description",
-            "keyshortcuts",
-            "roledescription",
-            "valuetext"
-    };
-    private static final String[] BOOLEAN_PROPERTIES = new String[]{"disabled",
-            "expanded",
-            "focused",
-            "modal",
-            "multiline",
-            "multiselectable",
-            "readonly",
-            "required",
-            "selected"
-    };
+    public static final String[] TRISTATE_PROPERTIES = new String[] { "checked", "pressed" };
+    public static final String[] TOKEN_PROPERTIES = new String[] { "autocomplete", "haspopup", "invalid",
+            "orientation" };
+    public static final String[] NUMERICAL_PROPERTIES = new String[] { "level", "valuemax", "valuemin" };
+    private static final String[] USERSTRING_PROPERTIES = new String[] { "name", "value", "description", "keyshortcuts",
+            "roledescription", "valuetext" };
+    private static final String[] BOOLEAN_PROPERTIES = new String[] { "disabled", "expanded", "focused", "modal",
+            "multiline", "multiselectable", "readonly", "required", "selected" };
     private org.miaixz.lancia.nimble.accessbility.AXNode payload;
     private List<AXNode> children = new ArrayList<>();
     private boolean richlyEditable = false;
@@ -185,17 +161,17 @@ public class AXNode {
         // (Note that whilst ARIA buttons can have only presentational children, HTML5
         // buttons are allowed to have content.)
         switch (this.role) {
-            case "doc-cover":
-            case "graphics-symbol":
-            case "img":
-            case "Meter":
-            case "scrollbar":
-            case "slider":
-            case "separator":
-            case "progressbar":
-                return true;
-            default:
-                break;
+        case "doc-cover":
+        case "graphics-symbol":
+        case "img":
+        case "Meter":
+        case "scrollbar":
+        case "slider":
+        case "separator":
+        case "progressbar":
+            return true;
+        default:
+            break;
         }
 
         // Here and below: Android heuristics
@@ -208,29 +184,29 @@ public class AXNode {
 
     public boolean isControl() {
         switch (this.role) {
-            case "button":
-            case "checkbox":
-            case "ColorWell":
-            case "combobox":
-            case "DisclosureTriangle":
-            case "listbox":
-            case "menu":
-            case "menubar":
-            case "menuitem":
-            case "menuitemcheckbox":
-            case "menuitemradio":
-            case "radio":
-            case "scrollbar":
-            case "searchbox":
-            case "slider":
-            case "spinbutton":
-            case "switch":
-            case "tab":
-            case "textbox":
-            case "tree":
-                return true;
-            default:
-                return false;
+        case "button":
+        case "checkbox":
+        case "ColorWell":
+        case "combobox":
+        case "DisclosureTriangle":
+        case "listbox":
+        case "menu":
+        case "menubar":
+        case "menuitem":
+        case "menuitemcheckbox":
+        case "menuitemradio":
+        case "radio":
+        case "scrollbar":
+        case "searchbox":
+        case "slider":
+        case "spinbutton":
+        case "switch":
+        case "tab":
+        case "textbox":
+        case "tree":
+            return true;
+        default:
+            return false;
         }
     }
 
@@ -253,7 +229,8 @@ public class AXNode {
         return this.isLeafNode() && StringKit.isNotEmpty(this.name);
     }
 
-    public SerializedAXNode serialize() throws IntrospectionException, InvocationTargetException, IllegalAccessException {
+    public SerializedAXNode serialize()
+            throws IntrospectionException, InvocationTargetException, IllegalAccessException {
         Map<String, Object> properties = new HashMap<>();
         List<AXProperty> properties1 = this.payload.getProperties();
         if (CollKit.isNotEmpty(properties1)) {
@@ -271,7 +248,6 @@ public class AXNode {
         SerializedAXNode node = new SerializedAXNode();
         node.setRole(this.role);
 
-
         BeanInfo beanInfo = Introspector.getBeanInfo(node.getClass());
 
         for (String userStringProperty : USERSTRING_PROPERTIES) {
@@ -281,9 +257,8 @@ public class AXNode {
             propDesc.getWriteMethod().invoke(node, properties.get(userStringProperty));
         }
 
-
         for (String booleanProperty : BOOLEAN_PROPERTIES) {
-            // WebArea's treat focus differently than other nodes. They report whether their frame  has focus,
+            // WebArea's treat focus differently than other nodes. They report whether their frame has focus,
             // not whether focus is specifically on the root node.
             if ("focused".equals(booleanProperty) && "WebArea".equals(this.role))
                 continue;
@@ -295,7 +270,6 @@ public class AXNode {
             propDesc.getWriteMethod().invoke(node, value);
         }
 
-
         for (String tristateProperty : TRISTATE_PROPERTIES) {
             if (!properties.containsKey(tristateProperty))
                 continue;
@@ -304,14 +278,12 @@ public class AXNode {
             propDesc.getWriteMethod().invoke(node, properties.get(tristateProperty));
         }
 
-
         for (String numericalProperty : NUMERICAL_PROPERTIES) {
             if (!properties.containsKey(numericalProperty))
                 continue;
             PropertyDescriptor propDesc = new PropertyDescriptor(numericalProperty, SerializedAXNode.class);
             propDesc.getWriteMethod().invoke(node, properties.get(numericalProperty));
         }
-
 
         for (String tokenProperty : TOKEN_PROPERTIES) {
             Object value = properties.get(tokenProperty);

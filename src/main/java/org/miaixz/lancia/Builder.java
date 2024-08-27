@@ -1,49 +1,31 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia;
-
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.lang.Normal;
-import org.miaixz.bus.core.lang.thread.NamedThreadFactory;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.IoKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.events.BrowserListenerWrapper;
-import org.miaixz.lancia.events.DefaultBrowserListener;
-import org.miaixz.lancia.events.EventEmitter;
-import org.miaixz.lancia.kernel.page.QueryHandler;
-import org.miaixz.lancia.kernel.page.QuerySelector;
-import org.miaixz.lancia.nimble.PageEvaluateType;
-import org.miaixz.lancia.nimble.runtime.CallFrame;
-import org.miaixz.lancia.nimble.runtime.ExceptionDetails;
-import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.worker.CDPSession;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -65,19 +47,39 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.Normal;
+import org.miaixz.bus.core.lang.thread.NamedThreadFactory;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.IoKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.logger.Logger;
+import org.miaixz.lancia.events.BrowserListenerWrapper;
+import org.miaixz.lancia.events.DefaultBrowserListener;
+import org.miaixz.lancia.events.EventEmitter;
+import org.miaixz.lancia.kernel.page.QueryHandler;
+import org.miaixz.lancia.kernel.page.QuerySelector;
+import org.miaixz.lancia.nimble.PageEvaluateType;
+import org.miaixz.lancia.nimble.runtime.CallFrame;
+import org.miaixz.lancia.nimble.runtime.ExceptionDetails;
+import org.miaixz.lancia.nimble.runtime.RemoteObject;
+import org.miaixz.lancia.worker.CDPSession;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * 公共方法
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Builder {
 
     /**
      * 指定版本
      */
-    public static final String VERSION = "818858";
+    public static final String VERSION = "1347218";
     /**
      * 临时文件夹前缀
      */
@@ -89,34 +91,23 @@ public class Builder {
     /**
      * 把产品存放到环境变量的所有可用字段
      */
-    public static final String[] PRODUCT_ENV = {
-            "PUPPETEER_PRODUCT",
-            "java_config_puppeteer_product",
-            "java_package_config_puppeteer_product"
-    };
+    public static final String[] PRODUCT_ENV = { "PUPPETEER_PRODUCT", "java_config_puppeteer_product",
+            "java_package_config_puppeteer_product" };
     /**
      * 把浏览器执行路径存放到环境变量的所有可用字段
      */
-    public static final String[] EXECUTABLE_ENV = {
-            "PUPPETEER_EXECUTABLE_PATH",
-            "java_config_puppeteer_executable_path",
-            "java_package_config_puppeteer_executable_path"
-    };
+    public static final String[] EXECUTABLE_ENV = { "PUPPETEER_EXECUTABLE_PATH",
+            "java_config_puppeteer_executable_path", "java_package_config_puppeteer_executable_path" };
     /**
      * 启动浏览器时，如果没有指定路径，那么会从以下路径搜索可执行的路径
      */
-    public static final String[] PROBABLE_CHROME_EXECUTABLE_PATH =
-            new String[]{
-                    "/usr/bin/chromium",
-                    "/usr/bin/chromium-browser",
-                    "/usr/bin/google-chrome-stable",
-                    "/usr/bin/google-chrome",
-                    "/Applications/Chromium.app/Contents/MacOS/Chromium",
-                    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                    "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
-                    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-                    "C:/Program Files/Google/Chrome/Application/chrome.exe"
-            };
+    public static final String[] PROBABLE_CHROME_EXECUTABLE_PATH = new String[] { "/usr/bin/chromium",
+            "/usr/bin/chromium-browser", "/usr/bin/google-chrome-stable", "/usr/bin/google-chrome",
+            "/Applications/Chromium.app/Contents/MacOS/Chromium",
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+            "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+            "C:/Program Files/Google/Chrome/Application/chrome.exe" };
     /**
      * 谷歌浏览器默认启动参数
      */
@@ -124,34 +115,19 @@ public class Builder {
         private static final long serialVersionUID = 1L;
 
         {
-            addAll(Arrays.asList(
-                    "--disable-background-networking",
-                    "--disable-background-timer-throttling",
-                    "--disable-breakpad",
-                    "--disable-browser-side-navigation",
-                    "--disable-client-side-phishing-detection",
-                    "--disable-default-apps",
-                    "--disable-dev-shm-usage",
-                    "--disable-extensions",
-                    "--disable-features=site-per-process",
-                    "--disable-hang-monitor",
-                    "--disable-popup-blocking",
-                    "--disable-prompt-on-repost",
-                    "--disable-sync",
-                    "--disable-translate",
-                    "--metrics-recording-only",
-                    "--no-first-run",
-                    "--safebrowsing-disable-auto-update",
-                    "--enable-automation",
-                    "--password-store=basic",
-                    "--use-mock-keychain"));
+            addAll(Arrays.asList("--disable-background-networking", "--disable-background-timer-throttling",
+                    "--disable-breakpad", "--disable-browser-side-navigation",
+                    "--disable-client-side-phishing-detection", "--disable-default-apps", "--disable-dev-shm-usage",
+                    "--disable-extensions", "--disable-features=site-per-process", "--disable-hang-monitor",
+                    "--disable-popup-blocking", "--disable-prompt-on-repost", "--disable-sync", "--disable-translate",
+                    "--metrics-recording-only", "--no-first-run", "--safebrowsing-disable-auto-update",
+                    "--enable-automation", "--password-store=basic", "--use-mock-keychain"));
         }
     });
 
-
     public static final Set<String> SUPPORTED_METRICS = new HashSet<>() {
 
-        private static final long serialVersionUID = -5224857570151968464L;
+        private static final long serialVersionUID = -1L;
 
         {
             add("Timestamp");
@@ -173,7 +149,7 @@ public class Builder {
      * 追踪信息的默认分类
      */
     public static final Set<String> DEFAULTCATEGORIES = new LinkedHashSet<>() {
-        private static final long serialVersionUID = -5224857570151968464L;
+        private static final long serialVersionUID = -1L;
 
         {
             add("-*");
@@ -245,22 +221,23 @@ public class Builder {
      */
     public static final int CONNECT_TIME_OUT = 10000;
     public static final Map<String, Map<String, String>> DOWNLOAD_URL = new HashMap<>() {
-        private static final long serialVersionUID = -6918778699407093058L;
+        private static final long serialVersionUID = -1L;
 
         {
             put("chrome", new HashMap<>() {
-                private static final long serialVersionUID = 3441562966233820720L;
+                private static final long serialVersionUID = -1L;
 
                 {
-                    put("host", "https://npm.taobao.org/mirrors");
+                    put("host", "https://registry.npmmirror.com/-/binary");
                     put("linux", "%s/chromium-browser-snapshots/Linux_x64/%s/%s.zip");
                     put("mac", "%s/chromium-browser-snapshots/Mac/%s/%s.zip");
+                    put("mac_arm", "%s/chromium-browser-snapshots/Mac_Arm/%s/%s.zip");
                     put("win32", "%s/chromium-browser-snapshots/Win/%s/%s.zip");
                     put("win64", "%s/chromium-browser-snapshots/Win_x64/%s/%s.zip");
                 }
             });
             put("firefox", new HashMap<>() {
-                private static final long serialVersionUID = 2053771138227029401L;
+                private static final long serialVersionUID = -1L;
 
                 {
                     put("host", "https://github.com/puppeteer/juggler/releases");
@@ -347,14 +324,12 @@ public class Builder {
             return new QuerySelector(selector, new QueryHandler() {
                 @Override
                 public String queryOne() {
-                    return "(element,selector) =>\n" +
-                            "      element.querySelector(selector)";
+                    return "(element,selector) =>\n" + "      element.querySelector(selector)";
                 }
 
                 @Override
                 public String queryAll() {
-                    return "(element,selector) =>\n" +
-                            "      element.querySelectorAll(selector)";
+                    return "(element,selector) =>\n" + "      element.querySelectorAll(selector)";
                 }
             });
         int index = selector.indexOf("/");
@@ -376,7 +351,8 @@ public class Builder {
      * @throws ExecutionException   异常
      * @throws InterruptedException 异常
      */
-    public static void download(String url, String filePath, BiConsumer<Integer, Integer> progressCallback) throws IOException, ExecutionException, InterruptedException {
+    public static void download(String url, String filePath, BiConsumer<Integer, Integer> progressCallback)
+            throws IOException, ExecutionException, InterruptedException {
         long contentLength = getContentLength(url);
 
         long taskCount = contentLength % CHUNK_SIZE == 0 ? contentLength / CHUNK_SIZE : contentLength / CHUNK_SIZE + 1;
@@ -392,10 +368,12 @@ public class Builder {
         } else {
             for (int i = 0; i < taskCount; i++) {
                 if (i == taskCount - 1) {
-                    Future<String> future = completionService.submit(new DownloadCallable((long) i * CHUNK_SIZE, contentLength, filePath, url));
+                    Future<String> future = completionService
+                            .submit(new DownloadCallable((long) i * CHUNK_SIZE, contentLength, filePath, url));
                     futureList.add(future);
                 } else {
-                    Future<String> future = completionService.submit(new DownloadCallable((long) i * CHUNK_SIZE, (long) (i + 1) * CHUNK_SIZE, filePath, url));
+                    Future<String> future = completionService.submit(
+                            new DownloadCallable((long) i * CHUNK_SIZE, (long) (i + 1) * CHUNK_SIZE, filePath, url));
                     futureList.add(future);
                 }
             }
@@ -456,7 +434,8 @@ public class Builder {
      * @return 线程池
      */
     public static ThreadPoolExecutor getExecutor() {
-        return new ThreadPoolExecutor(THREAD_COUNT, THREAD_COUNT, 30000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        return new ThreadPoolExecutor(THREAD_COUNT, THREAD_COUNT, 30000, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>());
     }
 
     /**
@@ -523,11 +502,12 @@ public class Builder {
             throw new IllegalArgumentException("Path must not be empty");
 
         char[] chars = perms.toCharArray();
-        if (chars.length != 3) throw new IllegalArgumentException("perms length must be 3");
+        if (chars.length != 3)
+            throw new IllegalArgumentException("perms length must be 3");
 
         Path path1 = Paths.get(path);
         Set<PosixFilePermission> permissions = new HashSet<>();
-        //own
+        // own
         if ('1' == chars[0]) {
             permissions.add(PosixFilePermission.OWNER_EXECUTE);
         } else if ('2' == chars[0]) {
@@ -548,7 +528,7 @@ public class Builder {
             permissions.add(PosixFilePermission.OWNER_WRITE);
             permissions.add(PosixFilePermission.OWNER_EXECUTE);
         }
-        //group
+        // group
         if ('1' == chars[1]) {
             permissions.add(PosixFilePermission.GROUP_EXECUTE);
         } else if ('2' == chars[1]) {
@@ -569,7 +549,7 @@ public class Builder {
             permissions.add(PosixFilePermission.GROUP_WRITE);
             permissions.add(PosixFilePermission.GROUP_EXECUTE);
         }
-        //other
+        // other
         if ('1' == chars[2]) {
             permissions.add(PosixFilePermission.OTHERS_EXECUTE);
         } else if ('2' == chars[2]) {
@@ -599,7 +579,7 @@ public class Builder {
     }
 
     /**
-     * read stream from protocol : example for tracing  file
+     * read stream from protocol : example for tracing file
      *
      * @param client  CDPSession
      * @param handler 发送给websocket的参数
@@ -608,7 +588,8 @@ public class Builder {
      * @return 可能是feture，可能是字节数组
      * @throws IOException 操作文件的异常
      */
-    public static final Object readProtocolStream(CDPSession client, String handler, String path, boolean isSync) throws IOException {
+    public static final Object readProtocolStream(CDPSession client, String handler, String path, boolean isSync)
+            throws IOException {
         if (isSync) {
             return Builder.commonExecutor().submit(() -> {
                 try {
@@ -661,7 +642,7 @@ public class Builder {
                         }
                         bufs.add(bytes);
                         byteLength += bytes.length;
-                        //转成二进制流 io
+                        // 转成二进制流 io
                         if (file != null) {
                             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
                             reader = new BufferedInputStream(byteArrayInputStream);
@@ -705,13 +686,17 @@ public class Builder {
 
     public static String getExceptionMessage(ExceptionDetails exceptionDetails) {
         if (exceptionDetails.getException() != null)
-            return StringKit.isNotEmpty(exceptionDetails.getException().getDescription()) ? exceptionDetails.getException().getDescription() : (String) exceptionDetails.getException().getValue();
+            return StringKit.isNotEmpty(exceptionDetails.getException().getDescription())
+                    ? exceptionDetails.getException().getDescription()
+                    : (String) exceptionDetails.getException().getValue();
         String message = exceptionDetails.getText();
         StringBuilder sb = new StringBuilder(message);
         if (exceptionDetails.getStackTrace() != null) {
             for (CallFrame callframe : exceptionDetails.getStackTrace().getCallFrames()) {
-                String location = callframe.getUrl() + ":" + callframe.getColumnNumber() + ":" + callframe.getColumnNumber();
-                String functionName = StringKit.isNotEmpty(callframe.getFunctionName()) ? callframe.getFunctionName() : "<anonymous>";
+                String location = callframe.getUrl() + ":" + callframe.getColumnNumber() + ":"
+                        + callframe.getColumnNumber();
+                String functionName = StringKit.isNotEmpty(callframe.getFunctionName()) ? callframe.getFunctionName()
+                        : "<anonymous>";
                 sb.append("\n    at ").append(functionName).append("(").append(location).append(")");
             }
         }
@@ -722,7 +707,8 @@ public class Builder {
         return new CopyOnWriteArraySet<>();
     }
 
-    public static final <T> BrowserListenerWrapper<T> addEventListener(EventEmitter emitter, String eventName, DefaultBrowserListener<T> handler) {
+    public static final <T> BrowserListenerWrapper<T> addEventListener(EventEmitter emitter, String eventName,
+            DefaultBrowserListener<T> handler) {
         emitter.addListener(eventName, handler);
         return new BrowserListenerWrapper<>(emitter, eventName, handler);
     }
@@ -755,16 +741,17 @@ public class Builder {
             if ("bigint".equals(remoteObject.getType()))
                 return new BigInteger(remoteObject.getUnserializableValue().replace("n", ""));
             switch (remoteObject.getUnserializableValue()) {
-                case "-0":
-                    return -0;
-                case "NaN":
-                    return "NaN";
-                case "Infinity":
-                    return "Infinity";
-                case "-Infinity":
-                    return "-Infinity";
-                default:
-                    throw new IllegalArgumentException("Unsupported unserializable value: " + remoteObject.getUnserializableValue());
+            case "-0":
+                return -0;
+            case "NaN":
+                return "NaN";
+            case "Infinity":
+                return "Infinity";
+            case "-Infinity":
+                return "-Infinity";
+            default:
+                throw new IllegalArgumentException(
+                        "Unsupported unserializable value: " + remoteObject.getUnserializableValue());
             }
         }
         return remoteObject.getValue();
@@ -779,15 +766,16 @@ public class Builder {
             client.send("Runtime.releaseObject", params, isBlock);
         } catch (Exception e) {
             // Exceptions might happen in case of a page been navigated or closed.
-            //重新导航到某个网页 或者页面已经关闭
+            // 重新导航到某个网页 或者页面已经关闭
             // Swallow these since they are harmless and we don't leak anything in this case.
-            //在这种情况下不需要将这个错误在线程执行中抛出，打日志记录一下就可以了
+            // 在这种情况下不需要将这个错误在线程执行中抛出，打日志记录一下就可以了
         }
     }
 
-    public static Object waitForEvent(EventEmitter eventEmitter, String eventName, Predicate predicate, int timeout, String abortPromise) throws InterruptedException {
+    public static Object waitForEvent(EventEmitter eventEmitter, String eventName, Predicate predicate, int timeout,
+            String abortPromise) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        final Object[] result = {null};
+        final Object[] result = { null };
         DefaultBrowserListener listener = new DefaultBrowserListener() {
             @Override
             public void onBrowserEvent(Object event) {
@@ -845,7 +833,8 @@ public class Builder {
                     } else {
                         threadNum = Math.max(1, Runtime.getRuntime().availableProcessors());
                     }
-                    COMMON_EXECUTOR = new ThreadPoolExecutor(threadNum, threadNum, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>(), new NamedThreadFactory("common-pool-", true));
+                    COMMON_EXECUTOR = new ThreadPoolExecutor(threadNum, threadNum, 30, TimeUnit.SECONDS,
+                            new LinkedBlockingDeque<>(), new NamedThreadFactory("common-pool-", true));
                 }
             }
         }

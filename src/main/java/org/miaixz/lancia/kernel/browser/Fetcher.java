@@ -1,38 +1,31 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.browser;
-
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.xyz.IoKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.core.xyz.ZipKit;
-import org.miaixz.bus.health.Platform;
-import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.option.FetcherOptions;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -55,13 +48,21 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.exception.InternalException;
+import org.miaixz.bus.core.xyz.IoKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.core.xyz.ZipKit;
+import org.miaixz.bus.health.Platform;
+import org.miaixz.bus.logger.Logger;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.option.FetcherOptions;
 
 /**
  * 用于下载chrome浏览器
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Fetcher {
 
@@ -88,7 +89,7 @@ public class Fetcher {
         this.url = Builder.DOWNLOAD_URL.get(this.product).get("host");
         if (platform == null) {
             if (Platform.isMac()) {
-                this.platform = "mac";
+                this.platform = Platform.is64Bit() ? "mac_arm" : "mac";
             } else if (Platform.isLinux()) {
                 this.platform = "linux";
             } else if (Platform.isWindows()) {
@@ -96,7 +97,8 @@ public class Fetcher {
             }
             Assert.notNull(this.platform, "Unsupported platform: " + Platform.getNativeLibraryResourcePrefix());
         }
-        Assert.notNull(Builder.DOWNLOAD_URL.get(this.product).get(this.platform), "Unsupported platform: " + this.platform);
+        Assert.notNull(Builder.DOWNLOAD_URL.get(this.product).get(this.platform),
+                "Unsupported platform: " + this.platform);
     }
 
     /**
@@ -107,13 +109,16 @@ public class Fetcher {
      */
     public Fetcher(String projectRoot, FetcherOptions options) {
         this.product = (StringKit.isNotEmpty(options.getProduct()) ? options.getProduct() : "chrome").toLowerCase();
-        Assert.isTrue("chrome".equals(product) || "firefox".equals(product), "Unknown product: " + options.getProduct());
-        this.folder = StringKit.isNotEmpty(options.getPath()) ? options.getPath() : Builder.join(projectRoot, ".local-browser");
-        this.url = StringKit.isNotEmpty(options.getHost()) ? options.getHost() : Builder.DOWNLOAD_URL.get(this.product).get("host");
+        Assert.isTrue("chrome".equals(product) || "firefox".equals(product),
+                "Unknown product: " + options.getProduct());
+        this.folder = StringKit.isNotEmpty(options.getPath()) ? options.getPath()
+                : Builder.join(projectRoot, ".local-browser");
+        this.url = StringKit.isNotEmpty(options.getHost()) ? options.getHost()
+                : Builder.DOWNLOAD_URL.get(this.product).get("host");
         this.platform = StringKit.isNotEmpty(options.getPlatform()) ? options.getPlatform() : null;
         if (platform == null) {
             if (Platform.isMac()) {
-                this.platform = "mac";
+                this.platform = Platform.is64Bit() ? "mac_arm" : "mac";
             } else if (Platform.isLinux()) {
                 this.platform = "linux";
             } else if (Platform.isWindows()) {
@@ -121,7 +126,8 @@ public class Fetcher {
             }
             Assert.notNull(this.platform, "Unsupported platform: " + Platform.getNativeLibraryResourcePrefix());
         }
-        Assert.notNull(Builder.DOWNLOAD_URL.get(this.product).get(this.platform), "Unsupported platform: " + this.platform);
+        Assert.notNull(Builder.DOWNLOAD_URL.get(this.product).get(this.platform),
+                "Unsupported platform: " + this.platform);
     }
 
     /**
@@ -136,8 +142,7 @@ public class Fetcher {
     }
 
     /**
-     * 下载浏览器，如果项目目录下不存在对应版本时
-     * 如果不指定版本，则使用默认配置版本
+     * 下载浏览器，如果项目目录下不存在对应版本时 如果不指定版本，则使用默认配置版本
      *
      * @param version 浏览器版本
      * @throws InterruptedException 异常
@@ -186,7 +191,8 @@ public class Fetcher {
             }
             conn.setRequestMethod(method);
             conn.connect();
-            if (conn.getResponseCode() >= 300 && conn.getResponseCode() <= 400 && StringKit.isNotEmpty(conn.getHeaderField("Location"))) {
+            if (conn.getResponseCode() >= 300 && conn.getResponseCode() <= 400
+                    && StringKit.isNotEmpty(conn.getHeaderField("Location"))) {
                 httpRequest(proxy, conn.getHeaderField("Location"), method);
             } else {
                 if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -212,7 +218,8 @@ public class Fetcher {
      * @throws InterruptedException 异常
      * @throws ExecutionException   异常
      */
-    public Revision download(String revision, BiConsumer<Integer, Integer> progressCallback) throws IOException, InterruptedException, ExecutionException {
+    public Revision download(String revision, BiConsumer<Integer, Integer> progressCallback)
+            throws IOException, InterruptedException, ExecutionException {
         String url = downloadURL(this.product, this.platform, this.url, revision);
         int lastIndexOf = url.lastIndexOf("/");
         String archivePath = Builder.join(this.folder, url.substring(lastIndexOf));
@@ -237,7 +244,8 @@ public class Fetcher {
                 File executableFile = new File(revisionInfo.getExecutablePath());
                 executableFile.setExecutable(true, false);
             } catch (Exception e) {
-                Logger.error("Set executablePath:{} file executation permission fail.", revisionInfo.getExecutablePath());
+                Logger.error("Set executablePath:{} file executation permission fail.",
+                        revisionInfo.getExecutablePath());
             }
         }
         return revisionInfo;
@@ -279,7 +287,8 @@ public class Fetcher {
      * @throws InterruptedException 异常
      * @throws ExecutionException   异常
      */
-    public Revision download(BiConsumer<Integer, Integer> progressCallback) throws IOException, InterruptedException, ExecutionException {
+    public Revision download(BiConsumer<Integer, Integer> progressCallback)
+            throws IOException, InterruptedException, ExecutionException {
         return this.download(fetchRevision(), progressCallback);
     }
 
@@ -333,12 +342,14 @@ public class Fetcher {
      * @return 版本集合
      * @throws IOException 异常
      */
-    public List<String> localRevisions() throws IOException {
+    public List<String> localRevisions() {
         if (!existsAsync(this.folder))
             return new ArrayList<>();
         Path path = Paths.get(this.folder);
         Stream<Path> fileNames = this.readdirAsync(path);
-        return fileNames.map(fileName -> parseFolderPath(this.product, fileName)).filter(entry -> entry != null && this.platform.equals(entry.getPlatform())).map(Revision::getRevision).collect(Collectors.toList());
+        return fileNames.map(fileName -> parseFolderPath(this.product, fileName))
+                .filter(entry -> entry != null && this.platform.equals(entry.getPlatform())).map(Revision::getRevision)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -379,11 +390,14 @@ public class Fetcher {
      *
      * @param downloadsFolder 下载文件夹
      * @return Stream<Path> Stream<Path>
-     * @throws IOException 异常
      */
-    private Stream<Path> readdirAsync(Path downloadsFolder) throws IOException {
+    private Stream<Path> readdirAsync(Path downloadsFolder) {
         Assert.isTrue(Files.isDirectory(downloadsFolder), "downloadsFolder " + downloadsFolder + " is not Directory");
-        return Files.list(downloadsFolder);
+        try {
+            return Files.list(downloadsFolder);
+        } catch (IOException e) {
+            throw new InternalException(e);
+        }
     }
 
     /**
@@ -470,7 +484,8 @@ public class Fetcher {
         if (StringKit.isEmpty(mountPath)) {
             throw new RuntimeException("Could not find volume path in [" + stringWriter + "]");
         }
-        Optional<Path> optionl = this.readdirAsync(Paths.get(mountPath)).filter(item -> item.toString().endsWith(".app")).findFirst();
+        Optional<Path> optionl = this.readdirAsync(Paths.get(mountPath))
+                .filter(item -> item.toString().endsWith(".app")).findFirst();
         if (optionl.isPresent()) {
             try {
                 Path path = optionl.get();
@@ -560,14 +575,14 @@ public class Fetcher {
     }
 
     /**
-     * 下载浏览器到具体的路径
-     * ContentTypeapplication/x-zip-compressed
+     * 下载浏览器到具体的路径 ContentTypeapplication/x-zip-compressed
      *
      * @param url              url
      * @param archivePath      zip路径
      * @param progressCallback 回调函数
      */
-    private void downloadFile(String url, String archivePath, BiConsumer<Integer, Integer> progressCallback) throws IOException, ExecutionException, InterruptedException {
+    private void downloadFile(String url, String archivePath, BiConsumer<Integer, Integer> progressCallback)
+            throws IOException, ExecutionException, InterruptedException {
         Logger.info("Downloading binary from " + url);
         Builder.download(url, archivePath, progressCallback);
         Logger.info("Download successfully from " + url);
@@ -606,30 +621,34 @@ public class Fetcher {
         String folderPath = this.getFolderPath(revision);
         String executablePath;
         if ("chrome".equals(this.product)) {
-            if ("mac".equals(this.platform)) {
-                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision), "Chromium.app", "Contents", "MacOS", "Chromium");
+            if ("mac".equals(this.platform) || "mac_arm".equals(this.platform)) {
+                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision),
+                        "Chromium.app", "Contents", "MacOS", "Chromium");
             } else if ("linux".equals(this.platform)) {
                 executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision), "chrome");
             } else if ("win32".equals(this.platform) || "win64".equals(this.platform)) {
-                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision), "chrome.exe");
+                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision),
+                        "chrome.exe");
             } else {
                 throw new IllegalArgumentException("Unsupported platform: " + this.platform);
             }
         } else if ("firefox".equals(this.product)) {
-            if ("mac".equals(this.platform))
+            if ("mac".equals(this.platform) || "mac_arm".equals(this.platform)) {
                 executablePath = Builder.join(folderPath, "Firefox Nightly.app", "Contents", "MacOS", "firefox");
-            else if ("linux".equals(this.platform))
+            } else if ("linux".equals(this.platform)) {
                 executablePath = Builder.join(folderPath, "firefox", "firefox");
-            else if ("win32".equals(this.platform) || "win64".equals(this.platform))
+            } else if ("win32".equals(this.platform) || "win64".equals(this.platform)) {
                 executablePath = Builder.join(folderPath, "firefox", "firefox.exe");
-            else
+            } else {
                 throw new IllegalArgumentException("Unsupported platform: " + this.platform);
+            }
         } else {
             throw new IllegalArgumentException("Unsupported product: " + this.product);
         }
         String url = downloadURL(this.product, this.platform, this.url, revision);
         boolean local = this.existsAsync(folderPath);
-        Logger.info("revision:{}，executablePath:{}，folderPath:{}，local:{}，url:{}，product:{}", revision, executablePath, folderPath, local, url, this.product);
+        Logger.info("revision:{}，executablePath:{}，folderPath:{}，local:{}，url:{}，product:{}", revision, executablePath,
+                folderPath, local, url, this.product);
         return new Revision(revision, executablePath, folderPath, local, url, this.product);
     }
 
@@ -655,7 +674,7 @@ public class Fetcher {
         if ("chrome".equals(product)) {
             if ("linux".equals(platform))
                 return "chrome-linux";
-            if ("mac".equals(platform))
+            if ("mac".equals(platform) || "mac_arm".equals(platform))
                 return "chrome-mac";
             if ("win32".equals(platform) || "win64".equals(platform)) {
                 // Windows archive name changed at r591479.
@@ -664,7 +683,7 @@ public class Fetcher {
         } else if ("firefox".equals(product)) {
             if ("linux".equals(platform))
                 return "firefox-linux";
-            if ("mac".equals(platform))
+            if ("mac".equals(this.platform) || "mac_arm".equals(this.platform))
                 return "firefox-mac";
             if ("win32".equals(platform) || "win64".equals(platform))
                 return "firefox-" + platform;
@@ -682,7 +701,8 @@ public class Fetcher {
      * @return 下载浏览器的url
      */
     public String downloadURL(String product, String platform, String host, String revision) {
-        return String.format(Builder.DOWNLOAD_URL.get(product).get(platform), host, revision, archiveName(product, platform, revision));
+        return String.format(Builder.DOWNLOAD_URL.get(product).get(platform), host, revision,
+                archiveName(product, platform, revision));
     }
 
 }

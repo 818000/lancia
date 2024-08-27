@@ -1,50 +1,31 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.launch;
-
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.Browser;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.Launcher;
-import org.miaixz.lancia.kernel.browser.Fetcher;
-import org.miaixz.lancia.kernel.browser.Revision;
-import org.miaixz.lancia.kernel.browser.Runner;
-import org.miaixz.lancia.option.BrowserOptions;
-import org.miaixz.lancia.option.ChromeArgOptions;
-import org.miaixz.lancia.option.FetcherOptions;
-import org.miaixz.lancia.option.LaunchOptions;
-import org.miaixz.lancia.worker.Connection;
-import org.miaixz.lancia.worker.Transport;
-import org.miaixz.lancia.worker.TransportFactory;
-import org.miaixz.lancia.worker.exception.LaunchException;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -59,12 +40,34 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
+import org.miaixz.bus.core.lang.exception.InternalException;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.logger.Logger;
+import org.miaixz.lancia.Browser;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.Launcher;
+import org.miaixz.lancia.kernel.browser.Fetcher;
+import org.miaixz.lancia.kernel.browser.Revision;
+import org.miaixz.lancia.kernel.browser.Runner;
+import org.miaixz.lancia.option.ArgumentOptions;
+import org.miaixz.lancia.option.ConnectOptions;
+import org.miaixz.lancia.option.FetcherOptions;
+import org.miaixz.lancia.option.LaunchOptions;
+import org.miaixz.lancia.worker.Connection;
+import org.miaixz.lancia.worker.Transport;
+import org.miaixz.lancia.worker.TransportFactory;
+import org.miaixz.lancia.worker.exception.LaunchException;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
+
 /**
  * Chrome启动支持
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class ChromeLauncher implements Launcher {
 
@@ -86,7 +89,7 @@ public class ChromeLauncher implements Launcher {
     }
 
     @Override
-    public Browser launch(LaunchOptions options) throws IOException {
+    public Browser launch(LaunchOptions options) {
         String temporaryUserDataDir = null;
         List<String> chromeArguments = defaultArgs(options);
 
@@ -104,9 +107,13 @@ public class ChromeLauncher implements Launcher {
             }
         }
         if (!isCustomUserDir) {
-            temporaryUserDataDir = Files.createTempDirectory(Builder.PROFILE_PREFIX).toRealPath().toString();
-            chromeArguments.add("--user-data-dir=" + temporaryUserDataDir);
+            try {
+                temporaryUserDataDir = Files.createTempDirectory(Builder.PROFILE_PREFIX).toRealPath().toString();
+            } catch (IOException e) {
+                throw new InternalException(e);
+            }
         }
+        chromeArguments.add("--user-data-dir=" + temporaryUserDataDir);
         if (!isCustomRemoteDebugger) {
             chromeArguments.add(options.getPipe() ? "--remote-debugging-pipe" : "--remote-debugging-port=0");
         }
@@ -118,12 +125,14 @@ public class ChromeLauncher implements Launcher {
         Runner runner = new Runner(chromeExecutable, chromeArguments, temporaryUserDataDir);//
         try {
             runner.start(options);
-            Connection connection = runner.setUpConnection(usePipe, options.getTimeout(), options.getSlowMo(), options.getDumpio(), options.getConnectionOptions());
+            Connection connection = runner.setUpConnection(usePipe, options.getTimeout(), options.getSlowMo(),
+                    options.getDumpio(), options.getConnectionOptions());
             Function<Object, Object> closeCallback = (s) -> {
                 runner.closeQuietly();
                 return null;
             };
-            Browser browser = Browser.create(connection, null, options.getIgnoreHTTPSErrors(), options.getViewport(), runner.getProcess(), closeCallback);
+            Browser browser = Browser.create(connection, null, options.getIgnoreHTTPSErrors(), options.getViewport(),
+                    runner.getProcess(), closeCallback);
             browser.waitForTarget(t -> "page".equals(t.type()), options);
             return browser;
         } catch (IOException | InterruptedException e) {
@@ -139,7 +148,7 @@ public class ChromeLauncher implements Launcher {
      * @return 默认的启动参数
      */
     @Override
-    public List<String> defaultArgs(ChromeArgOptions options) {
+    public List<String> defaultArgs(ArgumentOptions options) {
         List<String> chromeArguments = new ArrayList<>();
         LaunchOptions launchOptions;
         if (StringKit.isNotEmpty(options.getUserDataDir())) {
@@ -177,7 +186,7 @@ public class ChromeLauncher implements Launcher {
      * @return 返回解析后的可执行路径
      */
     @Override
-    public String resolveExecutablePath(String chromeExecutable) throws IOException {
+    public String resolveExecutablePath(String chromeExecutable) {
         boolean puppeteerCore = getIsPuppeteerCore();
         FetcherOptions fetcherOptions = new FetcherOptions();
         fetcherOptions.setProduct(this.product());
@@ -185,9 +194,11 @@ public class ChromeLauncher implements Launcher {
         if (!puppeteerCore) {
             // 指定了启动路径，则启动指定路径的chrome
             if (StringKit.isNotEmpty(chromeExecutable)) {
-                boolean assertDir = Builder.assertExecutable(Paths.get(chromeExecutable).normalize().toAbsolutePath().toString());
+                boolean assertDir = Builder
+                        .assertExecutable(Paths.get(chromeExecutable).normalize().toAbsolutePath().toString());
                 if (!assertDir) {
-                    throw new IllegalArgumentException("given chromeExecutable \"" + chromeExecutable + "\" is not executable");
+                    throw new IllegalArgumentException(
+                            "given chromeExecutable \"" + chromeExecutable + "\" is not executable");
                 }
                 return chromeExecutable;
             }
@@ -241,23 +252,27 @@ public class ChromeLauncher implements Launcher {
 
         Revision revision = fetcher.revisionInfo(this.preferredRevision);
         if (!revision.isLocal())
-            throw new LaunchException(MessageFormat.format("Could not find browser revision {0}. Pleaze download a browser binary.", this.preferredRevision));
+            throw new LaunchException(MessageFormat.format(
+                    "Could not find browser revision {0}. Pleaze download a browser binary.", this.preferredRevision));
         return revision.getExecutablePath();
     }
 
     @Override
-    public Browser connect(BrowserOptions options, String browserWSEndpoint, String browserURL, Transport transport) {
+    public Browser connect(ConnectOptions options, String browserWSEndpoint, String browserURL, Transport transport) {
         final Connection connection;
         try {
             if (transport != null) {
                 connection = new Connection("", transport, options.getSlowMo(), options.getConnectionOptions());
             } else if (StringKit.isNotEmpty(browserWSEndpoint)) {
-                connection = new Connection(browserWSEndpoint, TransportFactory.create(browserWSEndpoint), options.getSlowMo(), options.getConnectionOptions());
+                connection = new Connection(browserWSEndpoint, TransportFactory.create(browserWSEndpoint),
+                        options.getSlowMo(), options.getConnectionOptions());
             } else if (StringKit.isNotEmpty(browserURL)) {
                 String connectionURL = getWSEndpoint(browserURL);
-                connection = new Connection(connectionURL, TransportFactory.create(connectionURL), options.getSlowMo(), options.getConnectionOptions());
+                connection = new Connection(connectionURL, TransportFactory.create(connectionURL), options.getSlowMo(),
+                        options.getConnectionOptions());
             } else {
-                throw new IllegalArgumentException("Exactly one of browserWSEndpoint, browserURL or transport must be passed to puppeteer.connect");
+                throw new IllegalArgumentException(
+                        "Exactly one of browserWSEndpoint, browserURL or transport must be passed to puppeteer.connect");
             }
             JSONObject result = connection.send("Target.getBrowserContexts", null, true);
 
@@ -271,7 +286,8 @@ public class ChromeLauncher implements Launcher {
             }).getType();
 
             browserContextIds = result.getObject("browserContextIds", LIST_STRING);
-            return Browser.create(connection, browserContextIds, options.getIgnoreHTTPSErrors(), options.getViewport(), null, closeFunction);
+            return Browser.create(connection, browserContextIds, options.getIgnoreHTTPSErrors(), options.getViewport(),
+                    null, closeFunction);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -310,7 +326,7 @@ public class ChromeLauncher implements Launcher {
     }
 
     @Override
-    public String executablePath() throws IOException {
+    public String executablePath() {
         return resolveExecutablePath(null);
     }
 

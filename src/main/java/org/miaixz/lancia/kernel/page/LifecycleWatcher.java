@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.bus.core.xyz.CollKit;
@@ -39,8 +41,7 @@ import java.util.List;
  * 生命周期
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class LifecycleWatcher {
 
@@ -60,11 +61,9 @@ public class LifecycleWatcher {
 
     private boolean hasSameDocumentNavigation;
 
-
     private Object lifecyclePromise = null;
     private Object sameDocumentNavigationPromise = null;
     private Object newDocumentNavigationPromise = null;
-
 
     public LifecycleWatcher() {
         super();
@@ -142,11 +141,14 @@ public class LifecycleWatcher {
         };
         requestListener.setTarget(this);
         requestListener.setMethod(Events.NETWORK_MANAGER_REQUEST.getName());
-        eventListeners.add(Builder.addEventListener(this.frameManager.getClient(), disconnecteListener.getMethod(), disconnecteListener));
-        eventListeners.add(Builder.addEventListener(this.frameManager, lifecycleEventListener.getMethod(), lifecycleEventListener));
+        eventListeners.add(Builder.addEventListener(this.frameManager.getClient(), disconnecteListener.getMethod(),
+                disconnecteListener));
+        eventListeners.add(Builder.addEventListener(this.frameManager, lifecycleEventListener.getMethod(),
+                lifecycleEventListener));
         eventListeners.add(Builder.addEventListener(frameManager, documentListener.getMethod(), documentListener));
         eventListeners.add(Builder.addEventListener(frameManager, detachedListener.getMethod(), detachedListener));
-        eventListeners.add(Builder.addEventListener(frameManager.getNetworkManager(), requestListener.getMethod(), requestListener));
+        eventListeners.add(Builder.addEventListener(frameManager.getNetworkManager(), requestListener.getMethod(),
+                requestListener));
         this.checkLifecycleComplete();
     }
 
@@ -189,7 +191,8 @@ public class LifecycleWatcher {
 
     private void checkLifecycleComplete() {
         // We expect navigation to commit.
-        if (!checkLifecycle(this.frame, this.expectedLifecycle)) return;
+        if (!checkLifecycle(this.frame, this.expectedLifecycle))
+            return;
         this.lifecycleCallback();
         if (this.frame.getLoaderId().equals(this.initialLoaderId) && !this.hasSameDocumentNavigation)
             return;
@@ -207,12 +210,14 @@ public class LifecycleWatcher {
     private boolean checkLifecycle(Frame frame, List<String> expectedLifecycle) {
         if (CollKit.isNotEmpty(expectedLifecycle)) {
             for (String event : expectedLifecycle) {
-                if (!frame.getLifecycleEvents().contains(event)) return false;
+                if (!frame.getLifecycleEvents().contains(event))
+                    return false;
             }
         }
         if (CollKit.isNotEmpty(frame.childFrames())) {
             for (Frame child : frame.childFrames()) {
-                if (!checkLifecycle(child, expectedLifecycle)) return false;
+                if (!checkLifecycle(child, expectedLifecycle))
+                    return false;
             }
         }
         return true;
@@ -244,13 +249,15 @@ public class LifecycleWatcher {
 
     public void newDocumentNavigationCompleteCallback() {
         this.newDocumentNavigationPromise = new Object();
-        if ("new".equals(this.frameManager.getDocumentNavigationPromiseType()) || "all".equals(this.frameManager.getDocumentNavigationPromiseType()))
+        if ("new".equals(this.frameManager.getDocumentNavigationPromiseType())
+                || "all".equals(this.frameManager.getDocumentNavigationPromiseType()))
             setNavigateResult("success");
     }
 
     public void sameDocumentNavigationCompleteCallback() {
         this.sameDocumentNavigationPromise = new Object();
-        if ("same".equals(this.frameManager.getDocumentNavigationPromiseType()) || "all".equals(this.frameManager.getDocumentNavigationPromiseType()))
+        if ("same".equals(this.frameManager.getDocumentNavigationPromiseType())
+                || "all".equals(this.frameManager.getDocumentNavigationPromiseType()))
             setNavigateResult("success");
     }
 
@@ -262,4 +269,3 @@ public class LifecycleWatcher {
     }
 
 }
-

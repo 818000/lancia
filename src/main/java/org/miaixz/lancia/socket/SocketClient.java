@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.socket;
 
 import org.miaixz.lancia.worker.exception.SocketException;
@@ -44,14 +46,12 @@ import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * A subclass must implement at least <var>onOpen</var>, <var>onClose</var>, and
- * <var>onMessage</var> to be useful. At runtime the user is expected to establish a connection via
- * {@link #connect()}, then receive events like {@link #onMessage(String)} via the overloaded
- * methods and to {@link #send(String)} data to the server.
+ * A subclass must implement at least <var>onOpen</var>, <var>onClose</var>, and <var>onMessage</var> to be useful. At
+ * runtime the user is expected to establish a connection via {@link #connect()}, then receive events like
+ * {@link #onMessage(String)} via the overloaded methods and to {@link #send(String)} data to the server.
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public abstract class SocketClient extends ListenerBuilder implements Runnable, WebSocket {
 
@@ -105,9 +105,8 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     private int connectTimeout = 0;
 
     /**
-     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The
-     * channel does not attampt to connect automatically. The connection will be established once you
-     * call <var>connect</var>.
+     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The channel does not attampt
+     * to connect automatically. The connection will be established once you call <var>connect</var>.
      *
      * @param serverUri the server URI to connect to
      */
@@ -116,9 +115,8 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     }
 
     /**
-     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The
-     * channel does not attampt to connect automatically. The connection will be established once you
-     * call <var>connect</var>.
+     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The channel does not attampt
+     * to connect automatically. The connection will be established once you call <var>connect</var>.
      *
      * @param serverUri     the server URI to connect to
      * @param protocolDraft The draft which should be used for this connection
@@ -128,9 +126,8 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     }
 
     /**
-     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The
-     * channel does not attampt to connect automatically. The connection will be established once you
-     * call <var>connect</var>.
+     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The channel does not attampt
+     * to connect automatically. The connection will be established once you call <var>connect</var>.
      *
      * @param serverUri   the server URI to connect to
      * @param httpHeaders Additional HTTP-Headers
@@ -140,9 +137,8 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     }
 
     /**
-     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The
-     * channel does not attampt to connect automatically. The connection will be established once you
-     * call <var>connect</var>.
+     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The channel does not attampt
+     * to connect automatically. The connection will be established once you call <var>connect</var>.
      *
      * @param serverUri     the server URI to connect to
      * @param protocolDraft The draft which should be used for this connection
@@ -153,17 +149,15 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     }
 
     /**
-     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The
-     * channel does not attampt to connect automatically. The connection will be established once you
-     * call <var>connect</var>.
+     * Constructs a SocketClient instance and sets it to the connect to the specified URI. The channel does not attampt
+     * to connect automatically. The connection will be established once you call <var>connect</var>.
      *
      * @param serverUri      the server URI to connect to
      * @param draft          The draft which should be used for this connection
      * @param httpHeaders    Additional HTTP-Headers
      * @param connectTimeout The Timeout for the connection
      */
-    public SocketClient(URI serverUri, Draft_6455 draft, Map<String, String> httpHeaders,
-                        int connectTimeout) {
+    public SocketClient(URI serverUri, Draft_6455 draft, Map<String, String> httpHeaders, int connectTimeout) {
         if (serverUri == null) {
             throw new IllegalArgumentException();
         } else if (draft == null) {
@@ -205,8 +199,8 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     }
 
     /**
-     * Initiates the websocket close handshake. This method does not block<br> In oder to make sure
-     * the connection is closed use <code>closeBlocking</code>
+     * Initiates the websocket close handshake. This method does not block<br>
+     * In oder to make sure the connection is closed use <code>closeBlocking</code>
      */
     public void close() {
         if (writeThread != null) {
@@ -281,15 +275,18 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
             ostream = socket.getOutputStream();
 
             sendHandshake();
-        } catch (/*IOException | SecurityException | UnresolvedAddressException | ClosedByInterruptException | SocketTimeoutException */
-                Exception e) {
+        } catch (/*
+                  * IOException | SecurityException | UnresolvedAddressException | ClosedByInterruptException |
+                  * SocketTimeoutException
+                  */
+        Exception e) {
             onWebsocketError(engine, e);
             engine.closeConnection(Framedata.NEVER_CONNECTED, e.getMessage());
             return;
         } catch (InternalError e) {
             // https://bugs.openjdk.java.net/browse/JDK-8173620
-            if (e.getCause() instanceof InvocationTargetException && e.getCause()
-                    .getCause() instanceof IOException cause) {
+            if (e.getCause() instanceof InvocationTargetException
+                    && e.getCause().getCause() instanceof IOException cause) {
                 onWebsocketError(engine, cause);
                 engine.closeConnection(Framedata.NEVER_CONNECTED, cause.getMessage());
                 return;
@@ -318,8 +315,7 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
         connectReadThread = null;
     }
 
-    private void upgradeSocketToSSL()
-            throws NoSuchAlgorithmException, KeyManagementException, IOException {
+    private void upgradeSocketToSSL() throws NoSuchAlgorithmException, KeyManagementException, IOException {
         SSLSocketFactory factory;
         // Prioritise the provided socketfactory
         // Helps when using web debuggers like Fiddler Classic
@@ -351,13 +347,14 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     }
 
     /**
-     * Apply specific SSLParameters If you override this method make sure to always call
-     * super.onSetSSLParameters() to ensure the hostname validation is active
+     * Apply specific SSLParameters If you override this method make sure to always call super.onSetSSLParameters() to
+     * ensure the hostname validation is active
      *
      * @param sslParameters the SSLParameters which will be used for the SSLSocket
      */
     protected void onSetSSLParameters(SSLParameters sslParameters) {
-        // If you run into problem on Android (NoSuchMethodException), check out the wiki https://github.com/TooTallNate/Java-WebSocket/wiki/No-such-method-error-setEndpointIdentificationAlgorithm
+        // If you run into problem on Android (NoSuchMethodException), check out the wiki
+        // https://github.com/TooTallNate/Java-WebSocket/wiki/No-such-method-error-setEndpointIdentificationAlgorithm
         // Perform hostname validation
         sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
     }
@@ -395,10 +392,8 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
             path += '?' + part2;
         }
         int port = getPort();
-        String host = uri.getHost() + (
-                (port != SocketBuilder.DEFAULT_PORT && port != SocketBuilder.DEFAULT_WSS_PORT)
-                        ? ":" + port
-                        : "");
+        String host = uri.getHost()
+                + ((port != SocketBuilder.DEFAULT_PORT && port != SocketBuilder.DEFAULT_WSS_PORT) ? ":" + port : "");
 
         HandshakeBuilder handshake = new HandshakeBuilder();
         handshake.setDescriptor(path);
@@ -480,7 +475,7 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
      * @param reason Additional information string
      */
     public void onCloseInitiated(int code, String reason) {
-        //To overwrite
+        // To overwrite
     }
 
     /**
@@ -488,8 +483,7 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
      *
      * @param code   The codes can be looked up here: {@link Framedata}
      * @param reason Additional information string
-     * @param remote Returns whether or not the closing of the connection was initiated by the remote
-     *               host.
+     * @param remote Returns whether or not the closing of the connection was initiated by the remote host.
      */
     public void onClosing(int code, String reason, boolean remote) {
 
@@ -521,8 +515,7 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
     }
 
     /**
-     * Called after an opening handshake has been performed and the given websocket is ready to be
-     * written on.
+     * Called after an opening handshake has been performed and the given websocket is ready to be written on.
      *
      * @param handshake The handshake of the websocket instance
      */
@@ -541,16 +534,15 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
      *
      * @param code   The codes can be looked up here: {@link Framedata}
      * @param reason Additional information string
-     * @param remote Returns whether or not the closing of the connection was initiated by the remote
-     *               host.
+     * @param remote Returns whether or not the closing of the connection was initiated by the remote host.
      **/
     public abstract void onClose(int code, String reason, boolean remote);
 
     /**
-     * Called when errors occurs. If an error causes the websocket connection to fail {@link
-     * #onClose(int, String, boolean)} will be called additionally.<br> This method will be called
-     * primarily because of IO or protocol errors.<br> If the given exception is an RuntimeException
-     * that probably means that you encountered a bug.<br>
+     * Called when errors occurs. If an error causes the websocket connection to fail
+     * {@link #onClose(int, String, boolean)} will be called additionally.<br>
+     * This method will be called primarily because of IO or protocol errors.<br>
+     * If the given exception is an RuntimeException that probably means that you encountered a bug.<br>
      *
      * @param ex The exception causing this error
      **/
@@ -563,7 +555,7 @@ public abstract class SocketClient extends ListenerBuilder implements Runnable, 
      * @see #onMessage(String)
      **/
     public void onMessage(ByteBuffer bytes) {
-        //To overwrite
+        // To overwrite
     }
 
     @Override

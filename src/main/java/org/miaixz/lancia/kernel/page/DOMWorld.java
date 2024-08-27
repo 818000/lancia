@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.bus.core.lang.Assert;
@@ -45,8 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class DOMWorld {
 
@@ -93,14 +94,10 @@ public class DOMWorld {
     }
 
     public String content() {
-        return (String) this.evaluate("() => {\n" +
-                "      let retVal = '';\n" +
-                "      if (document.doctype)\n" +
-                "        retVal = new XMLSerializer().serializeToString(document.doctype);\n" +
-                "      if (document.documentElement)\n" +
-                "        retVal += document.documentElement.outerHTML;\n" +
-                "      return retVal;\n" +
-                "    }", new ArrayList<>());
+        return (String) this.evaluate("() => {\n" + "      let retVal = '';\n" + "      if (document.doctype)\n"
+                + "        retVal = new XMLSerializer().serializeToString(document.doctype);\n"
+                + "      if (document.documentElement)\n" + "        retVal += document.documentElement.outerHTML;\n"
+                + "      return retVal;\n" + "    }", new ArrayList<>());
     }
 
     public void setContext(ExecutionContext context) {
@@ -129,7 +126,9 @@ public class DOMWorld {
 
     public ExecutionContext executionContext() {
         if (this.detached)
-            throw new RuntimeException(MessageFormat.format("Execution Context is not available in detached frame {0} (are you trying to evaluate?)", this.frame.getUrl()));
+            throw new RuntimeException(MessageFormat.format(
+                    "Execution Context is not available in detached frame {0} (are you trying to evaluate?)",
+                    this.frame.getUrl()));
         if (this.contextPromise == null) {
             this.waitForContext = new CountDownLatch(1);
             try {
@@ -205,11 +204,8 @@ public class DOMWorld {
             }
         }
         LifecycleWatcher watcher = new LifecycleWatcher(this.frameManager, this.frame, waitUntil, timeout);
-        this.evaluate("(html) => {\n" +
-                "      document.open();\n" +
-                "      document.write(html);\n" +
-                "      document.close();\n" +
-                "    }", Collections.singletonList(html));
+        this.evaluate("(html) => {\n" + "      document.open();\n" + "      document.write(html);\n"
+                + "      document.close();\n" + "    }", Collections.singletonList(html));
         if (watcher.lifecyclePromise() != null) {
             return;
         }
@@ -242,7 +238,8 @@ public class DOMWorld {
         if (StringKit.isNotEmpty(options.getUrl())) {
             try {
                 ExecutionContext context = this.executionContext();
-                ElementHandle handle = (ElementHandle) context.evaluateHandle(addScriptUrl(), Arrays.asList(options.getUrl(), options.getType()));
+                ElementHandle handle = (ElementHandle) context.evaluateHandle(addScriptUrl(),
+                        Arrays.asList(options.getUrl(), options.getType()));
                 return handle.asElement();
             } catch (Exception e) {
                 throw new RuntimeException("Loading script from " + options.getUrl() + " failed", e);
@@ -252,57 +249,47 @@ public class DOMWorld {
             List<String> contents = Files.readAllLines(Paths.get(options.getPath()), StandardCharsets.UTF_8);
             String content = String.join("\n", contents) + "//# sourceURL=" + options.getPath().replaceAll("\n", "");
             ExecutionContext context = this.executionContext();
-            ElementHandle evaluateHandle = (ElementHandle) context.evaluateHandle(addScriptContent(), Arrays.asList(content, options.getType()));
+            ElementHandle evaluateHandle = (ElementHandle) context.evaluateHandle(addScriptContent(),
+                    Arrays.asList(content, options.getType()));
             return evaluateHandle.asElement();
         }
         if (StringKit.isNotEmpty(options.getContent())) {
             ExecutionContext context = this.executionContext();
-            ElementHandle elementHandle = (ElementHandle) context.evaluateHandle(addScriptContent(), Arrays.asList(options.getContent(), options.getType()));
+            ElementHandle elementHandle = (ElementHandle) context.evaluateHandle(addScriptContent(),
+                    Arrays.asList(options.getContent(), options.getType()));
             return elementHandle.asElement();
         }
         throw new IllegalArgumentException("Provide an object with a `url`, `path` or `content` property");
     }
 
     private String addScriptContent() {
-        return "function addScriptContent(content, type = 'text/javascript') {\n" +
-                "    const script = document.createElement('script');\n" +
-                "    script.type = type;\n" +
-                "    script.text = content;\n" +
-                "    let error = null;\n" +
-                "    script.onerror = e => error = e;\n" +
-                "    document.head.appendChild(script);\n" +
-                "    if (error)\n" +
-                "      throw error;\n" +
-                "    return script;\n" +
-                "  }";
+        return "function addScriptContent(content, type = 'text/javascript') {\n"
+                + "    const script = document.createElement('script');\n" + "    script.type = type;\n"
+                + "    script.text = content;\n" + "    let error = null;\n" + "    script.onerror = e => error = e;\n"
+                + "    document.head.appendChild(script);\n" + "    if (error)\n" + "      throw error;\n"
+                + "    return script;\n" + "  }";
     }
 
     private String addScriptUrl() {
-        return "async function addScriptUrl(url, type) {\n" +
-                "      const script = document.createElement('script');\n" +
-                "      script.src = url;\n" +
-                "      if (type)\n" +
-                "        script.type = type;\n" +
-                "      const promise = new Promise((res, rej) => {\n" +
-                "        script.onload = res;\n" +
-                "        script.onerror = rej;\n" +
-                "      });\n" +
-                "      document.head.appendChild(script);\n" +
-                "      await promise;\n" +
-                "      return script;\n" +
-                "    }";
+        return "async function addScriptUrl(url, type) {\n" + "      const script = document.createElement('script');\n"
+                + "      script.src = url;\n" + "      if (type)\n" + "        script.type = type;\n"
+                + "      const promise = new Promise((res, rej) => {\n" + "        script.onload = res;\n"
+                + "        script.onerror = rej;\n" + "      });\n" + "      document.head.appendChild(script);\n"
+                + "      await promise;\n" + "      return script;\n" + "    }";
     }
 
     public ElementHandle addStyleTag(StyleTagOptions options) throws IOException {
         if (options != null && StringKit.isNotEmpty(options.getUrl())) {
             ExecutionContext context = this.executionContext();
-            ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleUrl(), Collections.singletonList(options.getUrl()));
+            ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleUrl(),
+                    Collections.singletonList(options.getUrl()));
             return handle.asElement();
         }
 
         if (options != null && StringKit.isNotEmpty(options.getPath())) {
             List<String> contents = Files.readAllLines(Paths.get(options.getPath()), StandardCharsets.UTF_8);
-            String content = String.join("\n", contents) + "/*# sourceURL=" + options.getPath().replaceAll("\n", "") + "*/";
+            String content = String.join("\n", contents) + "/*# sourceURL=" + options.getPath().replaceAll("\n", "")
+                    + "*/";
             ExecutionContext context = this.executionContext();
             ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleContent(), List.of(content));
             return handle.asElement();
@@ -310,7 +297,8 @@ public class DOMWorld {
 
         if (options != null && StringKit.isNotEmpty(options.getContent())) {
             ExecutionContext context = this.executionContext();
-            ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleContent(), Collections.singletonList(options.getContent()));
+            ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleContent(),
+                    Collections.singletonList(options.getContent()));
             return handle.asElement();
         }
 
@@ -318,33 +306,19 @@ public class DOMWorld {
     }
 
     private String addStyleContent() {
-        return "async function addStyleContent(content) {\n" +
-                "      const style = document.createElement('style');\n" +
-                "      style.type = 'text/css';\n" +
-                "      style.appendChild(document.createTextNode(content));\n" +
-                "      const promise = new Promise((res, rej) => {\n" +
-                "        style.onload = res;\n" +
-                "        style.onerror = rej;\n" +
-                "      });\n" +
-                "      document.head.appendChild(style);\n" +
-                "      await promise;\n" +
-                "      return style;\n" +
-                "    }";
+        return "async function addStyleContent(content) {\n" + "      const style = document.createElement('style');\n"
+                + "      style.type = 'text/css';\n" + "      style.appendChild(document.createTextNode(content));\n"
+                + "      const promise = new Promise((res, rej) => {\n" + "        style.onload = res;\n"
+                + "        style.onerror = rej;\n" + "      });\n" + "      document.head.appendChild(style);\n"
+                + "      await promise;\n" + "      return style;\n" + "    }";
     }
 
     private String addStyleUrl() {
-        return "async function addStyleUrl(url) {\n" +
-                "      const link = document.createElement('link');\n" +
-                "      link.rel = 'stylesheet';\n" +
-                "      link.href = url;\n" +
-                "      const promise = new Promise((res, rej) => {\n" +
-                "        link.onload = res;\n" +
-                "        link.onerror = rej;\n" +
-                "      });\n" +
-                "      document.head.appendChild(link);\n" +
-                "      await promise;\n" +
-                "      return link;\n" +
-                "    }";
+        return "async function addStyleUrl(url) {\n" + "      const link = document.createElement('link');\n"
+                + "      link.rel = 'stylesheet';\n" + "      link.href = url;\n"
+                + "      const promise = new Promise((res, rej) => {\n" + "        link.onload = res;\n"
+                + "        link.onerror = rej;\n" + "      });\n" + "      document.head.appendChild(link);\n"
+                + "      await promise;\n" + "      return link;\n" + "    }";
     }
 
     public void click(String selector, ClickOptions options, boolean isBlock) throws InterruptedException {
@@ -413,7 +387,8 @@ public class DOMWorld {
         return this.waitForSelectorOrXPath(selector, false, options);
     }
 
-    private ElementHandle waitForSelectorOrXPath(String selectorOrXPath, boolean isXPath, WaitForSelectorOptions options) throws InterruptedException {
+    private ElementHandle waitForSelectorOrXPath(String selectorOrXPath, boolean isXPath,
+            WaitForSelectorOptions options) throws InterruptedException {
         boolean waitForVisible = false;
         boolean waitForHidden = false;
         int timeout = this.timeoutSettings.timeout();
@@ -425,37 +400,33 @@ public class DOMWorld {
             }
         }
         String polling = waitForVisible || waitForHidden ? "raf" : "mutation";
-        String title = (isXPath ? "XPath" : "selector") + " " + "\"" + selectorOrXPath + "\"" + (waitForHidden ? " to be hidden" : "");
+        String title = (isXPath ? "XPath" : "selector") + " " + "\"" + selectorOrXPath + "\""
+                + (waitForHidden ? " to be hidden" : "");
 
-        QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selectorOrXPath, "(element, selector) =>\n" +
-                "      element.querySelector(selector)");
+        QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selectorOrXPath,
+                "(element, selector) =>\n" + "      element.querySelector(selector)");
         QueryHandler queryHandler = queryHandlerAndSelector.getQueryHandler();
         String updatedSelector = queryHandlerAndSelector.getUpdatedSelector();
-        String predicate = "function predicate(selectorOrXPath, isXPath, waitForVisible, waitForHidden) {\n" +
-                "            const node = isXPath\n" +
-                "                ? document.evaluate(selectorOrXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue\n" +
-                "                : predicateQueryHandler\n" +
-                "                    ? predicateQueryHandler(document, selectorOrXPath)\n" +
-                "                    : document.querySelector(selectorOrXPath);\n" +
-                "            if (!node)\n" +
-                "                return waitForHidden;\n" +
-                "            if (!waitForVisible && !waitForHidden)\n" +
-                "                return node;\n" +
-                "            const element = node.nodeType === Node.TEXT_NODE\n" +
-                "                ? node.parentElement\n" +
-                "                : node;\n" +
-                "            const style = window.getComputedStyle(element);\n" +
-                "            const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();\n" +
-                "            const success = waitForVisible === isVisible || waitForHidden === !isVisible;\n" +
-                "            return success ? node : null;\n" +
-                "            function hasVisibleBoundingBox() {\n" +
-                "                const rect = element.getBoundingClientRect();\n" +
-                "                return !!(rect.top || rect.bottom || rect.width || rect.height);\n" +
-                "            }\n" +
-                "        }";
+        String predicate = "function predicate(selectorOrXPath, isXPath, waitForVisible, waitForHidden) {\n"
+                + "            const node = isXPath\n"
+                + "                ? document.evaluate(selectorOrXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue\n"
+                + "                : predicateQueryHandler\n"
+                + "                    ? predicateQueryHandler(document, selectorOrXPath)\n"
+                + "                    : document.querySelector(selectorOrXPath);\n" + "            if (!node)\n"
+                + "                return waitForHidden;\n" + "            if (!waitForVisible && !waitForHidden)\n"
+                + "                return node;\n" + "            const element = node.nodeType === Node.TEXT_NODE\n"
+                + "                ? node.parentElement\n" + "                : node;\n"
+                + "            const style = window.getComputedStyle(element);\n"
+                + "            const isVisible = style && style.visibility !== 'hidden' && hasVisibleBoundingBox();\n"
+                + "            const success = waitForVisible === isVisible || waitForHidden === !isVisible;\n"
+                + "            return success ? node : null;\n" + "            function hasVisibleBoundingBox() {\n"
+                + "                const rect = element.getBoundingClientRect();\n"
+                + "                return !!(rect.top || rect.bottom || rect.width || rect.height);\n"
+                + "            }\n" + "        }";
         List<Object> args = new ArrayList<>();
         args.addAll(Arrays.asList(updatedSelector, isXPath, waitForVisible, waitForHidden));
-        WaitTask waitTask = new WaitTask(this, predicate, queryHandler.queryOne(), PageEvaluateType.FUNCTION, title, polling, timeout, args);
+        WaitTask waitTask = new WaitTask(this, predicate, queryHandler.queryOne(), PageEvaluateType.FUNCTION, title,
+                polling, timeout, args);
         JSHandle handle = waitTask.getPromise();
         if (handle == null) {
             return null;
@@ -475,7 +446,8 @@ public class DOMWorld {
         return (String) this.evaluate("() => document.title", new ArrayList<>());
     }
 
-    public JSHandle waitForFunction(String pageFunction, PageEvaluateType type, WaitForSelectorOptions options, List<Object> args) throws InterruptedException {
+    public JSHandle waitForFunction(String pageFunction, PageEvaluateType type, WaitForSelectorOptions options,
+            List<Object> args) throws InterruptedException {
         String polling = "raf";
         int timeout = this.timeoutSettings.timeout();
         if (StringKit.isNotEmpty(options.getPolling())) {

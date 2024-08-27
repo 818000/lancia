@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
 
 import com.alibaba.fastjson.JSON;
@@ -53,8 +55,7 @@ import java.util.concurrent.TimeUnit;
  * 框架管理
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class FrameManager extends EventEmitter {
 
@@ -76,8 +77,7 @@ public class FrameManager extends EventEmitter {
     private CountDownLatch contentLatch;
 
     /**
-     * 导航到新的网页的结果
-     * "success" "timeout" "termination"
+     * 导航到新的网页的结果 "success" "timeout" "termination"
      */
     private String navigateResult;
 
@@ -251,7 +251,7 @@ public class FrameManager extends EventEmitter {
         }
         if (contextPayload.getAuxData() != null && "isolated".equals(contextPayload.getAuxData().getType()))
             this.isolatedWorlds.add(contextPayload.getName());
-        /*  ${@link ExecutionContext} */
+        /* ${@link ExecutionContext} */
         ExecutionContext context = new ExecutionContext(this.client, contextPayload, world);
         if (world != null)
             world.setContext(context);
@@ -292,7 +292,6 @@ public class FrameManager extends EventEmitter {
         this.emit(Events.FRAME_MANAGER_FRAME_NAVIGATED_WITHIN_DOCUMENT.getName(), frame);
         this.emit(Events.FRAME_MANAGER_FRAME_NAVIGATED.getName(), frame);
     }
-
 
     public void initialize() {
         this.client.send("Page.enable", null, false);
@@ -361,7 +360,8 @@ public class FrameManager extends EventEmitter {
     private void onFrameNavigated(FramePayload framePayload) {
         boolean isMainFrame = StringKit.isEmpty(framePayload.getParentId());
         Frame frame = isMainFrame ? this.mainFrame : this.frames.get(framePayload.getId());
-        Assert.isTrue(isMainFrame || frame != null, "We either navigate top level or have old version of the navigated frame");
+        Assert.isTrue(isMainFrame || frame != null,
+                "We either navigate top level or have old version of the navigated frame");
 
         // Detach all child frames first.
         if (frame != null) {
@@ -449,7 +449,8 @@ public class FrameManager extends EventEmitter {
         return mainFrame;
     }
 
-    public Response navigateFrame(Frame frame, String url, PageNavigateOptions options, boolean isBlock) throws InterruptedException {
+    public Response navigateFrame(Frame frame, String url, PageNavigateOptions options, boolean isBlock)
+            throws InterruptedException {
         String referrer;
         List<String> waitUntil;
         int timeout;
@@ -596,7 +597,7 @@ public class FrameManager extends EventEmitter {
 
             this.documentLatch = new CountDownLatch(1);
 
-            //可以发出reload的信号
+            // 可以发出reload的信号
             if (reloadLatch != null) {
                 reloadLatch.countDown();
             }
@@ -622,7 +623,8 @@ public class FrameManager extends EventEmitter {
     }
 
     private void assertNoLegacyNavigationOptions(List<String> waitUtil) {
-        Assert.isTrue(!"networkidle".equals(waitUtil.get(0)), "ERROR: \"networkidle\" option is no longer supported. Use \"networkidle2\" instead");
+        Assert.isTrue(!"networkidle".equals(waitUtil.get(0)),
+                "ERROR: \"networkidle\" option is no longer supported. Use \"networkidle2\" instead");
     }
 
     public Frame mainFrame() {

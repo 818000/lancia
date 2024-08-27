@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.socket;
 
 import org.miaixz.bus.logger.Logger;
@@ -39,27 +41,23 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Represents one end (client or server) of a single SocketBuilder connection. Takes care of the
- * "handshake" phase, then allows for easy sending of text frames, and receiving frames through an
- * event-based model.
+ * Represents one end (client or server) of a single SocketBuilder connection. Takes care of the "handshake" phase, then
+ * allows for easy sending of text frames, and receiving frames through an event-based model.
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class SocketBuilder implements WebSocket {
 
     /**
-     * The default port of WebSockets, as defined in the spec. If the nullary constructor is used,
-     * DEFAULT_PORT will be the port the WebSocketServer is binded to. Note that ports under 1024
-     * usually require root permissions.
+     * The default port of WebSockets, as defined in the spec. If the nullary constructor is used, DEFAULT_PORT will be
+     * the port the WebSocketServer is binded to. Note that ports under 1024 usually require root permissions.
      */
     public static final int DEFAULT_PORT = 80;
 
     /**
-     * The default wss port of WebSockets, as defined in the spec. If the nullary constructor is used,
-     * DEFAULT_WSS_PORT will be the port the WebSocketServer is binded to. Note that ports under 1024
-     * usually require root permissions.
+     * The default wss port of WebSockets, as defined in the spec. If the nullary constructor is used, DEFAULT_WSS_PORT
+     * will be the port the WebSocketServer is binded to. Note that ports under 1024 usually require root permissions.
      */
     public static final int DEFAULT_WSS_PORT = 443;
 
@@ -152,8 +150,9 @@ public class SocketBuilder implements WebSocket {
             }
         } else {
             if (decodeHandshake(socketBuffer) && (!isClosing() && !isClosed())) {
-                assert (tmpHandshakeBytes.hasRemaining() != socketBuffer.hasRemaining() || !socketBuffer
-                        .hasRemaining()); // the buffers will never have remaining bytes at the same time
+                assert (tmpHandshakeBytes.hasRemaining() != socketBuffer.hasRemaining()
+                        || !socketBuffer.hasRemaining()); // the buffers will never have remaining bytes at the same
+                                                          // time
                 if (socketBuffer.hasRemaining()) {
                     decodeFrames(socketBuffer);
                 } else if (tmpHandshakeBytes.hasRemaining()) {
@@ -164,8 +163,7 @@ public class SocketBuilder implements WebSocket {
     }
 
     /**
-     * Returns whether the handshake phase has is completed. In case of a broken handshake this will
-     * be never the case.
+     * Returns whether the handshake phase has is completed. In case of a broken handshake this will be never the case.
      **/
     private boolean decodeHandshake(ByteBuffer socketBufferNew) {
         ByteBuffer socketBuffer;
@@ -173,8 +171,7 @@ public class SocketBuilder implements WebSocket {
             socketBuffer = socketBufferNew;
         } else {
             if (tmpHandshakeBytes.remaining() < socketBufferNew.remaining()) {
-                ByteBuffer buf = ByteBuffer
-                        .allocate(tmpHandshakeBytes.capacity() + socketBufferNew.remaining());
+                ByteBuffer buf = ByteBuffer.allocate(tmpHandshakeBytes.capacity() + socketBufferNew.remaining());
                 tmpHandshakeBytes.flip();
                 buf.put(tmpHandshakeBytes);
                 tmpHandshakeBytes = buf;
@@ -313,26 +310,25 @@ public class SocketBuilder implements WebSocket {
     }
 
     /**
-     * This will close the connection immediately without a proper close handshake. The code and the
-     * message therefore won't be transferred over the wire also they will be forwarded to
-     * onClose/onWebsocketClose.
+     * This will close the connection immediately without a proper close handshake. The code and the message therefore
+     * won't be transferred over the wire also they will be forwarded to onClose/onWebsocketClose.
      *
      * @param code    the closing code
      * @param message the closing message
      * @param remote  Indicates who "generated" <code>code</code>.<br>
-     *                <code>true</code> means that this endpoint received the <code>code</code> from
-     *                the other endpoint.<br> false means this endpoint decided to send the given
-     *                code,<br>
-     *                <code>remote</code> may also be true if this endpoint started the closing
-     *                handshake since the other endpoint may not simply echo the <code>code</code> but
-     *                close the connection the same time this endpoint does do but with an other
-     *                <code>code</code>. <br>
+     *                <code>true</code> means that this endpoint received the <code>code</code> from the other
+     *                endpoint.<br>
+     *                false means this endpoint decided to send the given code,<br>
+     *                <code>remote</code> may also be true if this endpoint started the closing handshake since the
+     *                other endpoint may not simply echo the <code>code</code> but close the connection the same time
+     *                this endpoint does do but with an other <code>code</code>. <br>
      **/
     public synchronized void closeConnection(int code, String message, boolean remote) {
         if (readyState == ReadyState.CLOSED) {
             return;
         }
-        //Methods like eot() call this method without calling onClose(). Due to that reason we have to adjust the ReadyState manually
+        // Methods like eot() call this method without calling onClose(). Due to that reason we have to adjust the
+        // ReadyState manually
         if (readyState == ReadyState.OPEN) {
             if (code == Framedata.ABNORMAL_CLOSE) {
                 readyState = ReadyState.CLOSING;
@@ -361,8 +357,7 @@ public class SocketBuilder implements WebSocket {
 
         this.flushandclosestate = true;
 
-        this.listener.onWriteDemand(
-                this); // ensures that all outgoing frames are flushed before closing the connection
+        this.listener.onWriteDemand(this); // ensures that all outgoing frames are flushed before closing the connection
         try {
             listener.onWebsocketClosing(this, code, message, remote);
         } catch (RuntimeException e) {
@@ -388,7 +383,6 @@ public class SocketBuilder implements WebSocket {
             closeConnection(Framedata.ABNORMAL_CLOSE, true);
         }
     }
-
 
     /**
      * Send Text data to the other end.

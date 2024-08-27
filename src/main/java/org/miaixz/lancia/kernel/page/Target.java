@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.bus.core.xyz.StringKit;
@@ -42,8 +44,7 @@ import java.util.concurrent.TimeUnit;
  * 目标内容
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Target {
 
@@ -53,26 +54,19 @@ public class Target {
 
     private TargetInfo targetInfo;
 
-
     private Context context;
-
 
     private boolean ignoreHTTPSErrors;
 
-
     private Viewport viewport;
-
 
     private TaskQueue<String> screenshotTaskQueue;
 
     private String targetId;
 
-
     private Page pagePromise;
 
-
     private Worker workerPromise;
-
 
     private boolean isInitialized;
 
@@ -86,7 +80,8 @@ public class Target {
         super();
     }
 
-    public Target(TargetInfo targetInfo, Context context, SessionFactory sessionFactory, boolean ignoreHTTPSErrors, Viewport defaultViewport, TaskQueue<String> screenshotTaskQueue) {
+    public Target(TargetInfo targetInfo, Context context, SessionFactory sessionFactory, boolean ignoreHTTPSErrors,
+            Viewport defaultViewport, TaskQueue<String> screenshotTaskQueue) {
         super();
         this.targetInfo = targetInfo;
         this.context = context;
@@ -99,7 +94,7 @@ public class Target {
         this.workerPromise = null;
         this.isClosedPromiseLatch = new CountDownLatch(1);
         this.isInitialized = !"page".equals(this.targetInfo.getType()) || !StringKit.isEmpty(this.targetInfo.getUrl());
-        if (isInitialized) {//初始化
+        if (isInitialized) {// 初始化
             this.initializedPromise = this.initializedCallback(true);
         } else {
             this.initializedPromise = true;
@@ -127,7 +122,6 @@ public class Target {
         return this.workerPromise;
     }
 
-
     public void closedCallback() {
         if (pagePromise != null) {
             this.pagePromise.emit(Events.PAGE_CLOSE.getName(), null);
@@ -143,9 +137,11 @@ public class Target {
      */
     public Page page() {
         String type;
-        if (("page".equals(type = this.targetInfo.getType()) || "background_page".equals(type)) && this.pagePromise == null) {
+        if (("page".equals(type = this.targetInfo.getType()) || "background_page".equals(type))
+                && this.pagePromise == null) {
             try {
-                this.pagePromise = Page.create(this.sessionFactory.create(), this, this.ignoreHTTPSErrors, this.viewport, this.screenshotTaskQueue);
+                this.pagePromise = Page.create(this.sessionFactory.create(), this, this.ignoreHTTPSErrors,
+                        this.viewport, this.screenshotTaskQueue);
             } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -160,7 +156,8 @@ public class Target {
      */
     public String type() {
         String type = this.targetInfo.getType();
-        if ("page".equals(type) || "background_page".equals(type) || "service_worker".equals(type) || "shared_worker".equals(type) || "browser".equals(type)) {
+        if ("page".equals(type) || "background_page".equals(type) || "service_worker".equals(type)
+                || "shared_worker".equals(type) || "browser".equals(type)) {
             return type;
         }
         return "other";
@@ -316,7 +313,8 @@ public class Target {
 
     public void targetInfoChanged(TargetInfo targetInfo) {
         this.targetInfo = targetInfo;
-        if (!this.isInitialized && (!"page".equals(this.targetInfo.getType()) || !"".equals(this.targetInfo.getUrl()))) {
+        if (!this.isInitialized
+                && (!"page".equals(this.targetInfo.getType()) || !"".equals(this.targetInfo.getUrl()))) {
             this.isInitialized = true;
             this.initializedCallback(true);
         }

@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.browser;
 
 import org.miaixz.bus.core.xyz.IoKit;
@@ -55,8 +57,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Runner extends EventEmitter implements AutoCloseable {
 
@@ -179,12 +180,12 @@ public class Runner extends EventEmitter implements AutoCloseable {
      */
     public void kill() {
         this.destroyForcibly();
-        //delete user-data-dir
+        // delete user-data-dir
         try {
             if (StringKit.isNotEmpty(tempDirectory)) {
                 removeFolderByCmd(tempDirectory);
 //                FileKit.removeFolder(tempDirectory);
-                //同时把以前没删除干净的文件夹也重新删除一遍
+                // 同时把以前没删除干净的文件夹也重新删除一遍
 //                Stream<Path> remainTempDirectories = Files.list(Paths.get(tempDirectory).getParent());
 //                remainTempDirectories.forEach(path -> {
 //                    if (path.getFileName().toString().startsWith(Builder.PROFILE_PREFIX)) {
@@ -227,7 +228,7 @@ public class Runner extends EventEmitter implements AutoCloseable {
         if (Platform.isWindows()) {
             delProcess = Runtime.getRuntime().exec("cmd /c rd /s /q " + path);
         } else if (Platform.isLinux() || Platform.isMac()) {
-            String[] cmd = new String[]{"/bin/sh", "-c", "rm -rf " + path};
+            String[] cmd = new String[] { "/bin/sh", "-c", "rm -rf " + path };
             delProcess = Runtime.getRuntime().exec(cmd);
         }
         if (!delProcess.waitFor(10000, TimeUnit.MILLISECONDS)) {
@@ -245,7 +246,8 @@ public class Runner extends EventEmitter implements AutoCloseable {
      * @param connectionOptions 链接选项
      * @return
      */
-    public Connection setUpConnection(boolean usePipe, int timeout, int slowMo, boolean dumpio, ConnectionOptions connectionOptions) throws InterruptedException {
+    public Connection setUpConnection(boolean usePipe, int timeout, int slowMo, boolean dumpio,
+            ConnectionOptions connectionOptions) throws InterruptedException {
         Connection connection = this.setUpConnection(usePipe, timeout, slowMo, dumpio);
         connection.setConnectionOptions(connectionOptions);
         return connection;
@@ -264,13 +266,13 @@ public class Runner extends EventEmitter implements AutoCloseable {
     public Connection setUpConnection(boolean usePipe, int timeout, int slowMo, boolean dumpio) {
         if (usePipe) {
             // pipe connection
-            throw new LaunchException("Temporarily not supported pipe connect to chromuim.If you have a pipe connect to chromium idea,please new a issue in github:https://github.com/839128/lancia/issues");
-          /*
-            InputStream pipeRead = this.getProcess().getInputStream();
-            OutputStream pipeWrite = this.getProcess().getOutputStream();
-            PipeTransport transport = new PipeTransport(pipeRead, pipeWrite);
-            this.connection = new Connection("", transport, slowMo);
-            */
+            throw new LaunchException(
+                    "Temporarily not supported pipe connect to chromuim.If you have a pipe connect to chromium idea,please new a issue in github:https://github.com/839128/lancia/issues");
+            /*
+             * InputStream pipeRead = this.getProcess().getInputStream(); OutputStream pipeWrite =
+             * this.getProcess().getOutputStream(); PipeTransport transport = new PipeTransport(pipeRead, pipeWrite);
+             * this.connection = new Connection("", transport, slowMo);
+             */
         } else {
             /// websoket connection
             String waitForWSEndpoint = waitForWSEndpoint(timeout, dumpio);
@@ -394,36 +396,37 @@ public class Runner extends EventEmitter implements AutoCloseable {
         }
 
         public void start() {
-            readThread = new Thread(
-                    () -> {
-                        StringBuilder chromeOutputBuilder = new StringBuilder();
-                        BufferedReader reader = null;
-                        try {
-                            reader = new BufferedReader(new InputStreamReader(inputStream));
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                if (dumpio) {
-                                    System.out.println(line);
-                                }
-                                Matcher matcher = WS_ENDPOINT_PATTERN.matcher(line);
-                                if (matcher.find()) {
-                                    ws.append(matcher.group(1));
-                                    success.set(true);
-                                    break;
-                                }
-
-                                if (chromeOutputBuilder.length() != 0) {
-                                    chromeOutputBuilder.append(System.lineSeparator());
-                                }
-                                chromeOutputBuilder.append(line);
-                                chromeOutput.set(chromeOutputBuilder.toString());
-                            }
-                        } catch (Exception e) {
-                            Logger.error("Failed to launch the browser process!please see TROUBLESHOOTING: https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md:", e);
-                        } finally {
-                            IoKit.close(reader);
+            readThread = new Thread(() -> {
+                StringBuilder chromeOutputBuilder = new StringBuilder();
+                BufferedReader reader = null;
+                try {
+                    reader = new BufferedReader(new InputStreamReader(inputStream));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (dumpio) {
+                            System.out.println(line);
                         }
-                    });
+                        Matcher matcher = WS_ENDPOINT_PATTERN.matcher(line);
+                        if (matcher.find()) {
+                            ws.append(matcher.group(1));
+                            success.set(true);
+                            break;
+                        }
+
+                        if (chromeOutputBuilder.length() != 0) {
+                            chromeOutputBuilder.append(System.lineSeparator());
+                        }
+                        chromeOutputBuilder.append(line);
+                        chromeOutput.set(chromeOutputBuilder.toString());
+                    }
+                } catch (Exception e) {
+                    Logger.error(
+                            "Failed to launch the browser process!please see TROUBLESHOOTING: https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md:",
+                            e);
+                } finally {
+                    IoKit.close(reader);
+                }
+            });
 
             readThread.start();
         }
@@ -435,10 +438,8 @@ public class Runner extends EventEmitter implements AutoCloseable {
                     if (readThread != null) {
                         readThread = null;
                     }
-                    throw new TimeoutException(
-                            "Timed out after " + timeout + " ms while trying to connect to the browser!"
-                                    + "Chrome output: "
-                                    + chromeOutput.get());
+                    throw new TimeoutException("Timed out after " + timeout
+                            + " ms while trying to connect to the browser!" + "Chrome output: " + chromeOutput.get());
                 }
             } catch (InterruptedException e) {
                 if (readThread != null) {
@@ -463,5 +464,3 @@ public class Runner extends EventEmitter implements AutoCloseable {
     }
 
 }
-
-

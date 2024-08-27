@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.bus.core.lang.Normal;
@@ -44,8 +46,7 @@ import java.util.concurrent.ExecutionException;
  * 框架信息
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Frame {
 
@@ -90,7 +91,6 @@ public class Frame {
         if (this.parentFrame != null)
             this.parentFrame.getChildFrames().add(this);
     }
-
 
     public Set<Frame> getChildFrames() {
         return this.childFrames;
@@ -157,7 +157,8 @@ public class Frame {
         return this.mainWorld.addStyleTag(options);
     }
 
-    public void click(String selector, ClickOptions options, boolean isBlock) throws InterruptedException, ExecutionException {
+    public void click(String selector, ClickOptions options, boolean isBlock)
+            throws InterruptedException, ExecutionException {
         this.secondaryWorld.click(selector, options, isBlock);
     }
 
@@ -188,7 +189,8 @@ public class Frame {
      * @return 元素处理器
      * @throws InterruptedException 打断异常
      */
-    public JSHandle waitFor(String selectorOrFunctionOrTimeout, WaitForSelectorOptions options, List<Object> args) throws InterruptedException {
+    public JSHandle waitFor(String selectorOrFunctionOrTimeout, WaitForSelectorOptions options, List<Object> args)
+            throws InterruptedException {
         String xPathPattern = "//";
 
         if (Builder.isFunction(selectorOrFunctionOrTimeout)) {
@@ -216,8 +218,10 @@ public class Frame {
         return result;
     }
 
-    public JSHandle waitForFunction(String pageFunction, WaitForSelectorOptions options, List<Object> args) throws InterruptedException {
-        return this.mainWorld.waitForFunction(pageFunction, Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, options, args);
+    public JSHandle waitForFunction(String pageFunction, WaitForSelectorOptions options, List<Object> args)
+            throws InterruptedException {
+        return this.mainWorld.waitForFunction(pageFunction,
+                Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, options, args);
     }
 
     public String title() {
@@ -374,7 +378,6 @@ public class Frame {
     public String name() {
         return this.getName();
     }
-
 
     public Frame parentFrame() {
         return this.getParentFrame();

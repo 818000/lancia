@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.kernel.page;
 
 import com.alibaba.fastjson.JSON;
@@ -52,8 +54,7 @@ import java.util.stream.Collectors;
  * ElementHandle表示页内DOM元素。可以使用page.$方法创建ElementHandles
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class ElementHandle extends JSHandle {
 
@@ -63,7 +64,8 @@ public class ElementHandle extends JSHandle {
     private final FrameManager frameManager;
     private ExecutionContext context;
 
-    public ElementHandle(ExecutionContext context, CDPSession client, RemoteObject remoteObject, Page page, FrameManager frameManager) {
+    public ElementHandle(ExecutionContext context, CDPSession client, RemoteObject remoteObject, Page page,
+            FrameManager frameManager) {
         super(context, client, remoteObject);
         this.client = client;
         this.remoteObject = remoteObject;
@@ -91,27 +93,17 @@ public class ElementHandle extends JSHandle {
     }
 
     public void scrollIntoViewIfNeeded() {
-        String pageFunction = "async (element, pageJavascriptEnabled) => {\n" +
-                "  if (!element.isConnected)\n" +
-                "    return 'Node is detached from document';\n" +
-                "  if (element.nodeType !== Node.ELEMENT_NODE)\n" +
-                "    return 'Node is not of type HTMLElement';\n" +
-                "  // force-scroll if page's javascript is disabled.\n" +
-                "  if (!pageJavascriptEnabled) {\n" +
-                "    element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });\n" +
-                "    return false;\n" +
-                "  }\n" +
-                "  const visibleRatio = await new Promise(resolve => {\n" +
-                "    const observer = new IntersectionObserver(entries => {\n" +
-                "      resolve(entries[0].intersectionRatio);\n" +
-                "      observer.disconnect();\n" +
-                "    });\n" +
-                "    observer.observe(element);\n" +
-                "  });\n" +
-                "  if (visibleRatio !== 1.0)\n" +
-                "    element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });\n" +
-                "  return false;\n" +
-                "}";
+        String pageFunction = "async (element, pageJavascriptEnabled) => {\n" + "  if (!element.isConnected)\n"
+                + "    return 'Node is detached from document';\n" + "  if (element.nodeType !== Node.ELEMENT_NODE)\n"
+                + "    return 'Node is not of type HTMLElement';\n"
+                + "  // force-scroll if page's javascript is disabled.\n" + "  if (!pageJavascriptEnabled) {\n"
+                + "    element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });\n"
+                + "    return false;\n" + "  }\n" + "  const visibleRatio = await new Promise(resolve => {\n"
+                + "    const observer = new IntersectionObserver(entries => {\n"
+                + "      resolve(entries[0].intersectionRatio);\n" + "      observer.disconnect();\n" + "    });\n"
+                + "    observer.observe(element);\n" + "  });\n" + "  if (visibleRatio !== 1.0)\n"
+                + "    element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });\n"
+                + "  return false;\n" + "}";
         Object error = this.evaluate(pageFunction, List.of(this.page.getJavascriptEnabled()));
         if (error != null && error.getClass().equals(Boolean.class) && (boolean) error) {
             throw new RuntimeException(JSON.toJSONString(error));
@@ -142,7 +134,8 @@ public class ElementHandle extends JSHandle {
             intersectQuadWithViewport(clickOptions, clientWidth, clientHeight);
             quads.add(clickOptions);
         }
-        List<List<ClickablePoint>> collect = quads.stream().filter(quad -> computeQuadArea(quad) > 1).collect(Collectors.toList());
+        List<List<ClickablePoint>> collect = quads.stream().filter(quad -> computeQuadArea(quad) > 1)
+                .collect(Collectors.toList());
         if (collect.size() == 0)
             throw new RuntimeException("Node is either not visible or not an HTMLElement");
         // Return the middle point of the first quad.
@@ -176,9 +169,12 @@ public class ElementHandle extends JSHandle {
         Clip boundingBox = this.boundingBox();
         Assert.isTrue(boundingBox != null, "Node is either not visible or not an HTMLElement");
         Viewport viewport = this.page.viewport();
-        if (viewport != null && (boundingBox.getWidth() > viewport.getWidth() || boundingBox.getHeight() > viewport.getHeight())) {
+        if (viewport != null
+                && (boundingBox.getWidth() > viewport.getWidth() || boundingBox.getHeight() > viewport.getHeight())) {
             // Use the original viewport attributes to prevent from reload
-            Viewport newViewport = new Viewport(viewport.getWidth(), viewport.getHeight(), viewport.getDeviceScaleFactor(), viewport.getIsMobile(), viewport.getHasTouch(), viewport.getIsLandscape());
+            Viewport newViewport = new Viewport(viewport.getWidth(), viewport.getHeight(),
+                    viewport.getDeviceScaleFactor(), viewport.getIsMobile(), viewport.getHasTouch(),
+                    viewport.getIsLandscape());
             newViewport.setWidth(Math.max(viewport.getWidth(), (int) Math.ceil(boundingBox.getWidth())));
             newViewport.setHeight(Math.max(viewport.getHeight(), (int) Math.ceil(boundingBox.getHeight())));
 
@@ -255,7 +251,8 @@ public class ElementHandle extends JSHandle {
     public ElementHandle $(String selector) {
         String defaultHandler = "(element, selector) => element.querySelector(selector)";
         QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selector, defaultHandler);
-        JSHandle handle = (JSHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryOne(), Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
+        JSHandle handle = (JSHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryOne(),
+                Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
         ElementHandle element = handle.asElement();
         if (element != null)
             return element;
@@ -264,15 +261,12 @@ public class ElementHandle extends JSHandle {
     }
 
     public List<ElementHandle> $x(String expression) {
-        String pageFunction = "(element, expression) => {\n" +
-                "            const document = element.ownerDocument || element;\n" +
-                "            const iterator = document.evaluate(expression, element, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);\n" +
-                "            const array = [];\n" +
-                "            let item;\n" +
-                "            while ((item = iterator.iterateNext()))\n" +
-                "                array.push(item);\n" +
-                "            return array;\n" +
-                "        }";
+        String pageFunction = "(element, expression) => {\n"
+                + "            const document = element.ownerDocument || element;\n"
+                + "            const iterator = document.evaluate(expression, element, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);\n"
+                + "            const array = [];\n" + "            let item;\n"
+                + "            while ((item = iterator.iterateNext()))\n" + "                array.push(item);\n"
+                + "            return array;\n" + "        }";
         JSHandle arrayHandle = (JSHandle) this.evaluateHandle(pageFunction, Collections.singletonList(expression));
         Map<String, JSHandle> properties = arrayHandle.getProperties();
         arrayHandle.dispose();
@@ -298,7 +292,9 @@ public class ElementHandle extends JSHandle {
         String defaultHandler = "(element, selector) => Array.from(element.querySelectorAll(selector))";
         QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selector, defaultHandler);
 
-        ElementHandle arrayHandle = (ElementHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryAll(), Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
+        ElementHandle arrayHandle = (ElementHandle) this.evaluateHandle(
+                queryHandlerAndSelector.getQueryHandler().queryAll(),
+                Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
         ElementHandle result = (ElementHandle) arrayHandle.evaluate(pageFunction, args);
         arrayHandle.dispose();
         return result;
@@ -307,7 +303,8 @@ public class ElementHandle extends JSHandle {
     public List<ElementHandle> $$(String selector) {
         String defaultHandler = "(element, selector) => element.querySelectorAll(selector)";
         QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selector, defaultHandler);
-        JSHandle arrayHandle = (JSHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryAll(), Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
+        JSHandle arrayHandle = (JSHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryAll(),
+                Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
         Map<String, JSHandle> properties = arrayHandle.getProperties();
         arrayHandle.dispose();
         List<ElementHandle> result = new ArrayList<>();
@@ -320,19 +317,15 @@ public class ElementHandle extends JSHandle {
     }
 
     public boolean isIntersectingViewport() {
-        String pageFunction = "async (element) => {\n" +
-                "            const visibleRatio = await new Promise(resolve => {\n" +
-                "                const observer = new IntersectionObserver(entries => {\n" +
-                "                    resolve(entries[0].intersectionRatio);\n" +
-                "                    observer.disconnect();\n" +
-                "                });\n" +
-                "                observer.observe(element);\n" +
-                "            });\n" +
-                "            return visibleRatio > 0;\n" +
-                "        }";
+        String pageFunction = "async (element) => {\n"
+                + "            const visibleRatio = await new Promise(resolve => {\n"
+                + "                const observer = new IntersectionObserver(entries => {\n"
+                + "                    resolve(entries[0].intersectionRatio);\n"
+                + "                    observer.disconnect();\n" + "                });\n"
+                + "                observer.observe(element);\n" + "            });\n"
+                + "            return visibleRatio > 0;\n" + "        }";
         return (Boolean) this.evaluate(pageFunction, new ArrayList<>());
     }
-
 
     public void click() throws InterruptedException {
         click(new ClickOptions(), true);
@@ -375,20 +368,17 @@ public class ElementHandle extends JSHandle {
     }
 
     public List<String> select(List<String> values) {
-        String pageFunction = "(element, values) => {\n" +
-                "            if (element.nodeName.toLowerCase() !== 'select')\n" +
-                "                throw new Error('Element is not a <select> element.');\n" +
-                "            const options = Array.from(element.options);\n" +
-                "            element.value = undefined;\n" +
-                "            for (const option of options) {\n" +
-                "                option.selected = values.includes(option.value);\n" +
-                "                if (option.selected && !element.multiple)\n" +
-                "                    break;\n" +
-                "            }\n" +
-                "            element.dispatchEvent(new Event('input', { bubbles: true }));\n" +
-                "            element.dispatchEvent(new Event('change', { bubbles: true }));\n" +
-                "            return options.filter(option => option.selected).map(option => option.value);\n" +
-                "        }";
+        String pageFunction = "(element, values) => {\n"
+                + "            if (element.nodeName.toLowerCase() !== 'select')\n"
+                + "                throw new Error('Element is not a <select> element.');\n"
+                + "            const options = Array.from(element.options);\n"
+                + "            element.value = undefined;\n" + "            for (const option of options) {\n"
+                + "                option.selected = values.includes(option.value);\n"
+                + "                if (option.selected && !element.multiple)\n" + "                    break;\n"
+                + "            }\n" + "            element.dispatchEvent(new Event('input', { bubbles: true }));\n"
+                + "            element.dispatchEvent(new Event('change', { bubbles: true }));\n"
+                + "            return options.filter(option => option.selected).map(option => option.value);\n"
+                + "        }";
 
         return (List<String>) this.evaluate(pageFunction, Collections.singletonList(values));
     }
@@ -444,7 +434,8 @@ public class ElementHandle extends JSHandle {
 
     public void uploadFile(List<String> filePaths) {
         boolean isMultiple = (Boolean) this.evaluate("(element) => element.multiple", new ArrayList<>());
-        Assert.isTrue(filePaths.size() <= 1 || isMultiple, "Multiple file uploads only work with <input type=file multiple>");
+        Assert.isTrue(filePaths.size() <= 1 || isMultiple,
+                "Multiple file uploads only work with <input type=file multiple>");
         List<String> files = filePaths.stream().map(filePath -> {
             Path absolutePath = Paths.get(filePath).toAbsolutePath();
             boolean readable = Files.isReadable(absolutePath);
@@ -459,12 +450,10 @@ public class ElementHandle extends JSHandle {
         JSONObject node = this.client.send("DOM.describeNode", params, true);
         int backendNodeId = node.getJSONObject("node").getInteger("backendNodeId");
         if (files.size() == 0) {
-            String pageFunction = "(element) => {\n" +
-                    "                    element.files = new DataTransfer().files;\n" +
-                    "            // Dispatch events for this case because it should behave akin to a user action.\n" +
-                    "            element.dispatchEvent(new Event('input', { bubbles: true }));\n" +
-                    "            element.dispatchEvent(new Event('change', { bubbles: true }));\n" +
-                    "            }";
+            String pageFunction = "(element) => {\n" + "                    element.files = new DataTransfer().files;\n"
+                    + "            // Dispatch events for this case because it should behave akin to a user action.\n"
+                    + "            element.dispatchEvent(new Event('input', { bubbles: true }));\n"
+                    + "            element.dispatchEvent(new Event('change', { bubbles: true }));\n" + "            }";
             this.evaluate(pageFunction, new ArrayList<>());
         } else {
             params.clear();
@@ -480,4 +469,3 @@ public class ElementHandle extends JSHandle {
     }
 
 }
-

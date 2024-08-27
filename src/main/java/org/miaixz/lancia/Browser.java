@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia;
 
 import com.alibaba.fastjson.JSONObject;
@@ -45,7 +47,7 @@ import org.miaixz.lancia.kernel.page.Viewport;
 import org.miaixz.lancia.nimble.targets.TargetCreatedPayload;
 import org.miaixz.lancia.nimble.targets.TargetDestroyedPayload;
 import org.miaixz.lancia.nimble.targets.TargetInfoChangedPayload;
-import org.miaixz.lancia.option.ChromeArgOptions;
+import org.miaixz.lancia.option.ArgumentOptions;
 import org.miaixz.lancia.option.LaunchOptions;
 import org.miaixz.lancia.option.LaunchOptionsBuilder;
 import org.miaixz.lancia.worker.Connection;
@@ -63,8 +65,7 @@ import java.util.stream.Collectors;
  * 浏览器实例
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Browser extends EventEmitter {
 
@@ -100,8 +101,8 @@ public class Browser extends EventEmitter {
     private final TaskQueue<String> screenshotTaskQueue;
     private final Function<Object, Object> closeCallback;
 
-    public Browser(Connection connection, List<String> contextIds, boolean ignoreHTTPSErrors,
-                   Viewport defaultViewport, Process process, Function<Object, Object> closeCallback) {
+    public Browser(Connection connection, List<String> contextIds, boolean ignoreHTTPSErrors, Viewport defaultViewport,
+            Process process, Function<Object, Object> closeCallback) {
         super();
         this.ignoreHTTPSErrors = ignoreHTTPSErrors;
         this.viewport = defaultViewport;
@@ -176,7 +177,8 @@ public class Browser extends EventEmitter {
      * @param process           浏览器进程
      * @return 浏览器
      */
-    public static Browser create(Connection connection, List<String> contextIds, boolean ignoreHTTPSErrors, Viewport viewport, Process process, Function<Object, Object> closeCallback) {
+    public static Browser create(Connection connection, List<String> contextIds, boolean ignoreHTTPSErrors,
+            Viewport viewport, Process process, Function<Object, Object> closeCallback) {
         Browser browser = new Browser(connection, contextIds, ignoreHTTPSErrors, viewport, process, closeCallback);
         Map<String, Object> params = new HashMap<>();
         params.put("discover", true);
@@ -201,13 +203,9 @@ public class Browser extends EventEmitter {
             throw new RuntimeException(e);
         }
         if (ObjectKit.isNotEmpty(options)) {
-            options = new LaunchOptionsBuilder()
-                    .args(options.getArgs())
-                    .headless(options.getHeadless())
-                    .viewport(options.getViewport())
-                    .ignoreHTTPSErrors(options.getIgnoreHTTPSErrors())
-                    .slowMo(options.getSlowMo())
-                    .build();
+            options = new LaunchOptionsBuilder().args(options.getArgs()).headless(options.getHeadless())
+                    .viewport(options.getViewport()).ignoreHTTPSErrors(options.getIgnoreHTTPSErrors())
+                    .slowMo(options.getSlowMo()).build();
         } else {
             List<String> list = new ArrayList<>();
             list.add("--disable-gpu");
@@ -219,21 +217,12 @@ public class Browser extends EventEmitter {
             list.add("--proxy-server='direct://'");
             list.add("--proxy-bypass-list=*");
 
-            options = new LaunchOptionsBuilder()
-                    .args(list)
-                    .headless(true)
-                    .viewport(null)
-                    .ignoreHTTPSErrors(true)
-                    .slowMo(250)
-                    .build();
+            options = new LaunchOptionsBuilder().args(list).headless(true).viewport(null).ignoreHTTPSErrors(true)
+                    .slowMo(250).build();
         }
 
-        try {
-            INSTANCE = Puppeteer.launch(options);
-            INSTANCE = Puppeteer.connect(INSTANCE.wsEndpoint(), null, null);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        INSTANCE = Puppeteer.launch(options);
+        INSTANCE = Puppeteer.connect(INSTANCE.wsEndpoint(), null, null);
         LaunchOptions opts = options;
         INSTANCE.onDisconnected(b -> {
             String command = "ps -ef | grep chrome | grep -v \"grep\" | awk '{print $2}' | xargs kill -9";
@@ -314,12 +303,14 @@ public class Browser extends EventEmitter {
     protected void targetCreated(TargetCreatedPayload event) {
         Context context;
         TargetInfo targetInfo = event.getTargetInfo();
-        if (StringKit.isNotEmpty(targetInfo.getBrowserContextId()) && this.contexts().containsKey(targetInfo.getBrowserContextId())) {
+        if (StringKit.isNotEmpty(targetInfo.getBrowserContextId())
+                && this.contexts().containsKey(targetInfo.getBrowserContextId())) {
             context = this.contexts().get(targetInfo.getBrowserContextId());
         } else {
             context = this.defaultBrowserContext();
         }
-        Target target = new Target(targetInfo, context, () -> this.getConnection().createSession(targetInfo), this.getIgnoreHTTPSErrors(), this.getViewport(), this.screenshotTaskQueue);
+        Target target = new Target(targetInfo, context, () -> this.getConnection().createSession(targetInfo),
+                this.getIgnoreHTTPSErrors(), this.getViewport(), this.screenshotTaskQueue);
         if (this.targets.get(targetInfo.getTargetId()) != null) {
             throw new RuntimeException("Target should not exist befor targetCreated");
         }
@@ -337,7 +328,7 @@ public class Browser extends EventEmitter {
      * @param options   浏览器启动参数
      * @return target
      */
-    public Target waitForTarget(Predicate<Target> predicate, ChromeArgOptions options) {
+    public Target waitForTarget(Predicate<Target> predicate, ArgumentOptions options) {
         int timeout = options.getTimeout();
         long base = System.currentTimeMillis();
         long now = 0;
@@ -380,7 +371,8 @@ public class Browser extends EventEmitter {
     }
 
     public List<Page> pages() {
-        return this.browserContexts().stream().flatMap(context -> context.pages().stream()).collect(Collectors.toList());
+        return this.browserContexts().stream().flatMap(context -> context.pages().stream())
+                .collect(Collectors.toList());
     }
 
     public String version() {
@@ -453,9 +445,7 @@ public class Browser extends EventEmitter {
     }
 
     /**
-     * 监听浏览器事件disconnected
-     * 浏览器一共有四种事件
-     * method ="disconnected","targetchanged","targetcreated","targetdestroyed"
+     * 监听浏览器事件disconnected 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
      *
      * @param handler 事件处理器
      */
@@ -464,9 +454,7 @@ public class Browser extends EventEmitter {
     }
 
     /**
-     * 监听浏览器事件targetchanged
-     * 浏览器一共有四种事件
-     * method ="disconnected","targetchanged","targetcreated","targetdestroyed"
+     * 监听浏览器事件targetchanged 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
      *
      * @param handler 事件处理器
      */
@@ -475,9 +463,7 @@ public class Browser extends EventEmitter {
     }
 
     /**
-     * 监听浏览器事件targetcreated
-     * 浏览器一共有四种事件
-     * method ="disconnected","targetchanged","targetcreated","targetdestroyed"
+     * 监听浏览器事件targetcreated 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
      *
      * @param handler 事件处理器
      */
@@ -486,9 +472,7 @@ public class Browser extends EventEmitter {
     }
 
     /**
-     * 监听浏览器事件targetcreated
-     * 浏览器一共有四种事件
-     * method ="disconnected","targetchanged","targetcreated","targetdestroyed"
+     * 监听浏览器事件targetcreated 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
      *
      * @param handler 事件处理器
      */

@@ -21,7 +21,7 @@
 * 默认情况下页面的 `@media print` CSS 规则将被忽略.将Chrome设置为模拟 `@media
   screen`，使默认的pdf文件看起来更像实际站点。要获得更接近桌面Chrome的结果，请添加`&emulateScreenMedia=false`查询参数。更多信息请访问[Puppeteer API docs](https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pagepdfoptions).
   API文档。
-  
+
 * Chrome启动时带有`--no-sandbox--disable-setuid-sandbox`标志，开启debian支持.
 
 * 如果服务器没有足够的内存，超大页面加载可能会导致Chrome崩溃.
@@ -79,56 +79,56 @@ wkhtmltopdf|1、调用方式简单(只需执行一行脚本)；2、生成pdf质�
 唯一需要的参数是“url”。
 
 
-Parameter | Type | Default | Description
-----------|------|---------|------------
-url | string | - | URL渲染PDF。(必需)
-output | string | pdf | 指定输出格式。可选值: `pdf` 、 `screenshot`.
-emulateScreenMedia | boolean | `true` | 模拟 `@media screen` 渲染 PDF.
-ignoreHttpsErrors | boolean | `false` | 忽略https错误.
-scrollPage | boolean | `false` | 启用滚动页面触发延迟加载元素，可选值： `true` 、 `false`.
-waitFor | number | - | 延迟加载超时时间.
-attachmentName | string | - | 设置 `content-disposition` 确保浏览器下载属性,按照给定的字符串作为下载名称.
-viewport.width | number | `1600` | 预览宽度.
-viewport.height | number | `1200` | 预览高度.
-viewport.deviceScaleFactor | number | `1` | 设备比例信息.
-viewport.isMobile | boolean | `false` | 是否考虑移动端支持.
-viewport.hasTouch | boolean | `false` | 是否支持触摸.
-viewport.isLandscape | boolean | `false` | 是否考虑横屏模式.
-cookies[0][name] | string | - | Cookie 名称 (必需)
-cookies[0][value] | string | - | Cookie 值 (必需)
-cookies[0][url] | string | - | Cookie URL
-cookies[0][domain] | string | - | Cookie 域名
-cookies[0][path] | string | - | Cookie 路径
-cookies[0][expires] | number | - | Cookie 过期时间
-cookies[0][httpOnly] | boolean | - | Cookie httpOnly
-cookies[0][secure] | boolean | - | Cookie 安全
-cookies[0][sameSite] | string | - | `Strict` or `Lax`
-goto.timeout | number | `30000` | 最大超时时间(毫秒)，默认为30秒，通过0禁用超时.
-goto.waitUntil | string | `networkidle` | 选项:`load`, `networkidle`. 
-goto.networkIdleInflight | number | `2` | 允许最大请求数量。只在`goto.waitUntil`: 'networkidle'参数下生效.
-goto.networkIdleTimeout | number | `2000` | 等待超时时间,只有在 waitUntil: 'networkidle' 下生效.
-pdf.scale | number | `1` | 网页渲染比例.
-pdf.printBackground | boolean | `false`| 打印背景图形.
-pdf.displayHeaderFooter | boolean | `false` | 显示页眉和页脚.
-pdf.headerTemplate | string | - | HTML模板，用于作为PDF中每个页面的页眉.
-pdf.footerTemplate | string | - | HTML模板，用于作为PDF中每个页面的页脚.
-pdf.landscape | boolean | `false` | 页面方向.
-pdf.pageRanges | string | - | 可选页面信息，例如“1- 5,7,11 -13”。默认为空字符串，意味着输出所有页面.
-pdf.format | string | `A4` | 页面格式,如果设置，则优先于宽度或高度选项.
-pdf.width | string | - | 纸张宽度.
-pdf.height | string | - | 纸张高度.
-pdf.margin.top | string | - | 顶部空白.
-pdf.margin.right | string | - | 右边空白.
-pdf.margin.bottom | string | - | 底部空白.
-pdf.margin.left | string | - | 左侧空白.
-screenshot.fullPage | boolean | `true` | 如果为真，则获取整个可滚动页面的屏幕截图.
-screenshot.type | string | `png` | 截图类型,可选值: `png`, `jpeg`
-screenshot.quality | number | - | JPEG图像的质量，在0-100之间,只适用于当 `screenshot.type` 为 `jpeg`.
-screenshot.omitBackground | boolean | `false` | 隐藏默认的白色背景，并允许捕获具有透明度的屏幕截图.
-screenshot.clip.x | number | - | 指定页面裁剪区域左上角的x坐标.
-screenshot.clip.y | number | - | 指定页面裁剪区域左上角的y坐标.
-screenshot.clip.width | number | - | 指定页剪切区域的宽度.
-screenshot.clip.height | number | - | 指定页剪切区域的高度.
+ Parameter                  | Type    | Default       | Description                                          
+----------------------------|---------|---------------|------------------------------------------------------
+ url                        | string  | -             | URL渲染PDF。(必需)                                        
+ output                     | string  | pdf           | 指定输出格式。可选值: `pdf` 、 `screenshot`.                    
+ emulateScreenMedia         | boolean | `true`        | 模拟 `@media screen` 渲染 PDF.                           
+ ignoreHttpsErrors          | boolean | `false`       | 忽略https错误.                                           
+ scrollPage                 | boolean | `false`       | 启用滚动页面触发延迟加载元素，可选值： `true` 、 `false`.                
+ waitFor                    | number  | -             | 延迟加载超时时间.                                            
+ attachmentName             | string  | -             | 设置 `content-disposition` 确保浏览器下载属性,按照给定的字符串作为下载名称.   
+ viewport.width             | number  | `1600`        | 预览宽度.                                                
+ viewport.height            | number  | `1200`        | 预览高度.                                                
+ viewport.deviceScaleFactor | number  | `1`           | 设备比例信息.                                              
+ viewport.isMobile          | boolean | `false`       | 是否考虑移动端支持.                                           
+ viewport.hasTouch          | boolean | `false`       | 是否支持触摸.                                              
+ viewport.isLandscape       | boolean | `false`       | 是否考虑横屏模式.                                            
+ cookies[0][name]           | string  | -             | Cookie 名称 (必需)                                       
+ cookies[0][value]          | string  | -             | Cookie 值 (必需)                                        
+ cookies[0][url]            | string  | -             | Cookie URL                                           
+ cookies[0][domain]         | string  | -             | Cookie 域名                                            
+ cookies[0][path]           | string  | -             | Cookie 路径                                            
+ cookies[0][expires]        | number  | -             | Cookie 过期时间                                          
+ cookies[0][httpOnly]       | boolean | -             | Cookie httpOnly                                      
+ cookies[0][secure]         | boolean | -             | Cookie 安全                                            
+ cookies[0][sameSite]       | string  | -             | `Strict` or `Lax`                                    
+ goto.timeout               | number  | `30000`       | 最大超时时间(毫秒)，默认为30秒，通过0禁用超时.                           
+ goto.waitUntil             | string  | `networkidle` | 选项:`load`, `networkidle`.                            
+ goto.networkIdleInflight   | number  | `2`           | 允许最大请求数量。只在`goto.waitUntil`: 'networkidle'参数下生效.     
+ goto.networkIdleTimeout    | number  | `2000`        | 等待超时时间,只有在 waitUntil: 'networkidle' 下生效.             
+ pdf.scale                  | number  | `1`           | 网页渲染比例.                                              
+ pdf.printBackground        | boolean | `false`       | 打印背景图形.                                              
+ pdf.displayHeaderFooter    | boolean | `false`       | 显示页眉和页脚.                                             
+ pdf.headerTemplate         | string  | -             | HTML模板，用于作为PDF中每个页面的页眉.                              
+ pdf.footerTemplate         | string  | -             | HTML模板，用于作为PDF中每个页面的页脚.                              
+ pdf.landscape              | boolean | `false`       | 页面方向.                                                
+ pdf.pageRanges             | string  | -             | 可选页面信息，例如“1- 5,7,11 -13”。默认为空字符串，意味着输出所有页面.          
+ pdf.format                 | string  | `A4`          | 页面格式,如果设置，则优先于宽度或高度选项.                               
+ pdf.width                  | string  | -             | 纸张宽度.                                                
+ pdf.height                 | string  | -             | 纸张高度.                                                
+ pdf.margin.top             | string  | -             | 顶部空白.                                                
+ pdf.margin.right           | string  | -             | 右边空白.                                                
+ pdf.margin.bottom          | string  | -             | 底部空白.                                                
+ pdf.margin.left            | string  | -             | 左侧空白.                                                
+ screenshot.fullPage        | boolean | `true`        | 如果为真，则获取整个可滚动页面的屏幕截图.                                
+ screenshot.type            | string  | `png`         | 截图类型,可选值: `png`, `jpeg`                              
+ screenshot.quality         | number  | -             | JPEG图像的质量，在0-100之间,只适用于当 `screenshot.type` 为 `jpeg`. 
+ screenshot.omitBackground  | boolean | `false`       | 隐藏默认的白色背景，并允许捕获具有透明度的屏幕截图.                           
+ screenshot.clip.x          | number  | -             | 指定页面裁剪区域左上角的x坐标.                                     
+ screenshot.clip.y          | number  | -             | 指定页面裁剪区域左上角的y坐标.                                     
+ screenshot.clip.width      | number  | -             | 指定页剪切区域的宽度.                                          
+ screenshot.clip.height     | number  | -             | 指定页剪切区域的高度.                                          
 
 ## 技术开发
 

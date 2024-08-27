@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia;
 
 import com.alibaba.fastjson.JSON;
@@ -88,8 +90,7 @@ import java.util.regex.Pattern;
  * 页面信息
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public class Page extends EventEmitter {
 
@@ -154,7 +155,8 @@ public class Page extends EventEmitter {
                     return;
                 }
                 CDPSession session = Connection.fromSession(page.client()).session(event.getSessionId());
-                Worker worker = new Worker(session, event.getTargetInfo().getUrl(), page::addConsoleMessage, page::handleException);
+                Worker worker = new Worker(session, event.getTargetInfo().getUrl(), page::addConsoleMessage,
+                        page::handleException);
                 page.workers().putIfAbsent(event.getSessionId(), worker);
                 page.emit(Events.PAGE_WORKERCREATED.getName(), worker);
             }
@@ -396,7 +398,8 @@ public class Page extends EventEmitter {
      * @throws ExecutionException   并发异常
      * @throws InterruptedException 线程打断异常
      */
-    public static Page create(CDPSession client, Target target, boolean ignoreHTTPSErrors, Viewport viewport, TaskQueue<String> screenshotTaskQueue) throws ExecutionException, InterruptedException {
+    public static Page create(CDPSession client, Target target, boolean ignoreHTTPSErrors, Viewport viewport,
+            TaskQueue<String> screenshotTaskQueue) throws ExecutionException, InterruptedException {
         Page page = new Page(client, target, ignoreHTTPSErrors, screenshotTaskQueue);
         page.initialize();
         if (viewport != null) {
@@ -427,10 +430,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * frame attach的时候触发
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * 可以在将这些方法的调用移动到另外一个线程中
+     * frame attach的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -439,10 +439,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * frame detached的时候触发
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * 可以在将这些方法的调用移动到另外一个线程中
+     * frame detached的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -451,9 +448,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * 可以在将这些方法的调用移动到另外一个线程中
+     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -494,9 +489,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * 可以在将这些方法的调用移动到另外一个线程中
+     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -505,9 +498,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * 可以在将这些方法的调用移动到另外一个线程中
+     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -559,8 +550,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 返回主 Frame
-     * 保证页面一直有有一个主 frame
+     * 返回主 Frame 保证页面一直有有一个主 frame
      *
      * @return {@link Frame}
      */
@@ -660,8 +650,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 此方法找到一个匹配 selector 选择器的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 点击它。 如果选择器没有匹配任何元素，此方法将会报错。
-     * 默认是阻塞的，会等待点击完成指令返回
+     * 此方法找到一个匹配 selector 选择器的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 点击它。 如果选择器没有匹配任何元素，此方法将会报错。 默认是阻塞的，会等待点击完成指令返回
      *
      * @param selector 选择器
      * @param isBlock  是否是阻塞的，不阻塞的时候可以配合waitFor方法使用
@@ -673,8 +662,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 此方法找到一个匹配 selector 选择器的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 点击它。 如果选择器没有匹配任何元素，此方法将会报错。
-     * 默认是阻塞的，会等待点击完成指令返回
+     * 此方法找到一个匹配 selector 选择器的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 点击它。 如果选择器没有匹配任何元素，此方法将会报错。 默认是阻塞的，会等待点击完成指令返回
      *
      * @param selector 选择器
      * @throws InterruptedException 异常
@@ -693,7 +681,8 @@ public class Page extends EventEmitter {
      * @throws InterruptedException 异常
      * @throws ExecutionException   异常
      */
-    public void click(String selector, ClickOptions options, boolean isBlock) throws InterruptedException, ExecutionException {
+    public void click(String selector, ClickOptions options, boolean isBlock)
+            throws InterruptedException, ExecutionException {
         this.mainFrame().click(selector, options, isBlock);
     }
 
@@ -707,14 +696,15 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * page.close() 在 beforeunload 处理之前默认不执行
-     * <strong>注意 如果 runBeforeUnload 设置为true，可能会弹出一个 beforeunload 对话框。 这个对话框需要通过页面的 'dialog' 事件手动处理</strong>
+     * page.close() 在 beforeunload 处理之前默认不执行 <strong>注意 如果 runBeforeUnload 设置为true，可能会弹出一个 beforeunload 对话框。
+     * 这个对话框需要通过页面的 'dialog' 事件手动处理</strong>
      *
      * @param runBeforeUnload 默认 false. 是否执行 before unload
      * @throws InterruptedException 异常
      */
     public void close(boolean runBeforeUnload) throws InterruptedException {
-        Assert.isTrue(this.client.getConnection() != null, "Protocol error: Connection closed. Most likely the page has been closed.");
+        Assert.isTrue(this.client.getConnection() != null,
+                "Protocol error: Connection closed. Most likely the page has been closed.");
 
         if (runBeforeUnload) {
             this.client.send("Page.close", null, false);
@@ -727,8 +717,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 截图
-     * 备注 在OS X上 截图需要至少1/6秒。查看讨论：https://crbug.com/741689
+     * 截图 备注 在OS X上 截图需要至少1/6秒。查看讨论：https://crbug.com/741689
      *
      * @param options 截图选项
      * @return 图片base64的字节
@@ -739,7 +728,8 @@ public class Page extends EventEmitter {
         // options.type takes precedence over inferring the type from options.path
         // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
         if (StringKit.isNotEmpty(options.getType())) {
-            Assert.isTrue("png".equals(options.getType()) || "jpeg".equals(options.getType()), "Unknown options.type value: " + options.getType());
+            Assert.isTrue("png".equals(options.getType()) || "jpeg".equals(options.getType()),
+                    "Unknown options.type value: " + options.getType());
             screenshotType = options.getType();
         } else if (StringKit.isNotEmpty(options.getPath())) {
             String mimeType = Files.probeContentType(Paths.get(options.getPath()));
@@ -754,11 +744,14 @@ public class Page extends EventEmitter {
             screenshotType = "png";
 
         if (options.getQuality() > 0) {
-            Assert.isTrue("jpeg".equals(screenshotType), "options.quality is unsupported for the " + screenshotType + " screenshots");
-            Assert.isTrue(options.getQuality() <= 100, "Expected options.quality to be between 0 and 100 (inclusive), got " + options.getQuality());
+            Assert.isTrue("jpeg".equals(screenshotType),
+                    "options.quality is unsupported for the " + screenshotType + " screenshots");
+            Assert.isTrue(options.getQuality() <= 100,
+                    "Expected options.quality to be between 0 and 100 (inclusive), got " + options.getQuality());
         }
 
-        Assert.isTrue(options.getClip() == null || !options.getFullPage(), "options.clip and options.fullPage are exclusive");
+        Assert.isTrue(options.getClip() == null || !options.getFullPage(),
+                "options.clip and options.fullPage are exclusive");
         if (options.getClip() != null) {
             Assert.isTrue(options.getClip().getWidth() != 0, "Expected options.clip.width not to be 0.");
             Assert.isTrue(options.getClip().getHeight() != 0, "Expected options.clip.height not to be 0.");
@@ -809,8 +802,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 设置绕过页面的安全政策
-     * 注意 CSP 发生在 CSP 初始化而不是评估阶段。也就是说应该在导航到这个域名前设置
+     * 设置绕过页面的安全政策 注意 CSP 发生在 CSP 初始化而不是评估阶段。也就是说应该在导航到这个域名前设置
      *
      * @param enabled 是否绕过页面的安全政策
      */
@@ -842,12 +834,11 @@ public class Page extends EventEmitter {
      * 给页面设置html
      *
      * @param html    分派给页面的HTML。
-     * @param options timeout 加载资源的超时时间，默认值为30秒，传入0禁用超时. 可以使用 page.setDefaultNavigationTimeout(timeout) 或者 page.setDefaultTimeout(timeout) 方法修改默认值
-     *                waitUntil  HTML设置成功的标志事件, 默认为 load。 如果给定的是一个事件数组，那么当所有事件之后，给定的内容才被认为设置成功。 事件可以是：
-     *                load - load事件触发后，设置HTML内容完成。
-     *                domcontentloaded - DOMContentLoaded 事件触发后，设置HTML内容完成。
-     *                networkidle0 - 不再有网络连接时（至少500毫秒之后），设置HTML内容完成
-     *                networkidle2 - 只剩2个网络连接时（至少500毫秒之后），设置HTML内容完成
+     * @param options timeout 加载资源的超时时间，默认值为30秒，传入0禁用超时. 可以使用 page.setDefaultNavigationTimeout(timeout) 或者
+     *                page.setDefaultTimeout(timeout) 方法修改默认值 waitUntil HTML设置成功的标志事件, 默认为 load。
+     *                如果给定的是一个事件数组，那么当所有事件之后，给定的内容才被认为设置成功。 事件可以是： load - load事件触发后，设置HTML内容完成。 domcontentloaded -
+     *                DOMContentLoaded 事件触发后，设置HTML内容完成。 networkidle0 - 不再有网络连接时（至少500毫秒之后），设置HTML内容完成 networkidle2 -
+     *                只剩2个网络连接时（至少500毫秒之后），设置HTML内容完成
      */
     public void setContent(String html, PageNavigateOptions options) {
         this.frameManager.mainFrame().setContent(html, options);
@@ -861,8 +852,10 @@ public class Page extends EventEmitter {
      */
     public List<Cookie> cookies(List<String> urls) {
         Map<String, Object> params = new HashMap<>();
-        if (urls == null) urls = new ArrayList<>();
-        if (urls.size() == 0) urls.add(this.url());
+        if (urls == null)
+            urls = new ArrayList<>();
+        if (urls.size() == 0)
+            urls.add(this.url());
         params.put("urls", urls);
         JSONObject result = this.client.send("Network.getCookies", params, true);
         JSONArray cookiesNode = result.getJSONArray("cookies");
@@ -887,7 +880,8 @@ public class Page extends EventEmitter {
         return this.cookies(null);
     }
 
-    public void setCookie(List<CookieParam> cookies) throws IllegalAccessException, IntrospectionException, InvocationTargetException {
+    public void setCookie(List<CookieParam> cookies)
+            throws IllegalAccessException, IntrospectionException, InvocationTargetException {
         String pageURL = this.url();
         boolean startsWithHTTP = pageURL.startsWith("http");
         cookies.replaceAll(cookie -> {
@@ -895,13 +889,15 @@ public class Page extends EventEmitter {
                 cookie.setUrl(pageURL);
             Assert.isTrue(!ABOUT_BLANK.equals(cookie.getUrl()), "Blank page can not have cookie " + cookie.getName());
             if (StringKit.isNotEmpty(cookie.getUrl())) {
-                Assert.isTrue(!cookie.getUrl().startsWith("data:"), "Data URL page can not have cookie " + cookie.getName());
+                Assert.isTrue(!cookie.getUrl().startsWith("data:"),
+                        "Data URL page can not have cookie " + cookie.getName());
             }
             return cookie;
         });
         List<DeleteCookiesParameters> deleteCookiesParameters = new ArrayList<>();
         for (CookieParam cookie : cookies) {
-            deleteCookiesParameters.add(new DeleteCookiesParameters(cookie.getName(), cookie.getUrl(), cookie.getDomain(), cookie.getPath()));
+            deleteCookiesParameters.add(new DeleteCookiesParameters(cookie.getName(), cookie.getUrl(),
+                    cookie.getDomain(), cookie.getPath()));
         }
 
         this.deleteCookie(deleteCookiesParameters);
@@ -911,13 +907,9 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 此方法会改变下面几个方法的默认30秒等待时间：
-     * ${@link Page#goTo(String)}
-     * ${@link Page#goTo(String, PageNavigateOptions, boolean)}
-     * ${@link Page#goBack(PageNavigateOptions)}
-     * ${@link Page#goForward(PageNavigateOptions)}
-     * ${@link Page#reload(PageNavigateOptions)}
-     * ${@link Page#waitForNavigation()}
+     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, PageNavigateOptions, boolean)}
+     * ${@link Page#goBack(PageNavigateOptions)} ${@link Page#goForward(PageNavigateOptions)}
+     * ${@link Page#reload(PageNavigateOptions)} ${@link Page#waitForNavigation()}
      *
      * @param timeout 超时时间
      */
@@ -926,8 +918,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 当前页面发起的每个请求都会带上这些请求头
-     * 注意 此方法不保证请求头的顺序
+     * 当前页面发起的每个请求都会带上这些请求头 注意 此方法不保证请求头的顺序
      *
      * @param headers 每个 HTTP 请求都会带上这些请求头。值必须是字符串
      */
@@ -945,9 +936,11 @@ public class Page extends EventEmitter {
     public void setGeolocation(double longitude, double latitude, int accuracy) {
 
         if (longitude < -180 || longitude > 180)
-            throw new IllegalArgumentException("Invalid longitude " + longitude + ": precondition -180 <= LONGITUDE <= 180 failed.");
+            throw new IllegalArgumentException(
+                    "Invalid longitude " + longitude + ": precondition -180 <= LONGITUDE <= 180 failed.");
         if (latitude < -90 || latitude > 90)
-            throw new IllegalArgumentException("Invalid latitude " + latitude + ": precondition -90 <= LATITUDE <= 90 failed.");
+            throw new IllegalArgumentException(
+                    "Invalid latitude " + latitude + ": precondition -90 <= LATITUDE <= 90 failed.");
         if (accuracy < 0)
             throw new IllegalArgumentException("Invalid accuracy " + accuracy + ": precondition 0 <= ACCURACY failed.");
         Map<String, Object> params = new HashMap<>();
@@ -968,8 +961,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 是否启用js
-     * 注意 改变这个值不会影响已经执行的js。下一个跳转会完全起作用。
+     * 是否启用js 注意 改变这个值不会影响已经执行的js。下一个跳转会完全起作用。
      *
      * @param enabled 是否启用js
      */
@@ -1001,7 +993,8 @@ public class Page extends EventEmitter {
         this.frameManager.networkManager().setRequestInterception(value);
     }
 
-    private String screenshotTask(String format, ScreenshotOptions options) throws IOException, ExecutionException, InterruptedException {
+    private String screenshotTask(String format, ScreenshotOptions options)
+            throws IOException, ExecutionException, InterruptedException {
         Map<String, Object> params = new HashMap<>();
         params.put("targetId", this.target.getTargetId());
         this.client.send("Target.activateTarget", params, true);
@@ -1089,10 +1082,13 @@ public class Page extends EventEmitter {
         if (CollKit.isNotEmpty(event.getEntry().getArgs()))
             event.getEntry().getArgs().forEach(arg -> Builder.releaseObject(this.client, arg, false));
         if (!"worker".equals(event.getEntry().getSource()))
-            this.emit(Events.PAGE_CONSOLE.getName(), new ConsoleMessage(event.getEntry().getLevel(), event.getEntry().getText(), Collections.emptyList(), new Location(event.getEntry().getUrl(), event.getEntry().getLineNumber())));
+            this.emit(Events.PAGE_CONSOLE.getName(),
+                    new ConsoleMessage(event.getEntry().getLevel(), event.getEntry().getText(), Collections.emptyList(),
+                            new Location(event.getEntry().getUrl(), event.getEntry().getLineNumber())));
     }
 
-    private void emitMetrics(MetricsPayload event) throws IllegalAccessException, IntrospectionException, InvocationTargetException {
+    private void emitMetrics(MetricsPayload event)
+            throws IllegalAccessException, IntrospectionException, InvocationTargetException {
         PageMetrics pageMetrics = new PageMetrics();
         Metrics metrics = this.buildMetricsObject(event.getMetrics());
         pageMetrics.setMetrics(metrics);
@@ -1133,10 +1129,10 @@ public class Page extends EventEmitter {
             //
             // Ignore these messages since:
             // - there's no execution context we can use to operate with message
-            //   arguments
+            // arguments
             // - these messages are reported before Puppeteer clients can subscribe
-            //   to the 'console'
-            //   page event.
+            // to the 'console'
+            // page event.
             //
             // @see https://github.com/puppeteer/puppeteer/issues/3865
             return;
@@ -1158,9 +1154,11 @@ public class Page extends EventEmitter {
         String expression;
         try {
             Object result = this.pageBindings.get(event.getName()).apply(payload.getArgs());
-            expression = Builder.evaluationString(deliverResult(), PageEvaluateType.FUNCTION, payload.getName(), payload.getSeq(), result);
+            expression = Builder.evaluationString(deliverResult(), PageEvaluateType.FUNCTION, payload.getName(),
+                    payload.getSeq(), result);
         } catch (Exception e) {
-            expression = Builder.evaluationString(deliverError(), PageEvaluateType.FUNCTION, payload.getName(), payload.getSeq(), e, e.getMessage());
+            expression = Builder.evaluationString(deliverError(), PageEvaluateType.FUNCTION, payload.getName(),
+                    payload.getSeq(), e, e.getMessage());
         }
         Map<String, Object> params = new HashMap<>();
         params.put("expression", expression);
@@ -1169,31 +1167,27 @@ public class Page extends EventEmitter {
     }
 
     private String deliverError() {
-        return "function deliverError(name, seq, message, stack) {\n" +
-                "      const error = new Error(message);\n" +
-                "      error.stack = stack;\n" +
-                "      window[name]['callbacks'].get(seq).reject(error);\n" +
-                "      window[name]['callbacks'].delete(seq);\n" +
-                "    }";
+        return "function deliverError(name, seq, message, stack) {\n" + "      const error = new Error(message);\n"
+                + "      error.stack = stack;\n" + "      window[name]['callbacks'].get(seq).reject(error);\n"
+                + "      window[name]['callbacks'].delete(seq);\n" + "    }";
     }
 
     private String deliverResult() {
-        return "function deliverResult(name, seq, result) {\n" +
-                "      window[name]['callbacks'].get(seq).resolve(result);\n" +
-                "      window[name]['callbacks'].delete(seq);\n" +
-                "    }";
+        return "function deliverResult(name, seq, result) {\n"
+                + "      window[name]['callbacks'].get(seq).resolve(result);\n"
+                + "      window[name]['callbacks'].delete(seq);\n" + "    }";
     }
 
     /**
-     * 如果是一个浏览器多个页面的情况，每个页面都可以有单独的viewport
-     * 注意 在大部分情况下，改变 viewport 会重新加载页面以设置 isMobile 或者 hasTouch
+     * 如果是一个浏览器多个页面的情况，每个页面都可以有单独的viewport 注意 在大部分情况下，改变 viewport 会重新加载页面以设置 isMobile 或者 hasTouch
      *
      * @param viewport 设置的视图
      */
     public void setViewport(Viewport viewport) {
         boolean needsReload = this.emulationManager.emulateViewport(viewport);
         this.viewport = viewport;
-        if (needsReload) this.reload(null);
+        if (needsReload)
+            this.reload(null);
     }
 
     protected void initialize() {
@@ -1222,7 +1216,9 @@ public class Page extends EventEmitter {
                 textTokens.add(JSON.toJSONString(Builder.valueFromRemoteObject(remoteObject)));
             }
         }
-        Location location = stackTrace != null && stackTrace.getCallFrames().size() > 0 ? new Location(stackTrace.getCallFrames().get(0).getUrl(), stackTrace.getCallFrames().get(0).getLineNumber(), stackTrace.getCallFrames().get(0).getColumnNumber()) : new Location();
+        Location location = stackTrace != null && stackTrace.getCallFrames().size() > 0 ? new Location(
+                stackTrace.getCallFrames().get(0).getUrl(), stackTrace.getCallFrames().get(0).getLineNumber(),
+                stackTrace.getCallFrames().get(0).getColumnNumber()) : new Location();
         ConsoleMessage message = new ConsoleMessage(type, String.join(" ", textTokens), args, location);
         this.emit(Events.PAGE_CONSOLE.getName(), message);
     }
@@ -1244,8 +1240,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 导航到指定的url,可以配置是否阻塞，可以配合下面这个方法使用，但是不限于这个方法
-     * {@link Page#waitForResponse(String)}
+     * 导航到指定的url,可以配置是否阻塞，可以配合下面这个方法使用，但是不限于这个方法 {@link Page#waitForResponse(String)}
      * 因为如果不阻塞的话，页面在加载完成时，waitForResponse等waitFor方法会接受不到结果而抛出超时异常
      *
      * @param url     导航的地址
@@ -1260,20 +1255,14 @@ public class Page extends EventEmitter {
     /**
      * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名
      * <p>
-     * 以下情况此方法将报错：
-     * 发生了 SSL 错误 (比如有些自签名的https证书).
-     * 目标地址无效
-     * 超时
-     * 主页面不能加载
+     * 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效 超时 主页面不能加载
      *
      * @param url      url
      * @param options: timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                 waitUntil  满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
-     *                 load - 页面的load事件触发时
-     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时
-     *                 networkidle0 - 不再有网络连接时触发（至少500毫秒后）
-     *                 networkidle2 - 只有2个网络连接时触发（至少500毫秒后）
-     *                 referer  Referer header value. If provided it will take preference over the referer header value set by page.setExtraHTTPHeaders().
+     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
+     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
+     *                 只有2个网络连接时触发（至少500毫秒后） referer Referer header value. If provided it will take preference over the
+     *                 referer header value set by page.setExtraHTTPHeaders().
      * @return Response
      * @throws InterruptedException 异常
      */
@@ -1282,21 +1271,14 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名
-     * 以下情况此方法将报错：
-     * 发生了 SSL 错误 (比如有些自签名的https证书).
-     * 目标地址无效
-     * 超时
-     * 主页面不能加载
+     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效 超时 主页面不能加载
      *
      * @param url      url
      * @param options: timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                 waitUntil  满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
-     *                 load - 页面的load事件触发时
-     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时
-     *                 networkidle0 - 不再有网络连接时触发（至少500毫秒后）
-     *                 networkidle2 - 只有2个网络连接时触发（至少500毫秒后）
-     *                 referer  Referer header value. If provided it will take preference over the referer header value set by page.setExtraHTTPHeaders().
+     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
+     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
+     *                 只有2个网络连接时触发（至少500毫秒后） referer Referer header value. If provided it will take preference over the
+     *                 referer header value set by page.setExtraHTTPHeaders().
      * @param isBlock  是否阻塞，不阻塞代表只是发导航命令出去，并不等待导航结果，同时也不会抛异常
      * @return Response
      * @throws InterruptedException 打断异常
@@ -1306,12 +1288,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 导航到某个网站
-     * 以下情况此方法将报错：
-     * 发生了 SSL 错误 (比如有些自签名的https证书).
-     * 目标地址无效
-     * 超时
-     * 主页面不能加载
+     * 导航到某个网站 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效 超时 主页面不能加载
      *
      * @param url 导航到的地址. 地址应该带有http协议, 比如 https://.
      * @return 响应
@@ -1329,7 +1306,8 @@ public class Page extends EventEmitter {
      * @throws IntrospectionException    异常
      * @throws InvocationTargetException 异常
      */
-    public void deleteCookie(List<DeleteCookiesParameters> cookies) throws IllegalAccessException, IntrospectionException, InvocationTargetException {
+    public void deleteCookie(List<DeleteCookiesParameters> cookies)
+            throws IllegalAccessException, IntrospectionException, InvocationTargetException {
         String pageURL = this.url();
         for (DeleteCookiesParameters cookie : cookies) {
             if (StringKit.isEmpty(cookie.getUrl()) && pageURL.startsWith("http"))
@@ -1339,7 +1317,8 @@ public class Page extends EventEmitter {
         }
     }
 
-    private Map<String, Object> getProperties(DeleteCookiesParameters cookie) throws IntrospectionException, InvocationTargetException, IllegalAccessException {
+    private Map<String, Object> getProperties(DeleteCookiesParameters cookie)
+            throws IntrospectionException, InvocationTargetException, IllegalAccessException {
         Map<String, Object> params = new HashMap<>();
         BeanInfo beanInfo = Introspector.getBeanInfo(cookie.getClass());
         PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
@@ -1350,9 +1329,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 根据指定的参数和 user agent 生成模拟器。此方法是和下面两个方法效果相同
-     * ${@link Page#setViewport(Viewport)}
-     * ${@link Page#setUserAgent(String)}
+     * 根据指定的参数和 user agent 生成模拟器。此方法是和下面两个方法效果相同 ${@link Page#setViewport(Viewport)} ${@link Page#setUserAgent(String)}
      *
      * @param options Device 模拟器枚举类
      * @throws InterruptedException 线程被打断异常
@@ -1401,8 +1378,8 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 更改页面的时区，传null将禁用将时区仿真
-     * <a href="https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1">时区id列表</a>
+     * 更改页面的时区，传null将禁用将时区仿真 <a href=
+     * "https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1">时区id列表</a>
      *
      * @param timezoneId 时区id
      */
@@ -1439,12 +1416,12 @@ public class Page extends EventEmitter {
      * @param args         如果是 Javascript 函数的话，对应函数上的参数
      */
     public void evaluateOnNewDocument(String pageFunction, Object... args) {
-        this.evaluateOnNewDocument(pageFunction, Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, args);
+        this.evaluateOnNewDocument(pageFunction,
+                Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, args);
     }
 
     /**
-     * 在新dom产生之际执行给定的javascript
-     * 当你的js代码为函数时，type={@link PageEvaluateType#FUNCTION}
+     * 在新dom产生之际执行给定的javascript 当你的js代码为函数时，type={@link PageEvaluateType#FUNCTION}
      * 当你的js代码为字符串时，type={@link PageEvaluateType#STRING}
      *
      * @param pageFunction js代码
@@ -1480,9 +1457,11 @@ public class Page extends EventEmitter {
      * @throws ExecutionException   异常
      * @throws InterruptedException 异常
      */
-    public void exposeFunction(String name, Function<List<?>, Object> puppeteerFunction) throws InterruptedException, ExecutionException {
+    public void exposeFunction(String name, Function<List<?>, Object> puppeteerFunction)
+            throws InterruptedException, ExecutionException {
         if (this.pageBindings.containsKey(name)) {
-            throw new IllegalArgumentException(MessageFormat.format("Failed to add page binding with name {0}: window['{1}'] already exists!", name, name));
+            throw new IllegalArgumentException(MessageFormat
+                    .format("Failed to add page binding with name {0}: window['{1}'] already exists!", name, name));
         }
         this.pageBindings.put(name, puppeteerFunction);
         String expression = Builder.evaluationString(addPageBinding(), PageEvaluateType.FUNCTION, name);
@@ -1505,23 +1484,15 @@ public class Page extends EventEmitter {
     }
 
     private String addPageBinding() {
-        return "function addPageBinding(bindingName) {\n" +
-                "      const win = (window);\n" +
-                "      const binding = (win[bindingName]);\n" +
-                "      win[bindingName] = (...args) => {\n" +
-                "        const me = window[bindingName];\n" +
-                "        let callbacks = me['callbacks'];\n" +
-                "        if (!callbacks) {\n" +
-                "          callbacks = new Map();\n" +
-                "          me['callbacks'] = callbacks;\n" +
-                "        }\n" +
-                "        const seq = (me['lastSeq'] || 0) + 1;\n" +
-                "        me['lastSeq'] = seq;\n" +
-                "        const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));\n" +
-                "        binding(JSON.stringify({name: bindingName, seq, args}));\n" +
-                "        return promise;\n" +
-                "      };\n" +
-                "    }";
+        return "function addPageBinding(bindingName) {\n" + "      const win = (window);\n"
+                + "      const binding = (win[bindingName]);\n" + "      win[bindingName] = (...args) => {\n"
+                + "        const me = window[bindingName];\n" + "        let callbacks = me['callbacks'];\n"
+                + "        if (!callbacks) {\n" + "          callbacks = new Map();\n"
+                + "          me['callbacks'] = callbacks;\n" + "        }\n"
+                + "        const seq = (me['lastSeq'] || 0) + 1;\n" + "        me['lastSeq'] = seq;\n"
+                + "        const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));\n"
+                + "        binding(JSON.stringify({name: bindingName, seq, args}));\n" + "        return promise;\n"
+                + "      };\n" + "    }";
     }
 
     /**
@@ -1547,16 +1518,11 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 导航到页面历史的前一个页面
-     * options 的 referer参数不用填，填了也用不上
+     * 导航到页面历史的前一个页面 options 的 referer参数不用填，填了也用不上
      * <p>
-     * options 导航配置，可选值：
-     * otimeout  跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     * owaitUntil 满足什么条件认为页面跳转完成，默认是load事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
-     * oload - 页面的load事件触发时
-     * odomcontentloaded - 页面的DOMContentLoaded事件触发时
-     * onetworkidle0 - 不再有网络连接时触发（至少500毫秒后）
-     * onetworkidle2 - 只有2个网络连接时触发（至少500毫秒后）
+     * options 导航配置，可选值： otimeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
+     * owaitUntil 满足什么条件认为页面跳转完成，默认是load事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： oload - 页面的load事件触发时 odomcontentloaded -
+     * 页面的DOMContentLoaded事件触发时 onetworkidle0 - 不再有网络连接时触发（至少500毫秒后） onetworkidle2 - 只有2个网络连接时触发（至少500毫秒后）
      *
      * @param options 见上面注释
      * @return 响应
@@ -1570,8 +1536,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 导航到页面历史的后一个页面。
-     * options 的 referer参数不用填，填了也用不上
+     * 导航到页面历史的后一个页面。 options 的 referer参数不用填，填了也用不上
      *
      * @param options 可以看{@link Page#goTo(String, PageNavigateOptions, boolean)}方法介绍
      * @return Response 响应
@@ -1624,8 +1589,8 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
-     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') <strong>注意
+     * 目前仅支持无头模式的 Chrome</strong>
      *
      * @param path pdf存放的路径
      * @throws IOException 异常
@@ -1635,8 +1600,8 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
-     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') <strong>注意
+     * 目前仅支持无头模式的 Chrome</strong>
      *
      * @param options 选项
      * @return pdf文件的字节数组数据
@@ -1700,20 +1665,17 @@ public class Page extends EventEmitter {
 
         if (result != null) {
             String handle = result.getString(Builder.RECV_MESSAGE_STREAM_PROPERTY);
-            Assert.isTrue(handle != null, "Page.printToPDF result has no stream handle. Please check your chrome version. result=" + result);
+            Assert.isTrue(handle != null,
+                    "Page.printToPDF result has no stream handle. Please check your chrome version. result=" + result);
             return (byte[]) Builder.readProtocolStream(this.client, handle, options.getPath(), false);
         }
         throw new ProtocolException("Page.printToPDF no response");
     }
 
     /**
-     * 此方法会改变下面几个方法的默认30秒等待时间：
-     * ${@link Page#goTo(String)}
-     * ${@link Page#goTo(String, PageNavigateOptions, boolean)}
-     * ${@link Page#goBack(PageNavigateOptions)}
-     * ${@link Page#goForward(PageNavigateOptions)}
-     * ${@link Page#reload(PageNavigateOptions)}
-     * ${@link Page#waitForNavigation()}
+     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, PageNavigateOptions, boolean)}
+     * ${@link Page#goBack(PageNavigateOptions)} ${@link Page#goForward(PageNavigateOptions)}
+     * ${@link Page#reload(PageNavigateOptions)} ${@link Page#waitForNavigation()}
      *
      * @param timeout 超时时间
      */
@@ -1739,7 +1701,8 @@ public class Page extends EventEmitter {
         double pixels;
         if (Builder.isNumber(parameter)) {
             pixels = Double.parseDouble(parameter);
-        } else if (parameter.endsWith("px") || parameter.endsWith("in") || parameter.endsWith("cm") || parameter.endsWith("mm")) {
+        } else if (parameter.endsWith("px") || parameter.endsWith("in") || parameter.endsWith("cm")
+                || parameter.endsWith("mm")) {
 
             String unit = parameter.substring(parameter.length() - 2).toLowerCase();
             String valueText;
@@ -1769,7 +1732,7 @@ public class Page extends EventEmitter {
     public Response reload(PageNavigateOptions options) {
         CountDownLatch reloadLatch = new CountDownLatch(1);
         Page.reloadExecutor.submit(() -> {
-            /*执行reload命令，不用等待返回*/
+            /* 执行reload命令，不用等待返回 */
             try {
                 reloadLatch.await();
             } catch (InterruptedException e) {
@@ -1778,11 +1741,12 @@ public class Page extends EventEmitter {
             this.client.send("Page.reload", null, true);
         });
 
-        /*等待页面导航结果返回*/
+        /* 等待页面导航结果返回 */
         return this.waitForNavigation(options, reloadLatch);
     }
 
-    private Metrics buildMetricsObject(List<Metric> metrics) throws IntrospectionException, InvocationTargetException, IllegalAccessException {
+    private Metrics buildMetricsObject(List<Metric> metrics)
+            throws IntrospectionException, InvocationTargetException, IllegalAccessException {
         Metrics result = new Metrics();
         if (CollKit.isNotEmpty(metrics)) {
             for (Metric metric : metrics) {
@@ -1810,9 +1774,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
-     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转
-     * 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @return 响应
      */
@@ -1821,9 +1783,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
-     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转
-     * 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @param options PageNavigateOptions
      * @return 响应
@@ -1833,9 +1793,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
-     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转
-     * 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @param options     PageNavigateOptions
      * @param reloadLatch reload页面，这个参数配合{@link Page#setViewport(Viewport)}中的reload方法使用
@@ -1846,8 +1804,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 执行一段 JavaScript代码
-     * 此方法是{@link Page#evaluate(String, List)}的简化版，自动判断参数pageFunction是 Javascript 函数还是 Javascript 的字符串
+     * 执行一段 JavaScript代码 此方法是{@link Page#evaluate(String, List)}的简化版，自动判断参数pageFunction是 Javascript 函数还是 Javascript 的字符串
      *
      * @param pageFunction 要执行的字符串
      * @return 有可能是JShandle String等
@@ -1922,10 +1879,9 @@ public class Page extends EventEmitter {
     /**
      * 此方法根据第一个参数的不同有不同的结果：
      * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或 page.waitForXPath的简写
-     * 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
-     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve
-     * 否则会报错
+     * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或
+     * page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
+     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
      *
      * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
      * @return 代表页面元素的一个实例
@@ -1938,10 +1894,9 @@ public class Page extends EventEmitter {
     /**
      * 此方法根据第一个参数的不同有不同的结果：
      * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或 page.waitForXPath的简写
-     * 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
-     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve
-     * 否则会报错
+     * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或
+     * page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
+     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
      *
      * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
      * @param options                     可选的等待参数
@@ -1949,7 +1904,8 @@ public class Page extends EventEmitter {
      * @return 代表页面元素的一个实例
      * @throws InterruptedException 打断异常
      */
-    public JSHandle waitFor(String selectorOrFunctionOrTimeout, WaitForSelectorOptions options, List<Object> args) throws InterruptedException {
+    public JSHandle waitFor(String selectorOrFunctionOrTimeout, WaitForSelectorOptions options, List<Object> args)
+            throws InterruptedException {
         return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, args);
     }
 
@@ -2035,7 +1991,8 @@ public class Page extends EventEmitter {
      * @return JSHandle
      * @throws InterruptedException 异常
      */
-    public JSHandle waitForFunction(String pageFunction, WaitForSelectorOptions options, List<Object> args) throws InterruptedException {
+    public JSHandle waitForFunction(String pageFunction, WaitForSelectorOptions options, List<Object> args)
+            throws InterruptedException {
         return this.mainFrame().waitForFunction(pageFunction, options, args);
     }
 
@@ -2064,9 +2021,8 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空
-     * 当url不为空时， type = PageEvaluateType.STRING
-     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
+     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
+     * PageEvaluateType.FUNCTION
      *
      * @param url       等待的请求
      * @param predicate 方法
@@ -2089,7 +2045,8 @@ public class Page extends EventEmitter {
         DefaultBrowserListener<Object> listener = null;
         try {
             listener = sessionClosePromise();
-            return (Request) Builder.waitForEvent(this.frameManager.networkManager(), Events.NETWORK_MANAGER_REQUEST.getName(), predi, timeout, "Wait for request timeout");
+            return (Request) Builder.waitForEvent(this.frameManager.networkManager(),
+                    Events.NETWORK_MANAGER_REQUEST.getName(), predi, timeout, "Wait for request timeout");
         } finally {
             if (listener != null)
                 this.client.removeListener(Events.CDPSESSION_DISCONNECTED.getName(), listener);
@@ -2131,9 +2088,8 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空,默认等待的时间是30s
-     * 当url不为空时， type = PageEvaluateType.STRING
-     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
+     * 等到某个请求，url或者predicate只有有一个不为空,默认等待的时间是30s 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
+     * PageEvaluateType.FUNCTION
      *
      * @param url       等待的请求
      * @param predicate 方法
@@ -2145,9 +2101,8 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空
-     * 当url不为空时， type = PageEvaluateType.STRING
-     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
+     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
+     * PageEvaluateType.FUNCTION
      *
      * @param url       等待的请求
      * @param predicate 方法
@@ -2155,7 +2110,8 @@ public class Page extends EventEmitter {
      * @return 要等到的请求
      * @throws InterruptedException 异常
      */
-    public Response waitForResponse(String url, Predicate<Response> predicate, int timeout) throws InterruptedException {
+    public Response waitForResponse(String url, Predicate<Response> predicate, int timeout)
+            throws InterruptedException {
         if (timeout <= 0)
             timeout = this.timeoutSettings.timeout();
         Predicate<Response> predi = response -> {
@@ -2169,7 +2125,8 @@ public class Page extends EventEmitter {
         DefaultBrowserListener<Object> listener = null;
         try {
             listener = sessionClosePromise();
-            return (Response) Builder.waitForEvent(this.frameManager.networkManager(), Events.NETWORK_MANAGER_RESPONSE.getName(), predi, timeout, "Wait for response timeout");
+            return (Response) Builder.waitForEvent(this.frameManager.networkManager(),
+                    Events.NETWORK_MANAGER_RESPONSE.getName(), predi, timeout, "Wait for response timeout");
         } finally {
             if (listener != null)
                 this.client.removeListener(Events.CDPSESSION_DISCONNECTED.getName(), listener);
@@ -2265,8 +2222,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件
-     * 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
+     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
      *
      * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
      * @param text     要输入的内容
@@ -2277,8 +2233,7 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件
-     * 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
+     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
      *
      * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
      * @param text     要输入的内容
@@ -2293,19 +2248,13 @@ public class Page extends EventEmitter {
         return javascriptEnabled;
     }
 
-
     public Keyboard keyboard() {
         return this.keyboard;
     }
 
     /**
-     * 获取Viewport,Viewport各个参数的含义：
-     * width 宽度，单位是像素
-     * height  高度，单位是像素
-     * deviceScaleFactor  定义设备缩放， (类似于 dpr)。 默认 1。
-     * isMobile  要不要包含meta viewport 标签。 默认 false。
-     * hasTouch 指定终端是否支持触摸。 默认 false
-     * isLandscape 指定终端是不是 landscape 模式。 默认 false。
+     * 获取Viewport,Viewport各个参数的含义： width 宽度，单位是像素 height 高度，单位是像素 deviceScaleFactor 定义设备缩放， (类似于 dpr)。 默认 1。 isMobile
+     * 要不要包含meta viewport 标签。 默认 false。 hasTouch 指定终端是否支持触摸。 默认 false isLandscape 指定终端是不是 landscape 模式。 默认 false。
      *
      * @return Viewport
      */
@@ -2354,7 +2303,8 @@ public class Page extends EventEmitter {
             if (this.latch != null) {
                 boolean await = this.latch.await(finalTimeout, TimeUnit.MILLISECONDS);
                 if (!await) {
-                    throw new TimeoutException("Waiting for file chooser failed: timeout " + finalTimeout + "ms exceeded");
+                    throw new TimeoutException(
+                            "Waiting for file chooser failed: timeout " + finalTimeout + "ms exceeded");
                 }
             }
         }

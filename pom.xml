@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,22 +15,39 @@
     <licenses>
         <license>
             <name>The MIT License (MIT)</name>
-            <url>https://opensource.org/licenses/MIT</url>
+            <url>https://github.com/839128/bus/blob/main/LICENSE</url>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <id>839128</id>
+            <name>Kimi Liu</name>
+            <email>839536@gmail.com</email>
+            <organization>Miaixz</organization>
+            <organizationUrl>http://www.miaixz.org</organizationUrl>
+            <roles>
+                <role>Owner</role>
+                <role>Committer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>justubborn</id>
+            <name>Justubborn</name>
+            <email>wubenhui@gmail.com</email>
+            <organization>Miaixz</organization>
+            <organizationUrl>http://www.miaixz.org</organizationUrl>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+    </developers>
 
     <scm>
         <connection>scm:git@github.com:839128/lancia.git</connection>
         <developerConnection>scm:git@github.com:839128/lancia.git</developerConnection>
         <url>git@github.com:839128/lancia.git</url>
     </scm>
-
-    <developers>
-        <developer>
-            <name>Kimi Liu</name>
-            <url>https://github.com/839128/lancia.git</url>
-        </developer>
-    </developers>
 
     <issueManagement>
         <system>Github Issue</system>
@@ -41,15 +57,33 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <jna.version>5.14.0</jna.version>
         <logback.version>1.5.6</logback.version>
         <fastjson.version>2.0.51</fastjson.version>
-        <bus.version>8.0.8</bus.version>
+        <rxjava.version>3.1.8</rxjava.version>
+        <bus.version>8.0.9</bus.version>
+
+        <jackson.version>2.13.4.1</jackson.version>
+
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.miaixz</groupId>
             <artifactId>bus-all</artifactId>
@@ -74,6 +108,12 @@
             <version>${logback.version}</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>io.reactivex.rxjava3</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>${rxjava.version}</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
     <build>
@@ -83,21 +123,21 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>3.8.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
-                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <phase>package</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -117,14 +157,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>3.2.4</version>
                 <executions>
                     <execution>
                         <id>sonatype-nexus-staging</id>
-                        <phase>verify</phase>
                         <goals>
                             <goal>sign</goal>
                         </goals>
+                        <phase>verify</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -137,6 +177,121 @@
                     <publishingServerId>central</publishingServerId>
                     <autoPublish>true</autoPublish>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>10.0.3</version>
+                <configuration>
+                    <autoUpdate>true</autoUpdate>
+                    <nvdMaxRetryCount>25</nvdMaxRetryCount>
+                    <nvdApiDelay>32000</nvdApiDelay>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <upToDateChecking>
+                        <enabled>false</enabled>
+                    </upToDateChecking>
+                    <formats>
+                        <format>
+                            <includes>
+                                <include>**/*.md</include>
+                                <include>**/*.yml</include>
+                                <include>**/*.yaml</include>
+                            </includes>
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
+                            <indent>
+                                <spaces>true</spaces>
+                                <spacesPerTab>2</spacesPerTab>
+                            </indent>
+                        </format>
+                        <format>
+                            <includes>
+                                <include>**/*.xml</include>
+                            </includes>
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
+                            <indent>
+                                <spaces>true</spaces>
+                                <spacesPerTab>4</spacesPerTab>
+                            </indent>
+                        </format>
+                    </formats>
+                    <java>
+                        <licenseHeader>
+                            <file>.github/spotless/spotless_miaixz.org</file>
+                        </licenseHeader>
+                        <eclipse>
+                            <file>.github/spotless/spotless_format.xml</file>
+                        </eclipse>
+                        <removeUnusedImports/>
+                    </java>
+                    <pom>
+                        <sortPom>
+                            <encoding>UTF-8</encoding>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                            <keepBlankLines>true</keepBlankLines>
+                            <indentBlankLines>false</indentBlankLines>
+                            <indentSchemaLocation>true</indentSchemaLocation>
+                            <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
+                            <sortModules>false</sortModules>
+                            <sortExecutions>false</sortExecutions>
+                            <expandEmptyElements>false</expandEmptyElements>
+                            <sortProperties>false</sortProperties>
+                        </sortPom>
+                    </pom>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>apply</goal>
+                        </goals>
+                        <phase>clean</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <inherited>true</inherited>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <updatePomFile>true</updatePomFile>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <flattenedPomFilename>${project.artifactId}-${project.version}.pom</flattenedPomFilename>
+                            <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                            <pomElements>
+                                <parent>keep</parent>
+                                <dependencies>keep</dependencies>
+                                <dependencyManagement>keep</dependencyManagement>
+                                <distributionManagement>remove</distributionManagement>
+                                <repositories>remove</repositories>
+                                <pluginRepositories>remove</pluginRepositories>
+                                <build>remove</build>
+                                <profiles>remove</profiles>
+                            </pomElements>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

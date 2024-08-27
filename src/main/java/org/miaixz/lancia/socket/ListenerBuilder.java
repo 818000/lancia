@@ -1,28 +1,30 @@
-/*********************************************************************************
- *                                                                               *
- * The MIT License (MIT)                                                         *
- *                                                                               *
- * Copyright (c) 2015-2024 miaixz.org and other contributors.                    *
- *                                                                               *
- * Permission is hereby granted, free of charge, to any person obtaining a copy  *
- * of this software and associated documentation files (the "Software"), to deal *
- * in the Software without restriction, including without limitation the rights  *
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     *
- * copies of the Software, and to permit persons to whom the Software is         *
- * furnished to do so, subject to the following conditions:                      *
- *                                                                               *
- * The above copyright notice and this permission notice shall be included in    *
- * all copies or substantial portions of the Software.                           *
- *                                                                               *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   *
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, *
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     *
- * THE SOFTWARE.                                                                 *
- *                                                                               *
- ********************************************************************************/
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                               ~
+ ~ The MIT License (MIT)                                                         ~
+ ~                                                                               ~
+ ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
+ ~                                                                               ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
+ ~ of this software and associated documentation files (the "Software"), to deal ~
+ ~ in the Software without restriction, including without limitation the rights  ~
+ ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
+ ~ copies of the Software, and to permit persons to whom the Software is         ~
+ ~ furnished to do so, subject to the following conditions:                      ~
+ ~                                                                               ~
+ ~ The above copyright notice and this permission notice shall be included in    ~
+ ~ all copies or substantial portions of the Software.                           ~
+ ~                                                                               ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
+ ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
+ ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
+ ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
+ ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
+ ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
+ ~ THE SOFTWARE.                                                                 ~
+ ~                                                                               ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
 package org.miaixz.lancia.socket;
 
 import org.miaixz.bus.core.lang.thread.NamedThreadFactory;
@@ -39,8 +41,7 @@ import java.util.concurrent.TimeUnit;
  * Base class for additional implementations for the server as well as the client
  *
  * @author Kimi Liu
- * @version 1.2.8
- * @since JDK 1.8+
+ * @since Java 17+
  */
 public abstract class ListenerBuilder implements SocketListener {
 
@@ -85,8 +86,8 @@ public abstract class ListenerBuilder implements SocketListener {
     }
 
     /**
-     * Setter for the interval checking for lost connections A value lower or equal 0 results in the
-     * check to be deactivated
+     * Setter for the interval checking for lost connections A value lower or equal 0 results in the check to be
+     * deactivated
      *
      * @param connectionLostTimeout the interval in seconds
      */
@@ -100,7 +101,7 @@ public abstract class ListenerBuilder implements SocketListener {
             }
             if (this.websocketRunning) {
                 Logger.trace("Connection lost timer restarted");
-                //Reset all the pings
+                // Reset all the pings
                 try {
                     ArrayList<WebSocket> connections = new ArrayList<>(getConnections());
                     SocketBuilder socketBuilder;
@@ -152,7 +153,7 @@ public abstract class ListenerBuilder implements SocketListener {
     private void restartConnectionLostTimer() {
         cancelConnectionLostTimer();
         connectionLostCheckerService = Executors
-                .newSingleThreadScheduledExecutor(new NamedThreadFactory("connectionLostChecker",true));
+                .newSingleThreadScheduledExecutor(new NamedThreadFactory("connectionLostChecker", true));
         Runnable connectionLostChecker = new Runnable() {
 
             /**
@@ -173,24 +174,22 @@ public abstract class ListenerBuilder implements SocketListener {
                         executeConnectionLostDetection(conn, minimumPongTime);
                     }
                 } catch (Exception e) {
-                    //Ignore this exception
+                    // Ignore this exception
                 }
                 connections.clear();
             }
         };
 
-        connectionLostCheckerFuture = connectionLostCheckerService
-                .scheduleAtFixedRate(connectionLostChecker, connectionLostTimeout, connectionLostTimeout,
-                        TimeUnit.NANOSECONDS);
+        connectionLostCheckerFuture = connectionLostCheckerService.scheduleAtFixedRate(connectionLostChecker,
+                connectionLostTimeout, connectionLostTimeout, TimeUnit.NANOSECONDS);
     }
 
     /**
-     * Send a ping to the endpoint or close the connection since the other endpoint did not respond
-     * with a ping
+     * Send a ping to the endpoint or close the connection since the other endpoint did not respond with a ping
      *
      * @param webSocket       the websocket instance
-     * @param minimumPongTime the lowest/oldest allowable last pong time (in nanoTime) before we
-     *                        consider the connection to be lost
+     * @param minimumPongTime the lowest/oldest allowable last pong time (in nanoTime) before we consider the connection
+     *                        to be lost
      */
     private void executeConnectionLostDetection(WebSocket webSocket, long minimumPongTime) {
         if (!(webSocket instanceof SocketBuilder socketBuilder)) {
@@ -270,19 +269,18 @@ public abstract class ListenerBuilder implements SocketListener {
         this.reuseAddr = reuseAddr;
     }
 
-
     @Override
-    public void onWebsocketHandshakeReceivedAsClient(WebSocket conn, HandshakeBuilder request, HandshakeBuilder response) {
+    public void onWebsocketHandshakeReceivedAsClient(WebSocket conn, HandshakeBuilder request,
+            HandshakeBuilder response) {
 
     }
 
     /**
-     * This default implementation does not do anything which will cause the connections to always
-     * progress.
+     * This default implementation does not do anything which will cause the connections to always progress.
      */
     @Override
     public void onWebsocketHandshakeSentAsClient(WebSocket conn, HandshakeBuilder request) {
-        //To overwrite
+        // To overwrite
     }
 
 }
