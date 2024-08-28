@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class PropertyPreview {
 
     /**

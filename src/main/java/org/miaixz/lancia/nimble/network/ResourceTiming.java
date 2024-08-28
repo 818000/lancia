@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.network;
 
 /**
  * Timing information for the request.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class ResourceTiming {
 
@@ -228,4 +225,5 @@ public class ResourceTiming {
     public void setReceiveHeadersEnd(int receiveHeadersEnd) {
         this.receiveHeadersEnd = receiveHeadersEnd;
     }
+
 }

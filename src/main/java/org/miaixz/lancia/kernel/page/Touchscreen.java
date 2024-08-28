@@ -27,24 +27,18 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 屏幕触摸
- *
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.lancia.socket.CDPSession;
+
 public class Touchscreen {
 
-    private final CDPSession client;
+    private CDPSession client;
 
-    private final Keyboard keyboard;
+    private Keyboard keyboard;
 
     public Touchscreen(CDPSession client, Keyboard keyboard) {
         this.client = client;
@@ -52,10 +46,13 @@ public class Touchscreen {
     }
 
     public void tap(int x, int y) {
+        // Touches appear to be lost during the first frame after navigation.
+        // This waits a frame before sending the tap.
+        // @see https://crbug.com/613219
         Map<String, Object> params = new HashMap<>();
         params.put("expression", "new Promise(x => requestAnimationFrame(() => requestAnimationFrame(x)))");
         params.put("awaitPromise", true);
-        this.client.send("Runtime.evaluate", params, true);
+        this.client.send("Runtime.evaluate", params);
 
         TouchPoint touchPoint = new TouchPoint(x, y);
         List<TouchPoint> touchPoints = new ArrayList<>();
@@ -64,13 +61,13 @@ public class Touchscreen {
         params.put("type", "touchStart");
         params.put("touchPoints", touchPoints);
         params.put("modifiers", this.keyboard.getModifiers());
-        this.client.send("Input.dispatchTouchEvent", params, true);
+        this.client.send("Input.dispatchTouchEvent", params);
 
         params.clear();
         params.put("type", "touchEnd");
         params.put("touchPoints", new ArrayList<>());
         params.put("modifiers", this.keyboard.getModifiers());
-        this.client.send("Input.dispatchTouchEvent", params, true);
+        this.client.send("Input.dispatchTouchEvent", params);
     }
 
     static class TouchPoint {

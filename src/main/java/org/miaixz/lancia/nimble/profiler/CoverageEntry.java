@@ -27,14 +27,10 @@
 */
 package org.miaixz.lancia.nimble.profiler;
 
-import org.miaixz.lancia.nimble.css.Range;
-
 import java.util.List;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.lancia.nimble.css.Range;
+
 public class CoverageEntry {
 
     private String url;

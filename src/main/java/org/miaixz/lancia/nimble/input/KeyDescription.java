@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.input;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class KeyDescription {
 
     private Number keyCode;
@@ -95,4 +91,5 @@ public class KeyDescription {
     public void setLocation(int location) {
         this.location = location;
     }
+
 }

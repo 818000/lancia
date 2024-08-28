@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.profiler;
 
 /**
  * Coverage data for a source range.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class CoverageRange {
 

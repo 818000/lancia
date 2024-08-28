@@ -31,9 +31,6 @@ import java.util.List;
 
 /**
  * Coverage data for a JavaScript script.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class ScriptCoverage {
 

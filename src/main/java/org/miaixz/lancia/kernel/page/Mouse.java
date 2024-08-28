@@ -27,21 +27,14 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.option.ClickOptions;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * 鼠标
- *
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.options.ClickOptions;
+import org.miaixz.lancia.socket.CDPSession;
+
 public class Mouse {
 
     private final CDPSession client;
@@ -83,11 +76,11 @@ public class Mouse {
         Map<String, Object> params = new HashMap<>();
         params.put("type", "mouseMoved");
         params.put("button", this.button);
-        BigDecimal divide = new BigDecimal(i).divide(new BigDecimal(steps), 17, RoundingMode.HALF_UP);
+        BigDecimal divide = new BigDecimal(i).divide(new BigDecimal(steps), 17, BigDecimal.ROUND_HALF_UP);
         params.put("x", divide.multiply(BigDecimal.valueOf(this.x - fromX)).add(new BigDecimal(fromX)).doubleValue());
         params.put("y", divide.multiply(BigDecimal.valueOf(this.y - fromY)).add(new BigDecimal(fromY)).doubleValue());
         params.put("modifiers", this.keyboard.getModifiers());
-        this.client.send("Input.dispatchMouseEvent", params, true);
+        this.client.send("Input.dispatchMouseEvent", params);
     }
 
     public void click(int x, int y, ClickOptions options) throws InterruptedException {
@@ -125,7 +118,7 @@ public class Mouse {
         params.put("y", this.y);
         params.put("modifiers", this.keyboard.getModifiers());
         params.put("clickCount", clickCount);
-        this.client.send("Input.dispatchMouseEvent", params, true);
+        this.client.send("Input.dispatchMouseEvent", params);
     }
 
     public void down() {
@@ -148,7 +141,7 @@ public class Mouse {
         params.put("y", this.y);
         params.put("modifiers", this.keyboard.getModifiers());
         params.put("clickCount", clickCount);
-        this.client.send("Input.dispatchMouseEvent", params, true);
+        this.client.send("Input.dispatchMouseEvent", params);
     }
 
     public int buttonNameToButton(String buttonName) {
@@ -158,12 +151,12 @@ public class Mouse {
             return 1;
         if ("right".equals(buttonName))
             return 2;
-        throw new IllegalArgumentException("Unknown ButtonName: " + buttonName);
+        throw new IllegalArgumentException("Unkown ButtonName: " + buttonName);
     }
 
     /**
      * 触发一个鼠标滚轮事件
-     *
+     * 
      * @param deltaX 坐标x
      * @param deltaY 坐标y
      */
@@ -176,7 +169,7 @@ public class Mouse {
         params.put("deltaY", deltaY);
         params.put("modifiers", this.keyboard.getModifiers());
         params.put("pointerType", "mouse");
-        this.client.send("Input.dispatchMouseEvent", params, true);
+        this.client.send("Input.dispatchMouseEvent", params);
     }
 
     /**
@@ -191,7 +184,7 @@ public class Mouse {
         params.put("deltaY", 0.00);
         params.put("modifiers", this.keyboard.getModifiers());
         params.put("pointerType", "mouse");
-        this.client.send("Input.dispatchMouseEvent", params, true);
+        this.client.send("Input.dispatchMouseEvent", params);
     }
 
 }

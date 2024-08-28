@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.fetch;
 
 /**
  * Response HTTP header entry
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class HeaderEntry {
 
@@ -40,6 +37,7 @@ public class HeaderEntry {
     private String value;
 
     public HeaderEntry() {
+
     }
 
     public HeaderEntry(String name, String value) {
@@ -62,4 +60,5 @@ public class HeaderEntry {
     public void setValue(String value) {
         this.value = value;
     }
+
 }

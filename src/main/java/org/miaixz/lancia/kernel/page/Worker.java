@@ -27,81 +27,64 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.DefaultBrowserListener;
-import org.miaixz.lancia.events.EventEmitter;
-import org.miaixz.lancia.nimble.runtime.ConsoleAPICalledPayload;
-import org.miaixz.lancia.nimble.runtime.ExceptionDetails;
-import org.miaixz.lancia.nimble.runtime.ExecutionContextDescription;
-import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.worker.CDPSession;
-import org.miaixz.lancia.worker.exception.TimeoutException;
-
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.miaixz.bus.core.lang.exception.TimeoutException;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.events.ExceptionThrownEvent;
+import org.miaixz.lancia.nimble.runtime.ConsoleAPICalledEvent;
+import org.miaixz.lancia.nimble.runtime.ExecutionContextCreatedEvent;
+import org.miaixz.lancia.nimble.runtime.ExecutionContextDescription;
+import org.miaixz.lancia.nimble.runtime.RemoteObject;
+import org.miaixz.lancia.options.TargetType;
+import org.miaixz.lancia.socket.CDPSession;
+
 /**
- * 在页面对象上会发出“ workercreated”和“ workerdestroyed”事件，以表示工人的生命周期。
- *
- * @author Kimi Liu
- * @since Java 17+
+ * The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
  */
-public class Worker extends EventEmitter {
+public class Worker {
 
     private final CDPSession client;
-
     private final String url;
-
+    private final Consumer<ExceptionThrownEvent> exceptionThrown;
+    private final ConsoleAPI consoleAPICalled;
     private ExecutionContext context;
-
     private CountDownLatch contextLatch;
 
-    public Worker(CDPSession client, String url, ConsoleAPI consoleAPICalled,
-            Consumer<ExceptionDetails> exceptionThrown) {
+    public Worker(CDPSession client, String url, String targetId, TargetType targetType, ConsoleAPI consoleAPICalled,
+            Consumer<ExceptionThrownEvent> exceptionThrown) {
         super();
         this.client = client;
         this.url = url;
-        DefaultBrowserListener<JSONObject> executionContextListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(JSONObject event) {
-                Worker worker = (Worker) this.getTarget();
-                ExecutionContextDescription contextDescription = JSON
-                        .parseObject(JSON.toJSONString(event.get("context")), ExecutionContextDescription.class);
-                ExecutionContext executionContext = new ExecutionContext(client, contextDescription, null);
-                worker.executionContextCallback(executionContext);
-            }
-        };
-        executionContextListener.setMethod("Runtime.executionContextCreated");
-        executionContextListener.setTarget(this);
-        this.client.addListener(executionContextListener.getMethod(), executionContextListener, true);
+        this.exceptionThrown = exceptionThrown;
+        this.consoleAPICalled = consoleAPICalled;
+        this.client.once(CDPSession.CDPSessionEvent.Runtime_executionContextCreated,
+                (Consumer<ExecutionContextCreatedEvent>) this::onExecutionContextCreated);
+        this.client.send("Runtime.enable");
+        this.client.on(CDPSession.CDPSessionEvent.Runtime_consoleAPICalled,
+                (Consumer<ConsoleAPICalledEvent>) this::onConsoleAPICalled);
+        this.client.on(CDPSession.CDPSessionEvent.Runtime_exceptionThrown,
+                (Consumer<ExceptionThrownEvent>) this::onExceptionThrown);
+    }
 
-        this.client.send("Runtime.enable", null, false);
-        DefaultBrowserListener<ConsoleAPICalledPayload> consoleLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(ConsoleAPICalledPayload event) {
-                consoleAPICalled.call(event.getType(),
-                        event.getArgs().stream().map(item -> jsHandleFactory(item)).collect(Collectors.toList()),
-                        event.getStackTrace());
-            }
-        };
-        consoleLis.setMethod("Runtime.consoleAPICalled");
-        this.client.addListener(consoleLis.getMethod(), consoleLis);
+    private void onExceptionThrown(ExceptionThrownEvent event) {
+        exceptionThrown.accept(event);
+    }
 
-        DefaultBrowserListener<JSONObject> exceptionLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(JSONObject event) {
-                ExceptionDetails exceptionDetails = JSON.toJavaObject(event.getJSONObject("exceptionDetails"),
-                        ExceptionDetails.class);
-                exceptionThrown.accept(exceptionDetails);
-            }
-        };
-        exceptionLis.setMethod("Runtime.exceptionThrown");
-        this.client.addListener(exceptionLis.getMethod(), exceptionLis);
+    private void onConsoleAPICalled(ConsoleAPICalledEvent event) {
+        this.consoleAPICalled.call(event.getType(),
+                event.getArgs().stream().map(this::jsHandleFactory).collect(Collectors.toList()),
+                event.getStackTrace());
+    }
+
+    private void onExecutionContextCreated(ExecutionContextCreatedEvent event) {
+        ExecutionContextDescription contextDescription = event.getContext();
+        ExecutionContext executionContext = new ExecutionContext(client, contextDescription, null);
+        this.executionContextCallback(executionContext);
     }
 
     public JSHandle jsHandleFactory(RemoteObject remoteObject) {

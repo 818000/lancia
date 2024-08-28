@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.network;
 
 /**
  * Deletes browser cookies with matching name and url or domain/path pair.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class DeleteCookiesParameters {
 

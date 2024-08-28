@@ -27,14 +27,12 @@
 */
 package org.miaixz.lancia.launch;
 
+import java.util.List;
+
 import org.miaixz.lancia.Browser;
 import org.miaixz.lancia.Launcher;
-import org.miaixz.lancia.option.ConnectOptions;
-import org.miaixz.lancia.option.ArgumentOptions;
-import org.miaixz.lancia.option.LaunchOptions;
-import org.miaixz.lancia.worker.Transport;
-
-import java.util.List;
+import org.miaixz.lancia.options.ConnectOptions;
+import org.miaixz.lancia.options.LaunchOptions;
 
 /**
  * Firefox启动支持
@@ -57,7 +55,7 @@ public class FirefoxLauncher implements Launcher {
     }
 
     @Override
-    public List<String> defaultArgs(ArgumentOptions options) {
+    public List<String> defaultArgs(LaunchOptions options) {
         return null;
     }
 
@@ -67,7 +65,7 @@ public class FirefoxLauncher implements Launcher {
     }
 
     @Override
-    public Browser connect(ConnectOptions options, String browserWSEndpoint, String browserURL, Transport transport) {
+    public Browser connect(ConnectOptions options) {
         return null;
     }
 

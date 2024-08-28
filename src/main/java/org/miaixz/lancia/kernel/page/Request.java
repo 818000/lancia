@@ -27,29 +27,45 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSONObject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.miaixz.bus.core.codec.binary.Base64;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Charset;
 import org.miaixz.bus.core.xyz.CollKit;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.ErrorCode;
 import org.miaixz.lancia.nimble.fetch.HeaderEntry;
-import org.miaixz.lancia.nimble.network.RequestWillBeSentPayload;
-import org.miaixz.lancia.worker.CDPSession;
+import org.miaixz.lancia.nimble.network.RequestWillBeSentEvent;
+import org.miaixz.lancia.socket.CDPSession;
 
-import java.util.*;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * HTTP请求信息
- *
- * @author Kimi Liu
- * @since Java 17+
+ * Whenever the page sends a request, such as for a network resource, the following events are emitted by puppeteer's
+ * page:
+ * <p>
+ * 'request' emitted when the request is issued by the page. 'response' emitted when/if the response is received for the
+ * request. 'requestfinished' emitted when the response body is downloaded and the request is complete. If request fails
+ * at some point, then instead of 'requestfinished' event (and possibly instead of 'response' event), the
+ * 'requestfailed' event is emitted.
+ * <p>
+ * NOTE HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+ * complete with 'requestfinished' event.
+ * <p>
+ * If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a
+ * new request is issued to a redirected url.
  */
 public class Request {
 
     private static final Map<Integer, String> STATUS_TEXTS = new HashMap<>();
 
     static {
+        // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and
+        // 418 codes.
         STATUS_TEXTS.put(100, "Continue");
         STATUS_TEXTS.put(101, "Switching Protocols");
         STATUS_TEXTS.put(102, "Processing");
@@ -137,7 +153,7 @@ public class Request {
     }
 
     public Request(CDPSession client, Frame frame, String interceptionId, boolean allowInterception,
-            RequestWillBeSentPayload event, List<Request> redirectChain) {
+            RequestWillBeSentEvent event, List<Request> redirectChain) {
         super();
         this.client = client;
         this.requestId = event.getRequestId();
@@ -198,7 +214,8 @@ public class Request {
      * @param headers  请求头
      * @return Future
      */
-    public JSONObject continueRequest(String url, String method, String postData, Map<String, String> headers) {
+    public JsonNode continueRequest(String url, String method, String postData, Map<String, String> headers) {
+        // Request interception is not supported for data: urls.
         if (url().startsWith("data:"))
             return null;
 
@@ -216,13 +233,13 @@ public class Request {
             params.put("method", method);
         }
         if (StringKit.isNotEmpty(postData)) {
-            params.put("postData", new String(Base64.getEncoder().encode(postData.getBytes()), Charset.UTF_8));
+            params.put("postData", Base64.encode(postData.getBytes()));
         }
 
         if (headers != null && headers.size() > 0) {
             params.put("headers", headersArray(headers));
         }
-        return client.send("Fetch.continueRequest", params, true);
+        return client.send("Fetch.continueRequest", params);
     }
 
     /**
@@ -234,7 +251,7 @@ public class Request {
 
     /**
      * 自定义响应
-     *
+     * 
      * @param status           响应状态
      * @param headers          响应头
      * @param contentType      contentType
@@ -242,7 +259,7 @@ public class Request {
      * @param needBase64Decode 自定义响应体是否需要Base64解码
      * @return
      */
-    public JSONObject respond(int status, List<HeaderEntry> headers, String contentType, String body,
+    public JsonNode respond(int status, List<HeaderEntry> headers, String contentType, String body,
             boolean needBase64Decode) {
         // Mocking responses for dataURL requests is not currently supported.
         if (url().startsWith("data:")) {
@@ -280,25 +297,25 @@ public class Request {
         params.put("responseHeaders", headersArray(responseHeaders));
         if (responseBody != null) {
             if (needBase64Decode) {
-                // 设置自定义响应体时，如果body时base64，使用兼容MIME的工具类处理
-                params.put("body", Base64.getDecoder().decode(responseBody));
+                // fix #91: 设置自定义响应体时，如果body时base64，使用兼容MIME的工具类处理
+                params.put("body", Base64.decode(responseBody));
             } else {
                 params.put("body", responseBody);
             }
         }
-        return client.send("Fetch.fulfillRequest", params, true);
+        return client.send("Fetch.fulfillRequest", params);
     }
 
     /**
      * 自定义响应, 默认对响应体做base64解码
-     *
+     * 
      * @param status      响应状态
      * @param headers     响应头
      * @param contentType contentType
      * @param body        响应体
      * @return Future
      */
-    public JSONObject respond(int status, List<HeaderEntry> headers, String contentType, String body) {
+    public JsonNode respond(int status, List<HeaderEntry> headers, String contentType, String body) {
         return respond(status, headers, contentType, body, true);
     }
 
@@ -308,7 +325,8 @@ public class Request {
      * @param errorCode errorCode错误码
      * @return Future
      */
-    public JSONObject abort(ErrorCode errorCode) {
+    public JsonNode abort(ErrorCode errorCode) {
+        // Request interception is not supported for data: urls.
         if (url().startsWith("data:"))
             return null;
 
@@ -320,7 +338,7 @@ public class Request {
         Map<String, Object> params = new HashMap<>();
         params.put("requestId", interceptionId);
         params.put("errorReason", errorReason);
-        return client.send("Fetch.failRequest", params, true);
+        return client.send("Fetch.failRequest", params);
 
     }
 
@@ -400,22 +418,6 @@ public class Request {
 
     protected void setFromMemoryCache(boolean fromMemoryCache) {
         this.fromMemoryCache = fromMemoryCache;
-    }
-
-    public void setInterceptionId(String interceptionId) {
-        this.interceptionId = interceptionId;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    public void setHeaders(Map<String, String> headers) {
-        this.headers = headers;
     }
 
 }

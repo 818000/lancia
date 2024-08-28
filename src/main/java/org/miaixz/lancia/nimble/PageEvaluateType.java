@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public enum PageEvaluateType {
 
     STRING("string"), NUMBER("number"), FUNCTION("function");

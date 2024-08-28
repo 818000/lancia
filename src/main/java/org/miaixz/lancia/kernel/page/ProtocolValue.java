@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class ProtocolValue {
 
     private String unserializableValue;
@@ -73,4 +69,5 @@ public class ProtocolValue {
     public void setObjectId(String objectId) {
         this.objectId = objectId;
     }
+
 }

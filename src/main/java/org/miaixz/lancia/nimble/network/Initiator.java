@@ -31,9 +31,6 @@ import org.miaixz.lancia.nimble.runtime.StackTrace;
 
 /**
  * Information about the request initiator.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class Initiator {
 

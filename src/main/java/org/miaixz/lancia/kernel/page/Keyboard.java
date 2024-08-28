@@ -27,22 +27,16 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.nimble.input.KeyDefinition;
-import org.miaixz.lancia.nimble.input.KeyDescription;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * 键盘信息
- *
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.nimble.input.KeyDefinition;
+import org.miaixz.lancia.nimble.input.KeyDescription;
+import org.miaixz.lancia.socket.CDPSession;
+
 public class Keyboard {
 
     private static final Map<String, KeyDefinition> keyDefinitions = new HashMap<>();
@@ -302,9 +296,9 @@ public class Keyboard {
         keyDefinitions.put("VolumeUp", new KeyDefinition(183, "VolumeUp", "VolumeUp", 4));
     }
 
-    private final CDPSession client;
-    private final Set<String> pressedKeys;
+    private CDPSession client;
     private int modifiers;
+    private Set<String> pressedKeys;
 
     public Keyboard(CDPSession client) {
         this.client = client;
@@ -335,7 +329,7 @@ public class Keyboard {
         params.put("autoRepeat", autoRepeat);
         params.put("location", description.getLocation());
         params.put("isKeypad", description.getLocation() == 3);
-        this.client.send("Input.dispatchKeyEvent", params, true);
+        this.client.send("Input.dispatchKeyEvent", params);
     }
 
     public void up(String key) {
@@ -349,13 +343,13 @@ public class Keyboard {
         params.put("windowsVirtualKeyCode", description.getKeyCode());
         params.put("code", description.getCode());
         params.put("location", description.getLocation());
-        this.client.send("Input.dispatchKeyEvent", params, true);
+        this.client.send("Input.dispatchKeyEvent", params);
     }
 
     public void sendCharacter(String cha) {
         Map<String, Object> params = new HashMap<>();
         params.put("text", cha);
-        this.client.send("Input.insertText", params, true);
+        this.client.send("Input.insertText", params);
     }
 
     private boolean charIsKey(String c) {

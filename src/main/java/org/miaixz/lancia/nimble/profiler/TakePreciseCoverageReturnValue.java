@@ -29,10 +29,6 @@ package org.miaixz.lancia.nimble.profiler;
 
 import java.util.List;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class TakePreciseCoverageReturnValue {
 
     /**

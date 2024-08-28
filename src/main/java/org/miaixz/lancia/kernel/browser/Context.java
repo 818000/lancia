@@ -27,23 +27,26 @@
 */
 package org.miaixz.lancia.kernel.browser;
 
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.Browser;
-import org.miaixz.lancia.Page;
-import org.miaixz.lancia.events.EventEmitter;
-import org.miaixz.lancia.events.EventHandler;
-import org.miaixz.lancia.events.Events;
-import org.miaixz.lancia.kernel.page.Target;
-import org.miaixz.lancia.option.ArgumentOptions;
-import org.miaixz.lancia.worker.Connection;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.Browser;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.Emitter;
+import org.miaixz.lancia.Page;
+import org.miaixz.lancia.kernel.page.Target;
+import org.miaixz.lancia.options.TargetType;
+import org.miaixz.lancia.socket.Connection;
+
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * 浏览器上下文
@@ -51,26 +54,30 @@ import java.util.stream.Collectors;
  * @author Kimi Liu
  * @since Java 17+
  */
-public class Context extends EventEmitter {
+public class Context extends Emitter<Context.BrowserContextEvent> {
 
-    private static final Map<String, String> webPermissionToProtocol = new HashMap<>(32);
+    private static final Map<String, String> WEB_PERMISSION_TO_PROTOCOL_PERMISSION = new HashMap<>(32);
 
     static {
-        webPermissionToProtocol.put("geolocation", "geolocation");
-        webPermissionToProtocol.put("midi", "midi");
-        webPermissionToProtocol.put("notifications", "notifications");
-        webPermissionToProtocol.put("push", "push");
-        webPermissionToProtocol.put("camera", "videoCapture");
-        webPermissionToProtocol.put("microphone", "audioCapture");
-        webPermissionToProtocol.put("background-sync", "backgroundSync");
-        webPermissionToProtocol.put("ambient-light-sensor", "sensors");
-        webPermissionToProtocol.put("accelerometer", "sensors");
-        webPermissionToProtocol.put("gyroscope", "sensors");
-        webPermissionToProtocol.put("magnetometer", "sensors");
-        webPermissionToProtocol.put("accessibility-events", "accessibilityEvents");
-        webPermissionToProtocol.put("clipboard-read", "clipboardRead");
-        webPermissionToProtocol.put("payment-handler", "paymentHandler");
-        webPermissionToProtocol.put("midi-sysex", "midiSysex");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("geolocation", "geolocation");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("midi", "midi");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("notifications", "notifications");
+//		webPermissionToProtocol.put("push","push");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("camera", "videoCapture");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("microphone", "audioCapture");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("background-sync", "backgroundSync");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("ambient-light-sensor", "sensors");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("accelerometer", "sensors");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("gyroscope", "sensors");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("magnetometer", "sensors");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("accessibility-events", "accessibilityEvents");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("clipboard-read", "clipboardReadWrite");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("clipboard-write", "clipboardReadWrite");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("clipboard-sanitized-write", "clipboardSanitizedWrite");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("payment-handler", "paymentHandler");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("persistent-storage", "durableStorage");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("idle-detection", "idleDetection");
+        WEB_PERMISSION_TO_PROTOCOL_PERMISSION.put("midi-sysex", "midiSysex");
     }
 
     /**
@@ -97,45 +104,23 @@ public class Context extends EventEmitter {
         this.id = contextId;
     }
 
-    /**
-     * 监听浏览器事件targetchanged 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
-     *
-     * @param handler 事件处理器
-     */
-    public void onTargetchanged(EventHandler<Target> handler) {
-        this.on(Events.BROWSERCONTEXT_TARGETCHANGED.getName(), handler);
+    public List<Target> targets() {
+        return this.browser.targets().stream().filter(target -> target.browserContext() == this)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * 监听浏览器事件targetcreated 浏览器一共有四种事件 method ="disconnected","targetchanged","targetcreated","targetdestroyed"
-     *
-     * @param handler 事件处理器
-     */
-    public void onTrgetcreated(EventHandler<Target> handler) {
-        this.on(Events.BROWSERCONTEXT_TARGETCREATED.getName(), handler);
-    }
-
-    public void clearPermissionOverrides() {
-        Map<String, Object> params = new HashMap<>();
-        params.put("browserContextId", this.id);
-        this.connection.send("Browser.resetPermissions", params, true);
-    }
-
-    public void close() {
-        Assert.isTrue(StringKit.isNotEmpty(this.id), "Non-incognito profiles cannot be closed!");
-        this.browser.disposeContext(this.id);
-    }
-
-    /**
-     * @return {boolean}
-     */
-    public boolean isIncognito() {
-        return StringKit.isNotEmpty(this.id);
+    public List<Page> pages() {
+        return this.targets().stream()
+                .filter(target -> TargetType.PAGE.equals(target.type())
+                        || (TargetType.OTHER.equals(target.type()) && this.browser.getIsPageTargetCallback() != null
+                                ? this.browser.getIsPageTargetCallback().apply(target)
+                                : true))
+                .map(Target::page).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public void overridePermissions(String origin, List<String> permissions) {
         permissions.replaceAll(item -> {
-            String protocolPermission = webPermissionToProtocol.get(item);
+            String protocolPermission = WEB_PERMISSION_TO_PROTOCOL_PERMISSION.get(item);
             Assert.isTrue(protocolPermission != null, "Unknown permission: " + item);
             return protocolPermission;
         });
@@ -143,32 +128,67 @@ public class Context extends EventEmitter {
         params.put("origin", origin);
         params.put("browserContextId", this.id);
         params.put("permissions", permissions);
-        this.connection.send("Browser.grantPermissions", params, true);
+        this.connection.send("Browser.grantPermissions", params);
     }
 
-    public List<Page> pages() {
-        return this.targets().stream().filter(target -> "page".equals(target.type())).map(Target::page)
-                .filter(Objects::nonNull).collect(Collectors.toList());
+    public void clearPermissionOverrides() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("browserContextId", this.id);
+        this.connection.send("Browser.resetPermissions", params);
     }
 
-    /**
-     * @return 目标的集合
-     */
-    public List<Target> targets() {
-        return this.browser.targets().stream().filter(target -> target.browserContext() == this)
-                .collect(Collectors.toList());
+    public Page newPage() {
+        synchronized (this) {
+            return this.browser.createPageInContext(this.id);
+        }
     }
 
-    public Target waitForTarget(Predicate<Target> predicate, ArgumentOptions options) {
-        return this.browser.waitForTarget(target -> target.browserContext() == this && predicate.test(target), options);
+    public void close() {
+        Assert.isTrue(StringKit.isNotEmpty(this.id), "Non-incognito profiles cannot be closed!");
+        this.browser.disposeContext(this.id);
+    }
+
+    public boolean closed() {
+        return !this.browser.browserContexts().contains(this);
+    }
+
+    public Target waitForTarget(Predicate<Target> predicate, int timeout) {
+        Observable<Target> targetCreateObservable = Builder.fromEmitterEvent(this, BrowserContextEvent.TargetCreated);
+        Observable<Target> TargetChangeObservable = Builder.fromEmitterEvent(this, BrowserContextEvent.TargetChanged);
+        @NonNull
+        Observable<@NonNull Target> targetsObservable = Observable.fromIterable(this.targets());
+        return Observable.mergeArray(targetCreateObservable, TargetChangeObservable, targetsObservable)
+                .filter(predicate::test).timeout(timeout, TimeUnit.MILLISECONDS).blockingFirst();
+    }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 
     public Browser browser() {
         return browser;
     }
 
-    public Page newPage() {
-        return browser.createPageInContext(this.id);
+    public String getId() {
+        return this.id;
+    }
+
+    public enum BrowserContextEvent {
+        TargetChanged("targetchanged"), TargetCreated("targetcreated"), TargetDestroyed("targetdestroyed");
+
+        private String eventName;
+
+        BrowserContextEvent(String eventName) {
+            this.eventName = eventName;
+        }
+
+        public String getEventName() {
+            return eventName;
+        }
     }
 
 }

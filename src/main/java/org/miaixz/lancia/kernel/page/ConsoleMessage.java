@@ -27,15 +27,12 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.lancia.nimble.console.Location;
-
 import java.util.List;
 
+import org.miaixz.lancia.nimble.console.Location;
+
 /**
- * 通过console事件按页面调度ConsoleMessage对象
- *
- * @author Kimi Liu
- * @since Java 17+
+ * ConsoleMessage objects are dispatched by page via the 'console' event.
  */
 public class ConsoleMessage {
 
@@ -48,6 +45,7 @@ public class ConsoleMessage {
     private String text;
 
     public ConsoleMessage() {
+
     }
 
     public ConsoleMessage(String type, String text, List<JSHandle> args, Location location) {
@@ -61,8 +59,8 @@ public class ConsoleMessage {
     /**
      * One of the following values: 'log', 'debug', 'info', 'error', 'warning', 'dir', 'dirxml', 'table', 'trace',
      * 'clear', 'startGroup', 'startGroupCollapsed', 'endGroup', 'assert', 'profile', 'profileEnd', 'count', 'timeEnd'.
-     *
-     * @return 类型
+     * 
+     * @return type
      */
     public String type() {
         return type;

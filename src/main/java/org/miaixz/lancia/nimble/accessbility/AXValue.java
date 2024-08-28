@@ -31,14 +31,13 @@ import java.util.List;
 
 /**
  * A single computed AX property.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class AXValue {
+
     /**
      * The type of this value. Enum of possible property types.
      * "boolean"|"tristate"|"booleanOrUndefined"|"idref"|"idrefList"|"integer"|"node"|"nodeList"|"number"|"string"|"computedString"|"token"|"tokenList"|"domRelation"|"role"|"internalRole"|"valueUndefined";
+     *
      */
     private String type;
     /**
@@ -85,4 +84,5 @@ public class AXValue {
     public void setSources(List<AXValueSource> sources) {
         this.sources = sources;
     }
+
 }

@@ -27,32 +27,24 @@
 */
 package org.miaixz.lancia;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.miaixz.lancia.kernel.Variables;
-import org.miaixz.lancia.option.ConnectOptions;
-import org.miaixz.lancia.option.ArgumentOptions;
-import org.miaixz.lancia.option.LaunchOptions;
-import org.miaixz.lancia.worker.Transport;
+import org.miaixz.lancia.options.ConnectOptions;
+import org.miaixz.lancia.options.LaunchOptions;
 
-/**
- * 启动器(浏览器)
- *
- * @author Kimi Liu
- * @since Java 17+
- */
 public interface Launcher {
 
-    Variables VARIABLES = System::getenv;
+    Variables env = System::getenv;
 
     Browser launch(LaunchOptions options);
 
-    List<String> defaultArgs(ArgumentOptions options);
+    List<String> defaultArgs(LaunchOptions options);
 
-    String resolveExecutablePath(String chromeExecutable);
+    String resolveExecutablePath(String chromeExecutable) throws IOException;
 
-    Browser connect(ConnectOptions options, String browserWSEndpoint, String browserURL, Transport transport);
+    Browser connect(ConnectOptions options);
 
-    String executablePath();
-
+    String executablePath() throws IOException;
 }

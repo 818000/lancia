@@ -27,11 +27,8 @@
 */
 package org.miaixz.lancia.nimble.input;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class ClickablePoint {
+
     private int x;
     private int y;
 
@@ -58,4 +55,5 @@ public class ClickablePoint {
     public void setY(int y) {
         this.y = y;
     }
+
 }

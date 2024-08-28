@@ -31,9 +31,6 @@ import java.util.Map;
 
 /**
  * HTTP response data.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class ResponsePayload {
 

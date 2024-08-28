@@ -27,37 +27,33 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.BrowserListenerWrapper;
-import org.miaixz.lancia.events.DefaultBrowserListener;
-import org.miaixz.lancia.nimble.css.Range;
-import org.miaixz.lancia.nimble.debugger.ScriptParsedPayload;
-import org.miaixz.lancia.nimble.profiler.*;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
 
-/**
- * JS覆盖范围
- *
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.nimble.css.Range;
+import org.miaixz.lancia.nimble.debugger.ScriptParsedEvent;
+import org.miaixz.lancia.nimble.profiler.*;
+import org.miaixz.lancia.socket.CDPSession;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.reactivex.rxjava3.disposables.Disposable;
+
 public class JSCoverage {
 
-    private final CDPSession client;
-    private final Map<String, String> scriptSources;
-    private final Map<String, String> scriptURLs;
-    private final List<BrowserListenerWrapper> eventListeners;
+    private final List<Disposable> disposables = new ArrayList<>();
+    private CDPSession client;
     private boolean enabled;
+    private Map<String, String> scriptSources;
+    private Map<String, String> scriptURLs;
     private boolean resetOnNavigation;
 
     private boolean reportAnonymousScripts;
@@ -67,7 +63,6 @@ public class JSCoverage {
         this.enabled = false;
         this.scriptURLs = new HashMap<>();
         this.scriptSources = new HashMap<>();
-        this.eventListeners = new ArrayList<>();
         this.resetOnNavigation = false;
     }
 
@@ -79,37 +74,20 @@ public class JSCoverage {
         this.enabled = true;
         this.scriptURLs.clear();
         this.scriptSources.clear();
-        DefaultBrowserListener<ScriptParsedPayload> scriptParsedLis = new DefaultBrowserListener<ScriptParsedPayload>() {
-            @Override
-            public void onBrowserEvent(ScriptParsedPayload event) {
-                JSCoverage jsCoverage = (JSCoverage) this.getTarget();
-                jsCoverage.onScriptParsed(event);
-            }
-        };
-        scriptParsedLis.setTarget(this);
-        scriptParsedLis.setMethod("Debugger.scriptParsed");
-        this.eventListeners.add(Builder.addEventListener(this.client, scriptParsedLis.getMethod(), scriptParsedLis));
-
-        DefaultBrowserListener<Object> clearedLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                JSCoverage jsCoverage = (JSCoverage) this.getTarget();
-                jsCoverage.onExecutionContextsCleared();
-            }
-        };
-        clearedLis.setTarget(this);
-        clearedLis.setMethod("Runtime.executionContextsCleared");
-        this.eventListeners.add(Builder.addEventListener(this.client, clearedLis.getMethod(), clearedLis));
-
-        this.client.send("Profiler.enable", null, false);
+        this.disposables.add(Builder.fromEmitterEvent(this.client, CDPSession.CDPSessionEvent.Debugger_scriptparsed)
+                .subscribe((event) -> this.onScriptParsed((ScriptParsedEvent) event)));
+        this.disposables
+                .add(Builder.fromEmitterEvent(this.client, CDPSession.CDPSessionEvent.Runtime_executionContextsCleared)
+                        .subscribe((ignore) -> this.onExecutionContextsCleared()));
+        this.client.send("Profiler.enable", null, null, false);
         Map<String, Object> params = new HashMap<>();
         params.put("callCount", false);
         params.put("detailed", true);
-        this.client.send("Profiler.startPreciseCoverage", params, false);
-        this.client.send("Debugger.enable", null, false);
+        this.client.send("Profiler.startPreciseCoverage", params, null, false);
+        this.client.send("Debugger.enable", null, null, false);
         params.clear();
         params.put("skip", true);
-        this.client.send("Debugger.setSkipAllPauses", params, true);
+        this.client.send("Debugger.setSkipAllPauses", params);
 
     }
 
@@ -120,34 +98,32 @@ public class JSCoverage {
         this.scriptSources.clear();
     }
 
-    private void onScriptParsed(ScriptParsedPayload event) {
+    private void onScriptParsed(ScriptParsedEvent event) {
+        // Ignore puppeteer-injected scripts
         if (ExecutionContext.EVALUATION_SCRIPT_URL.equals(event.getUrl()))
             return;
-
+        // Ignore other anonymous scripts unless the reportAnonymousScripts option is true.
         if (StringKit.isEmpty(event.getUrl()) && !this.reportAnonymousScripts)
             return;
-        Builder.commonExecutor().submit(() -> {
+        ForkJoinPool.commonPool().submit(() -> {
             Map<String, Object> params = new HashMap<>();
             params.put("scriptId", event.getScriptId());
-            JSONObject response = client.send("Debugger.getScriptSource", params, true);
+            JsonNode response = client.send("Debugger.getScriptSource", params);
             scriptURLs.put(event.getScriptId(), event.getUrl());
-            scriptSources.put(event.getScriptId(), response.getString("scriptSource"));
+            scriptSources.put(event.getScriptId(), response.get("scriptSource").asText());
         });
     }
 
-    public List<CoverageEntry> stop() {
+    public List<CoverageEntry> stop() throws JsonProcessingException {
         Assert.isTrue(this.enabled, "JSCoverage is not enabled");
         this.enabled = false;
-
-        JSONObject result = this.client.send("Profiler.takePreciseCoverage", null, true);
-        this.client.send("Profiler.stopPreciseCoverage", null, false);
-        this.client.send("Profiler.disable", null, false);
-        this.client.send("Debugger.disable", null, false);
-
-        Builder.removeEventListeners(this.eventListeners);
-
+        JsonNode result = this.client.send("Profiler.takePreciseCoverage");
+        this.client.send("Profiler.stopPreciseCoverage");
+        this.client.send("Profiler.disable");
+        this.client.send("Debugger.disable");
+        this.disposables.forEach(Disposable::dispose);
         List<CoverageEntry> coverage = new ArrayList<>();
-        TakePreciseCoverageReturnValue profileResponse = JSON.toJavaObject(result,
+        TakePreciseCoverageReturnValue profileResponse = Builder.OBJECTMAPPER.treeToValue(result,
                 TakePreciseCoverageReturnValue.class);
         if (CollKit.isEmpty(profileResponse.getResult())) {
             return coverage;

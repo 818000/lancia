@@ -27,9 +27,15 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Collectors;
+
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.exception.InternalException;
 import org.miaixz.bus.core.xyz.StringKit;
@@ -39,30 +45,28 @@ import org.miaixz.lancia.nimble.dom.GetBoxModelReturnValue;
 import org.miaixz.lancia.nimble.input.BoxModel;
 import org.miaixz.lancia.nimble.input.ClickablePoint;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.option.ClickOptions;
-import org.miaixz.lancia.option.ScreenshotOptions;
-import org.miaixz.lancia.worker.CDPSession;
+import org.miaixz.lancia.options.ClickOptions;
+import org.miaixz.lancia.options.ClipOverwrite;
+import org.miaixz.lancia.options.ScreenshotOptions;
+import org.miaixz.lancia.options.Viewport;
+import org.miaixz.lancia.socket.CDPSession;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * ElementHandle表示页内DOM元素。可以使用page.$方法创建ElementHandles
- *
- * @author Kimi Liu
- * @since Java 17+
+ * ElementHandle represents an in-page DOM element. ElementHandles can be created with the page.$ method.
  */
 public class ElementHandle extends JSHandle {
 
-    private final CDPSession client;
-    private final RemoteObject remoteObject;
-    private final Page page;
-    private final FrameManager frameManager;
     private ExecutionContext context;
+
+    private CDPSession client;
+
+    private RemoteObject remoteObject;
+
+    private Page page;
+    private FrameManager frameManager;
 
     public ElementHandle(ExecutionContext context, CDPSession client, RemoteObject remoteObject, Page page,
             FrameManager frameManager) {
@@ -85,11 +89,11 @@ public class ElementHandle extends JSHandle {
     public Frame contentFrame() {
         Map<String, Object> params = new HashMap<>();
         params.put("objectId", this.remoteObject.getObjectId());
-        JSONObject nodeInfo = this.client.send("DOM.describeNode", params, true);
-        String frameId = nodeInfo.getJSONObject("node").getString("frameId");
-        if (frameId == null || StringKit.isEmpty(frameId))
+        JsonNode nodeInfo = this.client.send("DOM.describeNode", params);
+        JsonNode frameId = nodeInfo.get("node").get("frameId");
+        if (frameId == null || StringKit.isEmpty(frameId.asText()))
             return null;
-        return this.frameManager.frame(frameId);
+        return this.frameManager.frame(frameId.asText());
     }
 
     public void scrollIntoViewIfNeeded() {
@@ -104,34 +108,39 @@ public class ElementHandle extends JSHandle {
                 + "    observer.observe(element);\n" + "  });\n" + "  if (visibleRatio !== 1.0)\n"
                 + "    element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });\n"
                 + "  return false;\n" + "}";
-        Object error = this.evaluate(pageFunction, List.of(this.page.getJavascriptEnabled()));
-        if (error != null && error.getClass().equals(Boolean.class) && (boolean) error) {
-            throw new RuntimeException(JSON.toJSONString(error));
+        Object error = this.evaluate(pageFunction, Arrays.asList(this.page.getJavascriptEnabled()));
+        try {
+            if (error != null && error.getClass().equals(Boolean.class) && (boolean) error)
+                throw new RuntimeException(Builder.OBJECTMAPPER.writeValueAsString(error));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
+
     }
 
     private ClickablePoint clickablePoint() {
         Map<String, Object> params = new HashMap<>();
         params.put("objectId", this.remoteObject.getObjectId());
-        JSONObject result = this.client.send("DOM.getContentQuads", params, true);
-        JSONObject layoutMetrics = this.client.send("Page.getLayoutMetrics", null, true);
-        if (result == null || result.getJSONArray("quads").size() == 0) {
+        JsonNode result = this.client.send("DOM.getContentQuads", params);
+        JsonNode layoutMetrics = this.client.send("Page.getLayoutMetrics");
+        if (result == null || result.get("quads").size() == 0)
             throw new RuntimeException("Node is either not visible or not an HTMLElement");
-        }
-        JSONObject layoutViewport = layoutMetrics.getJSONObject("layoutViewport");
-        Integer clientWidth = layoutViewport.getInteger("clientWidth");
-        Integer clientHeight = layoutViewport.getInteger("clientHeight");
-        List<JSONObject> quadsNode = result.getObject("quads", new TypeReference<List<JSONObject>>() {
-        });
-        Iterator<JSONObject> elements = quadsNode.iterator();
+        // Filter out quads that have too small area to click into.
+        JsonNode layoutViewport = layoutMetrics.get("layoutViewport");
+        JsonNode clientWidth = layoutViewport.get("clientWidth");
+        JsonNode clientHeight = layoutViewport.get("clientHeight");
+        JsonNode quadsNode = result.get("quads");
+        Iterator<JsonNode> elements = quadsNode.elements();
         List<List<ClickablePoint>> quads = new ArrayList<>();
         while (elements.hasNext()) {
-            JSONObject quadNode = elements.next();
-            List<Integer> list = quadNode.toJavaObject(new TypeReference<List<Integer>>() {
-            });
-            List<Integer> quad = new ArrayList<>(list);
+            JsonNode quadNode = elements.next();
+            List<Integer> quad = new ArrayList<>();
+            Iterator<JsonNode> iterator = quadNode.elements();
+            while (iterator.hasNext()) {
+                quad.add(iterator.next().asInt());
+            }
             List<ClickablePoint> clickOptions = this.fromProtocolQuad(quad);
-            intersectQuadWithViewport(clickOptions, clientWidth, clientHeight);
+            intersectQuadWithViewport(clickOptions, clientWidth.asInt(), clientHeight.asInt());
             quads.add(clickOptions);
         }
         List<List<ClickablePoint>> collect = quads.stream().filter(quad -> computeQuadArea(quad) > 1)
@@ -152,13 +161,17 @@ public class ElementHandle extends JSHandle {
     private GetBoxModelReturnValue getBoxModel() {
         Map<String, Object> params = new HashMap<>();
         params.put("objectId", this.remoteObject.getObjectId());
-        JSONObject result = this.client.send("DOM.getBoxModel", params, true);
-        return JSON.parseObject(JSON.toJSONString(result), GetBoxModelReturnValue.class);
+        JsonNode result = this.client.send("DOM.getBoxModel", params);
+        try {
+            return Builder.OBJECTMAPPER.treeToValue(result, GetBoxModelReturnValue.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * 截图所选择的元素
-     *
+     * 
      * @param options                截图配置
      * @param scrollIntoViewIfNeeded 元素如果不可见时是否需要滚动浏览器
      * @return
@@ -166,7 +179,7 @@ public class ElementHandle extends JSHandle {
      */
     public String screenshot(ScreenshotOptions options, boolean scrollIntoViewIfNeeded) throws IOException {
         boolean needsViewportReset = false;
-        Clip boundingBox = this.boundingBox();
+        ClipOverwrite boundingBox = this.boundingBox();
         Assert.isTrue(boundingBox != null, "Node is either not visible or not an HTMLElement");
         Viewport viewport = this.page.viewport();
         if (viewport != null
@@ -188,10 +201,10 @@ public class ElementHandle extends JSHandle {
         Assert.isTrue(boundingBox != null, "Node is either not visible or not an HTMLElement");
         Assert.isTrue(boundingBox.getWidth() != 0, "Node has 0 width.");
         Assert.isTrue(boundingBox.getHeight() != 0, "Node has 0 height.");
-        JSONObject response = this.client.send("Page.getLayoutMetrics", null, true);
-        double pageX = response.getJSONObject("layoutViewport").getDouble("pageX");
-        double pageY = response.getJSONObject("layoutViewport").getDouble("pageY");
-        Clip clip = boundingBox;
+        JsonNode response = this.client.send("Page.getLayoutMetrics", null);
+        double pageX = response.get("layoutViewport").get("pageX").asDouble();
+        double pageY = response.get("layoutViewport").get("pageY").asDouble();
+        ClipOverwrite clip = boundingBox;
         clip.setX(clip.getX() + pageX);
         clip.setY(clip.getY() + pageY);
 
@@ -252,7 +265,7 @@ public class ElementHandle extends JSHandle {
         String defaultHandler = "(element, selector) => element.querySelector(selector)";
         QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selector, defaultHandler);
         JSHandle handle = (JSHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryOne(),
-                Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
+                Arrays.asList(queryHandlerAndSelector.getUpdatedSelector()));
         ElementHandle element = handle.asElement();
         if (element != null)
             return element;
@@ -267,7 +280,7 @@ public class ElementHandle extends JSHandle {
                 + "            const array = [];\n" + "            let item;\n"
                 + "            while ((item = iterator.iterateNext()))\n" + "                array.push(item);\n"
                 + "            return array;\n" + "        }";
-        JSHandle arrayHandle = (JSHandle) this.evaluateHandle(pageFunction, Collections.singletonList(expression));
+        JSHandle arrayHandle = (JSHandle) this.evaluateHandle(pageFunction, Arrays.asList(expression));
         Map<String, JSHandle> properties = arrayHandle.getProperties();
         arrayHandle.dispose();
         List<ElementHandle> result = new ArrayList<>();
@@ -292,10 +305,9 @@ public class ElementHandle extends JSHandle {
         String defaultHandler = "(element, selector) => Array.from(element.querySelectorAll(selector))";
         QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selector, defaultHandler);
 
-        ElementHandle arrayHandle = (ElementHandle) this.evaluateHandle(
-                queryHandlerAndSelector.getQueryHandler().queryAll(),
-                Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
-        ElementHandle result = (ElementHandle) arrayHandle.evaluate(pageFunction, args);
+        JSHandle arrayHandle = (JSHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryAll(),
+                Arrays.asList(queryHandlerAndSelector.getUpdatedSelector()));
+        Object result = arrayHandle.evaluate(pageFunction, args);
         arrayHandle.dispose();
         return result;
     }
@@ -304,7 +316,7 @@ public class ElementHandle extends JSHandle {
         String defaultHandler = "(element, selector) => element.querySelectorAll(selector)";
         QuerySelector queryHandlerAndSelector = Builder.getQueryHandlerAndSelector(selector, defaultHandler);
         JSHandle arrayHandle = (JSHandle) this.evaluateHandle(queryHandlerAndSelector.getQueryHandler().queryAll(),
-                Collections.singletonList(queryHandlerAndSelector.getUpdatedSelector()));
+                Arrays.asList(queryHandlerAndSelector.getUpdatedSelector()));
         Map<String, JSHandle> properties = arrayHandle.getProperties();
         arrayHandle.dispose();
         List<ElementHandle> result = new ArrayList<>();
@@ -327,17 +339,18 @@ public class ElementHandle extends JSHandle {
         return (Boolean) this.evaluate(pageFunction, new ArrayList<>());
     }
 
-    public void click() throws InterruptedException {
+    public void click() throws InterruptedException, ExecutionException {
         click(new ClickOptions(), true);
     }
 
     /**
      * 点击元素，可配置是否阻塞，如果阻塞，则等会点击结果返回，不阻塞的话，会放在另外一个线程中运行
-     *
+     * 
      * @param isBlock 是否阻塞
      * @throws InterruptedException 打断异常
+     * @throws ExecutionException   异常
      */
-    public void click(boolean isBlock) throws InterruptedException {
+    public void click(boolean isBlock) throws InterruptedException, ExecutionException {
         click(new ClickOptions(), isBlock);
     }
 
@@ -345,7 +358,7 @@ public class ElementHandle extends JSHandle {
         this.scrollIntoViewIfNeeded();
         ClickablePoint point = this.clickablePoint();
         if (!isBlock) {
-            Builder.commonExecutor().submit(() -> {
+            ForkJoinPool.commonPool().submit(() -> {
                 try {
                     this.page.mouse().click(point.getX(), point.getY(), options);
                 } catch (Exception e) {
@@ -368,6 +381,9 @@ public class ElementHandle extends JSHandle {
     }
 
     public List<String> select(List<String> values) {
+        /*
+         * its evaluate function is properly typed with generics we can return here and remove the typecasting
+         */
         String pageFunction = "(element, values) => {\n"
                 + "            if (element.nodeName.toLowerCase() !== 'select')\n"
                 + "                throw new Error('Element is not a <select> element.');\n"
@@ -384,6 +400,7 @@ public class ElementHandle extends JSHandle {
     }
 
     /**
+     *
      * @param isBlock 是否是阻塞的，阻塞的话会在当前线程内完成
      */
     public void tap(boolean isBlock) {
@@ -392,7 +409,7 @@ public class ElementHandle extends JSHandle {
         if (isBlock) {
             this.page.touchscreen().tap(point.getX(), point.getY());
         } else {
-            Builder.commonExecutor().submit(() -> this.page.touchscreen().tap(point.getX(), point.getY()));
+            ForkJoinPool.commonPool().submit(() -> this.page.touchscreen().tap(point.getX(), point.getY()));
         }
 
     }
@@ -419,7 +436,7 @@ public class ElementHandle extends JSHandle {
         this.page.keyboard().press(key, delay, text);
     }
 
-    public Clip boundingBox() {
+    public ClipOverwrite boundingBox() {
         GetBoxModelReturnValue result = this.getBoxModel();
         if (result == null)
             return null;
@@ -429,7 +446,7 @@ public class ElementHandle extends JSHandle {
         int width = Math.max(Math.max(Math.max(quad.get(0), quad.get(2)), quad.get(4)), quad.get(6)) - x;
         int height = Math.max(Math.max(Math.max(quad.get(1), quad.get(3)), quad.get(5)), quad.get(7)) - y;
 
-        return new Clip(x, y, width, height);
+        return new ClipOverwrite(x, y, width, height, 1);
     }
 
     public void uploadFile(List<String> filePaths) {
@@ -447,9 +464,12 @@ public class ElementHandle extends JSHandle {
         String objectId = this.remoteObject.getObjectId();
         Map<String, Object> params = new HashMap<>();
         params.put("objectId", objectId);
-        JSONObject node = this.client.send("DOM.describeNode", params, true);
-        int backendNodeId = node.getJSONObject("node").getInteger("backendNodeId");
-        if (files.size() == 0) {
+        JsonNode node = this.client.send("DOM.describeNode", params);
+        int backendNodeId = node.get("node").get("backendNodeId").asInt();
+        // The zero-length array is a special case, it seems that DOM.setFileInputFiles does
+        // not actually update the files in that case, so the solution is to eval the element
+        // value to a new FileList directly.
+        if (files.isEmpty()) {
             String pageFunction = "(element) => {\n" + "                    element.files = new DataTransfer().files;\n"
                     + "            // Dispatch events for this case because it should behave akin to a user action.\n"
                     + "            element.dispatchEvent(new Event('input', { bubbles: true }));\n"
@@ -460,7 +480,7 @@ public class ElementHandle extends JSHandle {
             params.put("objectId", objectId);
             params.put("files", files);
             params.put("backendNodeId", backendNodeId);
-            this.client.send("DOM.setFileInputFiles", params, true);
+            this.client.send("DOM.setFileInputFiles", params);
         }
     }
 

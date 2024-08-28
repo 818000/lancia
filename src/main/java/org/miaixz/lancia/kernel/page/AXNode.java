@@ -27,11 +27,6 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.nimble.accessbility.AXProperty;
-import org.miaixz.lancia.nimble.accessbility.SerializedAXNode;
-
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -43,19 +38,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.nimble.accessbility.AXProperty;
+import org.miaixz.lancia.nimble.accessbility.SerializedAXNode;
+
 public class AXNode {
 
-    public static final String[] TRISTATE_PROPERTIES = new String[] { "checked", "pressed" };
-    public static final String[] TOKEN_PROPERTIES = new String[] { "autocomplete", "haspopup", "invalid",
+    public static final String[] tristateProperties = new String[] { "checked", "pressed" };
+    public static final String[] tokenProperties = new String[] { "autocomplete", "haspopup", "invalid",
             "orientation" };
-    public static final String[] NUMERICAL_PROPERTIES = new String[] { "level", "valuemax", "valuemin" };
-    private static final String[] USERSTRING_PROPERTIES = new String[] { "name", "value", "description", "keyshortcuts",
+    public static final String[] numericalProperties = new String[] { "level", "valuemax", "valuemin" };
+    private static final String[] userStringProperties = new String[] { "name", "value", "description", "keyshortcuts",
             "roledescription", "valuetext" };
-    private static final String[] BOOLEAN_PROPERTIES = new String[] { "disabled", "expanded", "focused", "modal",
+    private static final String[] booleanProperties = new String[] { "disabled", "expanded", "focused", "modal",
             "multiline", "multiselectable", "readonly", "required", "selected" };
     private org.miaixz.lancia.nimble.accessbility.AXNode payload;
     private List<AXNode> children = new ArrayList<>();
@@ -69,6 +65,7 @@ public class AXNode {
     private Boolean cachedHasFocusableChild;
 
     public AXNode() {
+
     }
 
     public AXNode(org.miaixz.lancia.nimble.accessbility.AXNode payload) {
@@ -250,14 +247,14 @@ public class AXNode {
 
         BeanInfo beanInfo = Introspector.getBeanInfo(node.getClass());
 
-        for (String userStringProperty : USERSTRING_PROPERTIES) {
+        for (String userStringProperty : userStringProperties) {
             if (!properties.containsKey(userStringProperty))
                 continue;
             PropertyDescriptor propDesc = new PropertyDescriptor(userStringProperty, SerializedAXNode.class);
             propDesc.getWriteMethod().invoke(node, properties.get(userStringProperty));
         }
 
-        for (String booleanProperty : BOOLEAN_PROPERTIES) {
+        for (String booleanProperty : booleanProperties) {
             // WebArea's treat focus differently than other nodes. They report whether their frame has focus,
             // not whether focus is specifically on the root node.
             if ("focused".equals(booleanProperty) && "WebArea".equals(this.role))
@@ -270,7 +267,7 @@ public class AXNode {
             propDesc.getWriteMethod().invoke(node, value);
         }
 
-        for (String tristateProperty : TRISTATE_PROPERTIES) {
+        for (String tristateProperty : tristateProperties) {
             if (!properties.containsKey(tristateProperty))
                 continue;
 
@@ -278,14 +275,14 @@ public class AXNode {
             propDesc.getWriteMethod().invoke(node, properties.get(tristateProperty));
         }
 
-        for (String numericalProperty : NUMERICAL_PROPERTIES) {
+        for (String numericalProperty : numericalProperties) {
             if (!properties.containsKey(numericalProperty))
                 continue;
             PropertyDescriptor propDesc = new PropertyDescriptor(numericalProperty, SerializedAXNode.class);
             propDesc.getWriteMethod().invoke(node, properties.get(numericalProperty));
         }
 
-        for (String tokenProperty : TOKEN_PROPERTIES) {
+        for (String tokenProperty : tokenProperties) {
             Object value = properties.get(tokenProperty);
 
             if (value == null || "false".equals(value))

@@ -27,36 +27,31 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSONObject;
+import java.util.*;
+import java.util.function.Consumer;
+
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.DefaultBrowserListener;
-import org.miaixz.lancia.events.EventEmitter;
-import org.miaixz.lancia.events.Events;
-import org.miaixz.lancia.nimble.fetch.AuthRequiredPayload;
-import org.miaixz.lancia.nimble.fetch.RequestPausedPayload;
+import org.miaixz.lancia.Emitter;
+import org.miaixz.lancia.nimble.fetch.AuthRequiredEvent;
+import org.miaixz.lancia.nimble.fetch.RequestPausedEvent;
 import org.miaixz.lancia.nimble.network.*;
 import org.miaixz.lancia.nimble.webAuthn.Credentials;
-import org.miaixz.lancia.worker.CDPSession;
+import org.miaixz.lancia.socket.CDPSession;
 
-import java.util.*;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-/**
- * 网络管理
- *
- * @author Kimi Liu
- * @since Java 17+
- */
-public class NetworkManager extends EventEmitter {
+public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> {
 
+    /**
+     * cdpsession
+     */
     private final CDPSession client;
-
-    private final boolean ignoreHTTPSErrors;
 
     private final FrameManager frameManager;
     private final Map<String, Request> requestIdToRequest;
-    private final Map<String, RequestWillBeSentPayload> requestIdToRequestWillBeSentEvent;
+    private final Map<String, RequestWillBeSentEvent> requestIdToRequestWillBeSentEvent;
     private final Set<String> attemptedAuthentications;
     private final Map<String, String> requestIdToInterceptionId;
     private Map<String, String> extraHTTPHeaders;
@@ -66,9 +61,8 @@ public class NetworkManager extends EventEmitter {
     private boolean protocolRequestInterceptionEnabled;
     private boolean userCacheDisabled;
 
-    public NetworkManager(CDPSession client, boolean ignoreHTTPSErrors, FrameManager frameManager) {
+    public NetworkManager(CDPSession client, FrameManager frameManager) {
         this.client = client;
-        this.ignoreHTTPSErrors = ignoreHTTPSErrors;
         this.frameManager = frameManager;
         this.requestIdToRequest = new HashMap<>();
         this.requestIdToRequestWillBeSentEvent = new HashMap<>();
@@ -80,90 +74,25 @@ public class NetworkManager extends EventEmitter {
         this.protocolRequestInterceptionEnabled = false;
         this.userCacheDisabled = false;
         this.requestIdToInterceptionId = new HashMap<>();
-
-        DefaultBrowserListener<RequestPausedPayload> requestPausedListener = new DefaultBrowserListener<RequestPausedPayload>() {
-            @Override
-            public void onBrowserEvent(RequestPausedPayload event) {
-                NetworkManager manager = (NetworkManager) this.getTarget();
-                manager.onRequestPaused(event);
-            }
-        };
-        requestPausedListener.setMethod("Fetch.requestPaused");
-        requestPausedListener.setTarget(this);
-        this.client.addListener(requestPausedListener.getMethod(), requestPausedListener);
-
-        DefaultBrowserListener<AuthRequiredPayload> authRequiredListener = new DefaultBrowserListener<AuthRequiredPayload>() {
-            @Override
-            public void onBrowserEvent(AuthRequiredPayload event) {
-                NetworkManager manager = (NetworkManager) this.getTarget();
-                manager.onAuthRequired(event);
-            }
-        };
-        authRequiredListener.setMethod("Fetch.authRequired");
-        authRequiredListener.setTarget(this);
-        this.client.addListener(authRequiredListener.getMethod(), authRequiredListener);
-
-        DefaultBrowserListener<RequestWillBeSentPayload> requestWillBeSentListener = new DefaultBrowserListener<RequestWillBeSentPayload>() {
-            @Override
-            public void onBrowserEvent(RequestWillBeSentPayload event) {
-                NetworkManager manager = (NetworkManager) this.getTarget();
-                manager.onRequestWillBeSent(event);
-            }
-        };
-        requestWillBeSentListener.setMethod("Network.requestWillBeSent");
-        requestWillBeSentListener.setTarget(this);
-        this.client.addListener(requestWillBeSentListener.getMethod(), requestWillBeSentListener);
-
-        DefaultBrowserListener<RequestServedFromCachePayload> requestServedFromCacheListener = new DefaultBrowserListener<RequestServedFromCachePayload>() {
-            @Override
-            public void onBrowserEvent(RequestServedFromCachePayload event) {
-                NetworkManager manager = (NetworkManager) this.getTarget();
-                manager.onRequestServedFromCache(event);
-            }
-        };
-        requestServedFromCacheListener.setMethod("Network.requestServedFromCache");
-        requestServedFromCacheListener.setTarget(this);
-        this.client.addListener(requestServedFromCacheListener.getMethod(), requestServedFromCacheListener);
-
-        DefaultBrowserListener<ResponseReceivedPayload> responseReceivedListener = new DefaultBrowserListener<ResponseReceivedPayload>() {
-            @Override
-            public void onBrowserEvent(ResponseReceivedPayload event) {
-                NetworkManager manager = (NetworkManager) this.getTarget();
-                manager.onResponseReceived(event);
-            }
-        };
-        responseReceivedListener.setMethod("Network.responseReceived");
-        responseReceivedListener.setTarget(this);
-        this.client.addListener(responseReceivedListener.getMethod(), responseReceivedListener);
-
-        DefaultBrowserListener<LoadingFinishedPayload> loadingFinishedListener = new DefaultBrowserListener<LoadingFinishedPayload>() {
-            @Override
-            public void onBrowserEvent(LoadingFinishedPayload event) {
-                NetworkManager manager = (NetworkManager) this.getTarget();
-                manager.onLoadingFinished(event);
-            }
-        };
-        loadingFinishedListener.setMethod("Network.loadingFinished");
-        loadingFinishedListener.setTarget(this);
-        this.client.addListener(loadingFinishedListener.getMethod(), loadingFinishedListener);
-
-        DefaultBrowserListener<LoadingFailedPayload> loadingFailedListener = new DefaultBrowserListener<LoadingFailedPayload>() {
-            @Override
-            public void onBrowserEvent(LoadingFailedPayload event) {
-                NetworkManager manager = (NetworkManager) this.getTarget();
-                manager.onLoadingFailed(event);
-            }
-        };
-        loadingFailedListener.setMethod("Network.loadingFailed");
-        loadingFailedListener.setTarget(this);
-        this.client.addListener(loadingFailedListener.getMethod(), loadingFailedListener);
-
+        this.client.on(CDPSession.CDPSessionEvent.Fetch_requestPaused,
+                (Consumer<RequestPausedEvent>) this::onRequestPaused);
+        this.client.on(CDPSession.CDPSessionEvent.Fetch_authRequired,
+                (Consumer<AuthRequiredEvent>) this::onAuthRequired);
+        this.client.on(CDPSession.CDPSessionEvent.Network_requestWillBeSent,
+                (Consumer<RequestWillBeSentEvent>) this::onRequestWillBeSent);
+        this.client.on(CDPSession.CDPSessionEvent.Network_requestServedFromCache,
+                (Consumer<RequestServedFromCacheEvent>) this::onRequestServedFromCache);
+        this.client.on(CDPSession.CDPSessionEvent.Network_responseReceived,
+                (Consumer<ResponseReceivedEvent>) this::onResponseReceived);
+        this.client.on(CDPSession.CDPSessionEvent.Network_loadingFinished,
+                (Consumer<LoadingFinishedEvent>) this::onLoadingFinished);
+        this.client.on(CDPSession.CDPSessionEvent.Network_loadingFailed,
+                (Consumer<LoadingFailedEvent>) this::onLoadingFailed);
     }
 
     public void setExtraHTTPHeaders(Map<String, String> extraHTTPHeaders) {
         this.extraHTTPHeaders = new HashMap<>();
         for (Map.Entry<String, String> entry : extraHTTPHeaders.entrySet()) {
-
             String value = entry.getValue();
             Assert.isTrue(Builder.isString(value), "Expected value of header " + entry.getKey() + " to be String, but "
                     + value.getClass().getCanonicalName() + " is found.");
@@ -171,17 +100,11 @@ public class NetworkManager extends EventEmitter {
         }
         Map<String, Object> params = new HashMap<>();
         params.put("headers", this.extraHTTPHeaders);
-        this.client.send("Network.setExtraHTTPHeaders", params, true);
+        this.client.send("Network.setExtraHTTPHeaders", params);
     }
 
     public void initialize() {
-        this.client.send("Network.enable", null, true);
-        if (this.ignoreHTTPSErrors) {
-            Map<String, Object> params = new HashMap<>();
-            params.put("ignore", true);
-            this.client.send("Security.setIgnoreCertificateErrors", params, true);
-        }
-
+        this.client.send("Network.enable");
     }
 
     public void authenticate(Credentials credentials) {
@@ -203,13 +126,13 @@ public class NetworkManager extends EventEmitter {
         params.put("latency", 0);
         params.put("downloadThroughput", -1);
         params.put("uploadThroughput", -1);
-        this.client.send("Network.emulateNetworkConditions", params, true);
+        this.client.send("Network.emulateNetworkConditions", params);
     }
 
     public void setUserAgent(String userAgent) {
         Map<String, Object> params = new HashMap<>();
         params.put("userAgent", userAgent);
-        this.client.send("Network.setUserAgentOverride", params, true);
+        this.client.send("Network.setUserAgentOverride", params);
     }
 
     public void setCacheEnabled(boolean enabled) {
@@ -226,7 +149,7 @@ public class NetworkManager extends EventEmitter {
         Map<String, Object> params = new HashMap<>();
         boolean cacheDisabled = this.userCacheDisabled || this.protocolRequestInterceptionEnabled;
         params.put("cacheDisabled", cacheDisabled);
-        this.client.send("Network.setCacheDisabled", params, true);
+        this.client.send("Network.setCacheDisabled", params);
     }
 
     public void updateProtocolRequestInterception() {
@@ -239,15 +162,15 @@ public class NetworkManager extends EventEmitter {
             Map<String, Object> params = new HashMap<>();
             params.put("handleAuthRequests", true);
             List<Object> patterns = new ArrayList<>();
-            patterns.add(new JSONObject().put("urlPattern", "*"));
+            patterns.add(Builder.OBJECTMAPPER.createObjectNode().put("urlPattern", "*"));
             params.put("patterns", patterns);
-            this.client.send("Fetch.enable", params, true);
+            this.client.send("Fetch.enable", params);
         } else {
-            this.client.send("Fetch.disable", null, true);
+            this.client.send("Fetch.disable");
         }
     }
 
-    public void onRequestWillBeSent(RequestWillBeSentPayload event) {
+    public void onRequestWillBeSent(RequestWillBeSentEvent event) {
         // Request interception doesn't happen for data URLs with Network Service.
         if (this.protocolRequestInterceptionEnabled && !event.getRequest().url().startsWith("data:")) {
             String requestId = event.getRequestId();
@@ -263,7 +186,7 @@ public class NetworkManager extends EventEmitter {
         this.onRequest(event, null);
     }
 
-    public void onAuthRequired(AuthRequiredPayload event) {
+    public void onAuthRequired(AuthRequiredEvent event) {
         /* @type {"Default"|"CancelAuth"|"ProvideCredentials"} */
         String response = "Default";
         if (this.attemptedAuthentications.contains(event.getRequestId())) {
@@ -273,7 +196,7 @@ public class NetworkManager extends EventEmitter {
             this.attemptedAuthentications.add(event.getRequestId());
         }
         String username, password;
-        JSONObject respParams = new JSONObject();
+        ObjectNode respParams = Builder.OBJECTMAPPER.createObjectNode();
         respParams.put("response", response);
         if (this.credentials != null) {
             if (StringKit.isNotEmpty(username = credentials.getUsername())) {
@@ -287,20 +210,20 @@ public class NetworkManager extends EventEmitter {
         params.put("response", "Default");
         params.put("requestId", event.getRequestId());
         params.put("authChallengeResponse", respParams);
-        this.client.send("Fetch.continueWithAuth", params, false);
+        this.client.send("Fetch.continueWithAuth", params, null, false);
     }
 
-    public void onRequestPaused(RequestPausedPayload event) {
+    public void onRequestPaused(RequestPausedEvent event) {
         if (!this.userRequestInterceptionEnabled && this.protocolRequestInterceptionEnabled) {
             Map<String, Object> params = new HashMap<>();
             params.put("requestId", event.getRequestId());
-            this.client.send("Fetch.continueRequest", params, false);
+            this.client.send("Fetch.continueRequest", params, null, false);
         }
 
         String requestId = event.getNetworkId();
         String interceptionId = event.getRequestId();
         if (StringKit.isNotEmpty(requestId) && this.requestIdToRequestWillBeSentEvent.containsKey(requestId)) {
-            RequestWillBeSentPayload requestWillBeSentEvent = this.requestIdToRequestWillBeSentEvent.get(requestId);
+            RequestWillBeSentEvent requestWillBeSentEvent = this.requestIdToRequestWillBeSentEvent.get(requestId);
             this.onRequest(requestWillBeSentEvent, interceptionId);
             this.requestIdToRequestWillBeSentEvent.remove(requestId);
         } else {
@@ -308,7 +231,7 @@ public class NetworkManager extends EventEmitter {
         }
     }
 
-    public void onRequest(RequestWillBeSentPayload event, String interceptionId) {
+    public void onRequest(RequestWillBeSentEvent event, String interceptionId) {
         List<Request> redirectChain = new ArrayList<>();
         if (event.getRedirectResponse() != null) {
             Request request = this.requestIdToRequest.get(event.getRequestId());
@@ -322,7 +245,7 @@ public class NetworkManager extends EventEmitter {
         Request request = new Request(this.client, frame, interceptionId, this.userRequestInterceptionEnabled, event,
                 redirectChain);
         this.requestIdToRequest.put(event.getRequestId(), request);
-        this.emit(Events.NETWORK_MANAGER_REQUEST.getName(), request);
+        this.emit(NetworkManagerEvent.Request, request);
     }
 
     private void handleRequestRedirect(Request request, ResponsePayload responsePayload) {
@@ -332,11 +255,11 @@ public class NetworkManager extends EventEmitter {
         response.resolveBody("Response body is unavailable for redirect responses");
         this.requestIdToRequest.remove(request.requestId());
         this.attemptedAuthentications.remove(request.interceptionId());
-        this.emit(Events.NETWORK_MANAGER_RESPONSE.getName(), response);
-        this.emit(Events.NETWORK_MANAGER_REQUEST_FINISHED.getName(), request);
+        this.emit(NetworkManagerEvent.Response, response);
+        this.emit(NetworkManagerEvent.RequestFinished, request);
     }
 
-    public void onLoadingFinished(LoadingFinishedPayload event) {
+    public void onLoadingFinished(LoadingFinishedEvent event) {
         Request request = this.requestIdToRequest.get(event.getRequestId());
         // For certain requestIds we never receive requestWillBeSent event.
         // @see https://crbug.com/750469
@@ -349,20 +272,20 @@ public class NetworkManager extends EventEmitter {
             request.response().bodyLoadedPromiseFulfill(null);
         this.requestIdToRequest.remove(request.requestId());
         this.attemptedAuthentications.remove(request.interceptionId());
-        this.emit(Events.NETWORK_MANAGER_REQUEST_FINISHED.getName(), request);
+        this.emit(NetworkManagerEvent.RequestFailed, request);
     }
 
-    public void onResponseReceived(ResponseReceivedPayload event) {
+    public void onResponseReceived(ResponseReceivedEvent event) {
         Request request = this.requestIdToRequest.get(event.getRequestId());
         // FileUpload sends a response without a matching request.
         if (request == null)
             return;
         Response response = new Response(this.client, request, event.getResponse());
         request.setResponse(response);
-        this.emit(Events.NETWORK_MANAGER_RESPONSE.getName(), response);
+        this.emit(NetworkManagerEvent.Response, response);
     }
 
-    public void onLoadingFailed(LoadingFailedPayload event) {
+    public void onLoadingFailed(LoadingFailedEvent event) {
         Request request = this.requestIdToRequest.get(event.getRequestId());
         // For certain requestIds we never receive requestWillBeSent event.
         // @see https://crbug.com/750469
@@ -374,13 +297,33 @@ public class NetworkManager extends EventEmitter {
             response.bodyLoadedPromiseFulfill(null);
         this.requestIdToRequest.remove(request.requestId());
         this.attemptedAuthentications.remove(request.interceptionId());
-        this.emit(Events.NETWORK_MANAGER_REQUEST_FAILED.getName(), request);
+        this.emit(NetworkManagerEvent.RequestFailed, request);
     }
 
-    public void onRequestServedFromCache(RequestServedFromCachePayload event) {
+    public void onRequestServedFromCache(RequestServedFromCacheEvent event) {
         Request request = this.requestIdToRequest.get(event.getRequestId());
         if (request != null)
             request.setFromMemoryCache(true);
+    }
+
+    public enum NetworkManagerEvent {
+        Request("NetworkManager.Request"), RequestServedFromCache("NetworkManager.RequestServedFromCache"),
+        Response("NetworkManager.Response"), RequestFailed("NetworkManager.RequestFailed"),
+        RequestFinished("NetworkManager.RequestFinished");
+
+        private String eventName;
+
+        NetworkManagerEvent(String eventName) {
+            this.eventName = eventName;
+        }
+
+        public String getEventName() {
+            return eventName;
+        }
+
+        public void setEventName(String eventName) {
+            this.eventName = eventName;
+        }
     }
 
 }

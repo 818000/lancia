@@ -29,11 +29,8 @@ package org.miaixz.lancia.nimble.dom;
 
 import org.miaixz.lancia.nimble.input.BoxModel;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class GetBoxModelReturnValue {
+
     /**
      * Box model for the node.
      */
@@ -46,4 +43,5 @@ public class GetBoxModelReturnValue {
     public void setModel(BoxModel model) {
         this.model = model;
     }
+
 }

@@ -27,6 +27,8 @@
 */
 package org.miaixz.lancia;
 
+import static org.miaixz.lancia.Builder.PRODUCT_ENV;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -34,16 +36,15 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.kernel.Variables;
 import org.miaixz.lancia.kernel.browser.Fetcher;
 import org.miaixz.lancia.launch.ChromeLauncher;
-import org.miaixz.lancia.launch.FirefoxLauncher;
-import org.miaixz.lancia.option.*;
-import org.miaixz.lancia.worker.Transport;
+import org.miaixz.lancia.options.ConnectOptions;
+import org.miaixz.lancia.options.FetcherOptions;
+import org.miaixz.lancia.options.LaunchOptions;
+import org.miaixz.lancia.options.LaunchOptionsBuilder;
+import org.miaixz.lancia.socket.ConnectionTransport;
 
 /**
  * Puppeteer 也可以用来控制 Chrome 浏览器， 但它与绑定的 Chromium 版本在一起使用效果最好。不能保证它可以与任何其他版本一起使用。谨慎地使用 executablePath 选项。 如果 Google
  * Chrome（而不是Chromium）是首选，一个 Chrome Canary 或 Dev Channel 版本是建议的
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class Puppeteer {
 
@@ -51,7 +52,7 @@ public class Puppeteer {
 
     private Launcher launcher;
 
-    private Variables variables = null;
+    private Variables env = null;
 
     private String projectRoot = System.getProperty("user.dir");
 
@@ -92,81 +93,50 @@ public class Puppeteer {
     }
 
     private static Browser rawLaunch(boolean headless) {
-        return rawLaunch(new LaunchOptionsBuilder().headless(headless).build(), new Puppeteer());
+        return rawLaunch(new LaunchOptionsBuilder().withHeadless(headless).build(), new Puppeteer());
     }
 
     /**
      * 连接一个已经存在的浏览器实例 browserWSEndpoint、browserURL、transport有其中一个就行了 browserWSEndpoint:类似 UUID
-     * 的字符串，可通过{@link Browser#wsEndpoint()}获取 browserURL: 类似 localhost:8080 这个地址 transport: 之前已经创建好的 Transport
-     *
-     * @param options           连接的浏览器选项
-     * @param browserWSEndpoint websocket http transport 三选一
-     * @param browserURL        websocket http transport 三选一
-     * @param transport         websocket http transport 三选一
-     * @param product           谷歌还是火狐
+     * 的字符串，可通过{@link Browser#wsEndpoint()}获取 browserURL: 类似 localhost:8080 这个地址 transport: 之前已经创建好的 ConnectionTransport
+     * 
+     * @param options 连接的浏览器选项
      * @return 浏览器实例
      */
-    private static Browser connect(ConnectOptions options, String browserWSEndpoint, String browserURL,
-            Transport transport, String product) {
+    private static Browser connect(ConnectOptions options) {
         Puppeteer puppeteer = new Puppeteer();
-
-        if (StringKit.isNotEmpty(product))
-            puppeteer.setProductName(product);
         adapterLauncher(puppeteer);
-        return puppeteer.getLauncher().connect(options, browserWSEndpoint, browserURL, transport);
-    }
-
-    /**
-     * 连接一个已经存在的 Browser 实例 browserWSEndpoint、browserURL、transport有其中一个就行了 browserWSEndpoint:类似 UUID
-     * 的字符串，可通过{@link Browser#wsEndpoint()}获取 browserURL: 类似 localhost:8080 这个地址 transport: 之前已经创建好的 Transport
-     *
-     * @param options           连接的浏览器选项
-     * @param browserWSEndpoint websocket http transport 三选一
-     * @param browserURL        websocket http transport 三选一
-     * @param transport         websocket http transport 三选一
-     * @return 浏览器实例
-     */
-    public static Browser connect(ConnectOptions options, String browserWSEndpoint, String browserURL,
-            Transport transport) {
-        return Puppeteer.connect(options, browserWSEndpoint, browserURL, transport, null);
-    }
-
-    /**
-     * 连接一个已经存在的 Browser 实例 browserWSEndpoint、browserURL、transport有其中一个就行了 browserWSEndpoint:类似 UUID
-     * 的字符串，可通过{@link Browser#wsEndpoint()}获取 browserURL: 类似 localhost:8080 这个地址 transport: 之前已经创建好的 Transport
-     *
-     * @param browserWSEndpoint websocket http transport 三选一
-     * @param browserURL        websocket http transport 三选一
-     * @param transport         websocket http transport 三选一
-     * @return 浏览器实例
-     */
-    public static Browser connect(String browserWSEndpoint, String browserURL, Transport transport) {
-        return Puppeteer.connect(new ConnectOptions(), browserWSEndpoint, browserURL, transport, null);
+        return puppeteer.getLauncher().connect(options);
     }
 
     /**
      * 连接一个已经存在的 Browser 实例 browserWSEndpoint:类似 UUID 的字符串，可通过{@link Browser#wsEndpoint()}获取 browserURL: 类似
      * localhost:8080 这个地址
-     *
+     * 
      * @param browserWSEndpointOrURL 一个Browser实例对应一个browserWSEndpoint
      * @return 浏览器实例
      */
     public static Browser connect(String browserWSEndpointOrURL) {
+        ConnectOptions options = new ConnectOptions();
         if (browserWSEndpointOrURL.contains(":")) {
-            return Puppeteer.connect(null, browserWSEndpointOrURL, null);
+            options.setBrowserURL(browserWSEndpointOrURL);
+            return connect(options);
         } else {
-            return Puppeteer.connect(browserWSEndpointOrURL, null, null);
+            options.setBrowserWSEndpoint(browserWSEndpointOrURL);
+            return connect(options);
         }
     }
 
     /**
-     * 连接一个已经存在的 Browser 实例 transport: 之前已经创建好的 Transport
-     *
+     * 连接一个已经存在的 Browser 实例 transport: 之前已经创建好的 ConnectionTransport
+     * 
      * @param transport websocket http transport 三选一
      * @return 浏览器实例
      */
-    public static Browser connect(Transport transport) {
-        return Puppeteer.connect(null, null, transport);
+    public static Browser connect(ConnectionTransport transport) {
+        ConnectOptions options = new ConnectOptions();
+        options.setTransport(transport);
+        return connect(options);
     }
 
     /**
@@ -186,15 +156,16 @@ public class Puppeteer {
      */
     private static void adapterLauncher(Puppeteer puppeteer) {
         String productName;
-
-        Variables variables;
+        Launcher launcher;
+        Variables env;
         if (StringKit.isEmpty(productName = puppeteer.getProductName()) && !puppeteer.getIsPuppeteerCore()) {
-            if ((variables = puppeteer.getContext()) == null) {
-                puppeteer.setContext(variables = System::getenv);
+
+            if ((env = puppeteer.getEnv()) == null) {
+                puppeteer.setEnv(env = System::getenv);
             }
-            for (int i = 0; i < Builder.PRODUCT_ENV.length; i++) {
-                String envProductName = Builder.PRODUCT_ENV[i];
-                productName = variables.getEnv(envProductName);
+            for (int i = 0; i < PRODUCT_ENV.length; i++) {
+                String envProductName = PRODUCT_ENV[i];
+                productName = env.getEnv(envProductName);
                 if (StringKit.isNotEmpty(productName)) {
                     puppeteer.setProductName(productName);
                     break;
@@ -205,25 +176,37 @@ public class Puppeteer {
             productName = "chrome";
             puppeteer.setProductName(productName);
         }
-        Launcher launcher;
         switch (productName) {
         case "firefox":
-            launcher = new FirefoxLauncher(puppeteer.getIsPuppeteerCore());
         case "chrome":
         default:
-            launcher = new ChromeLauncher(puppeteer.getProjectRoot(), puppeteer.getPreferredRevision(),
-                    puppeteer.getIsPuppeteerCore());
+            launcher = new ChromeLauncher(System.getProperty("user.dir"), puppeteer.getPreferredRevision());
         }
         puppeteer.setLauncher(launcher);
     }
 
     /**
+     * 指定启动版本，开启浏览器
+     * 
+     * @param options 启动参数
+     * @param version 浏览器版本
+     * @return 浏览器实例
+     */
+    public static Browser launch(LaunchOptions options, String version) {
+        Puppeteer puppeteer = new Puppeteer();
+        if (StringKit.isNotEmpty(version)) {
+            puppeteer.setPreferredRevision(version);
+        }
+        return Puppeteer.rawLaunch(options, puppeteer);
+    }
+
+    /**
      * 返回默认的运行的参数
-     *
+     * 
      * @param options 可自己添加的选项
      * @return 默认参数集合
      */
-    public List<String> defaultArgs(ArgumentOptions options) {
+    public List<String> defaultArgs(LaunchOptions options) {
         return this.getLauncher().defaultArgs(options);
     }
 
@@ -232,11 +215,11 @@ public class Puppeteer {
     }
 
     public Fetcher createBrowserFetcher() {
-        return new Fetcher(this.getProjectRoot(), new FetcherOptions());
+        return new Fetcher(this.projectRoot, new FetcherOptions());
     }
 
     public Fetcher createBrowserFetcher(FetcherOptions options) {
-        return new Fetcher(this.getProjectRoot(), options);
+        return new Fetcher(this.projectRoot, options);
     }
 
     private String getProductName() {
@@ -259,12 +242,12 @@ public class Puppeteer {
         this.launcher = launcher;
     }
 
-    private Variables getContext() {
-        return this.variables;
+    private Variables getEnv() {
+        return env;
     }
 
-    private void setContext(Variables variables) {
-        this.variables = variables;
+    private void setEnv(Variables env) {
+        this.env = env;
     }
 
     public String getProjectRoot() {

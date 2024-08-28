@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.performance;
 
 /**
  * Run-time execution metric.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class Metric {
 

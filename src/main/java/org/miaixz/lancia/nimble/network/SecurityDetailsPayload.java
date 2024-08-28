@@ -31,11 +31,9 @@ import java.util.List;
 
 /**
  * Security details about a request.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class SecurityDetailsPayload {
+
     /**
      * Protocol name (e.g. "TLS 1.2" or "QUIC").
      */
@@ -192,4 +190,5 @@ public class SecurityDetailsPayload {
     public void setCertificateTransparencyCompliance(String certificateTransparencyCompliance) {
         this.certificateTransparencyCompliance = certificateTransparencyCompliance;
     }
+
 }

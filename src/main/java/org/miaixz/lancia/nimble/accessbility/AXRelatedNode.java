@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.accessbility;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class AXRelatedNode {
 
     /**
@@ -69,4 +65,5 @@ public class AXRelatedNode {
     public void setText(String text) {
         this.text = text;
     }
+
 }

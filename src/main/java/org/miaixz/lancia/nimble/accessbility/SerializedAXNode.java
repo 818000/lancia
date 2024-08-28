@@ -29,10 +29,6 @@ package org.miaixz.lancia.nimble.accessbility;
 
 import java.util.List;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class SerializedAXNode {
 
     private String role;
@@ -298,4 +294,5 @@ public class SerializedAXNode {
     public void setChildren(List<SerializedAXNode> children) {
         this.children = children;
     }
+
 }

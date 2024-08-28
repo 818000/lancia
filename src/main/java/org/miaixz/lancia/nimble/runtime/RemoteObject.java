@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.runtime;
 
 /**
  * Mirror object referencing original JavaScript object.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class RemoteObject {
 

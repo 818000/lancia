@@ -29,10 +29,6 @@ package org.miaixz.lancia.nimble.input;
 
 import java.util.List;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class BoxModel {
 
     private List<Integer> content;
@@ -107,4 +103,5 @@ public class BoxModel {
     public void setHeight(int height) {
         this.height = height;
     }
+
 }

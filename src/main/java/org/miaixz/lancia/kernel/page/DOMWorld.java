@@ -27,28 +27,25 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.nimble.PageEvaluateType;
-import org.miaixz.lancia.option.*;
-import org.miaixz.lancia.worker.exception.NavigateException;
-import org.miaixz.lancia.worker.exception.TimeoutException;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.exception.TimeoutException;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.nimble.PageEvaluateType;
+import org.miaixz.lancia.options.*;
+
 public class DOMWorld {
 
     private FrameManager frameManager;
@@ -104,9 +101,12 @@ public class DOMWorld {
         if (context != null) {
             this.contextResolveCallback(context);
             hasContext = true;
-            for (WaitTask waitTask : this.waitTasks) {
-                Builder.commonExecutor().submit(waitTask::rerun);
-            }
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+            // 将每个 WaitTask 的 rerun() 调用转换为 CompletableFuture
+            this.waitTasks.forEach(task -> {
+                futures.add(CompletableFuture.runAsync(task::rerun));
+            });
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } else {
             this.documentPromise = null;
             this.hasContext = false;
@@ -187,48 +187,29 @@ public class DOMWorld {
         return document.$$(selector);
     }
 
-    public void setContent(String html, PageNavigateOptions options) {
-        List<String> waitUntil;
-        int timeout;
+    public void setContent(String html, GoToOptions options) {
+        List<PuppeteerLifeCycle> waitUntil;
+        Integer timeout;
         if (options == null) {
             waitUntil = new ArrayList<>();
-            waitUntil.add("load");
+            waitUntil.add(PuppeteerLifeCycle.LOAD);
             timeout = this.timeoutSettings.navigationTimeout();
         } else {
             if (CollKit.isEmpty(waitUntil = options.getWaitUntil())) {
                 waitUntil = new ArrayList<>();
-                waitUntil.add("load");
+                waitUntil.add(PuppeteerLifeCycle.LOAD);
             }
-            if ((timeout = options.getTimeout()) <= 0) {
+            if ((timeout = options.getTimeout()) == null) {
                 timeout = this.timeoutSettings.navigationTimeout();
             }
         }
-        LifecycleWatcher watcher = new LifecycleWatcher(this.frameManager, this.frame, waitUntil, timeout);
+        LifecycleWatcher watcher = new LifecycleWatcher(this.frameManager.getNetworkManager(), this.frame, waitUntil,
+                timeout);
         this.evaluate("(html) => {\n" + "      document.open();\n" + "      document.write(html);\n"
                 + "      document.close();\n" + "    }", Collections.singletonList(html));
-        if (watcher.lifecyclePromise() != null) {
-            return;
-        }
-        try {
-            CountDownLatch latch = new CountDownLatch(1);
-            this.frameManager.setContentLatch(latch);
-            this.frameManager.setNavigateResult(null);
-            boolean await = latch.await(timeout, TimeUnit.MILLISECONDS);
-            if (await) {
-                if (NavigateResult.CONTENT_SUCCESS.getResult().equals(this.frameManager.getNavigateResult())) {
 
-                } else if (NavigateResult.TIMEOUT.getResult().equals(this.frameManager.getNavigateResult())) {
-                    throw new TimeoutException("setContent timeout :" + html);
-                } else if (NavigateResult.TERMINATION.getResult().equals(this.frameManager.getNavigateResult())) {
-                    throw new NavigateException("Navigating frame was detached");
-                } else {
-                    throw new NavigateException("UnNokwn result " + this.frameManager.getNavigateResult());
-                }
-            } else {
-                throw new TimeoutException("setContent timeout " + html);
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        try {
+            watcher.waitForLifecycle();
         } finally {
             watcher.dispose();
         }
@@ -282,7 +263,7 @@ public class DOMWorld {
         if (options != null && StringKit.isNotEmpty(options.getUrl())) {
             ExecutionContext context = this.executionContext();
             ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleUrl(),
-                    Collections.singletonList(options.getUrl()));
+                    Arrays.asList(options.getUrl()));
             return handle.asElement();
         }
 
@@ -291,14 +272,14 @@ public class DOMWorld {
             String content = String.join("\n", contents) + "/*# sourceURL=" + options.getPath().replaceAll("\n", "")
                     + "*/";
             ExecutionContext context = this.executionContext();
-            ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleContent(), List.of(content));
+            ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleContent(), Arrays.asList(content));
             return handle.asElement();
         }
 
         if (options != null && StringKit.isNotEmpty(options.getContent())) {
             ExecutionContext context = this.executionContext();
             ElementHandle handle = (ElementHandle) context.evaluateHandle(addStyleContent(),
-                    Collections.singletonList(options.getContent()));
+                    Arrays.asList(options.getContent()));
             return handle.asElement();
         }
 
@@ -329,7 +310,7 @@ public class DOMWorld {
             handle.dispose();
             return;
         }
-        Builder.commonExecutor().submit(() -> {
+        ForkJoinPool.commonPool().submit(() -> {
             try {
                 handle.click(options, true);
                 handle.dispose();
@@ -369,7 +350,7 @@ public class DOMWorld {
             handle.tap();
             handle.dispose();
         } else {
-            Builder.commonExecutor().submit(() -> {
+            ForkJoinPool.commonPool().submit(() -> {
                 handle.tap();
                 handle.dispose();
             });

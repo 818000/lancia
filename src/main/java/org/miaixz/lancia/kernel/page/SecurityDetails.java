@@ -29,10 +29,6 @@ package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.lancia.nimble.network.SecurityDetailsPayload;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class SecurityDetails {
 
     private String subjectName;
@@ -46,6 +42,7 @@ public class SecurityDetails {
     private String protocol;
 
     public SecurityDetails() {
+
     }
 
     public SecurityDetails(SecurityDetailsPayload securityDetails) {
@@ -115,4 +112,5 @@ public class SecurityDetails {
     public void setProtocol(String protocol) {
         this.protocol = protocol;
     }
+
 }

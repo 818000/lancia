@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.network;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class RemoteAddress {
 
     private String ip;
@@ -38,6 +34,7 @@ public class RemoteAddress {
     private int port;
 
     public RemoteAddress() {
+
     }
 
     public RemoteAddress(String ip, int port) {

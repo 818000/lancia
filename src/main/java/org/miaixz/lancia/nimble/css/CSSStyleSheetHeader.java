@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.css;
 
 /**
  * CSS stylesheet metainformation.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class CSSStyleSheetHeader {
 
@@ -217,4 +214,5 @@ public class CSSStyleSheetHeader {
     public void setEndColumn(int endColumn) {
         this.endColumn = endColumn;
     }
+
 }

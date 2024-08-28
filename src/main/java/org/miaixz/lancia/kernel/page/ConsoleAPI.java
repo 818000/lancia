@@ -27,15 +27,12 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.lancia.nimble.runtime.StackTrace;
-
 import java.util.List;
+
+import org.miaixz.lancia.nimble.runtime.StackTrace;
 
 /**
  * 打印页面console事件接口
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 @FunctionalInterface
 public interface ConsoleAPI {

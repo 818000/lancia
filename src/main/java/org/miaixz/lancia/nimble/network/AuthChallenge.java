@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.network;
 
 /**
  * Authorization challenge for HTTP status code 401 or 407.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class AuthChallenge {
 

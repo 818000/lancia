@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.network;
 
 /**
  * Details of a signed certificate timestamp (SCT).
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class SignedCertificateTimestamp {
 
@@ -131,4 +128,5 @@ public class SignedCertificateTimestamp {
     public void setSignatureData(String signatureData) {
         this.signatureData = signatureData;
     }
+
 }

@@ -29,13 +29,12 @@ package org.miaixz.lancia.nimble.accessbility;
 
 /**
  * A single source for a computed AX property.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class AXValueSource {
+
     /**
      * What type of source this is. "attribute"|"implicit"|"style"|"contents"|"placeholder"|"relatedElement";
+     *
      */
     private String type;
     /**
@@ -57,6 +56,7 @@ public class AXValueSource {
     /**
      * The native markup source for this value, e.g. a <label> element.
      * "figcaption"|"label"|"labelfor"|"labelwrapped"|"legend"|"tablecaption"|"title"|"other";
+     *
      */
     private String nativeSource;
     /**
@@ -143,4 +143,5 @@ public class AXValueSource {
     public void setInvalidReason(String invalidReason) {
         this.invalidReason = invalidReason;
     }
+
 }

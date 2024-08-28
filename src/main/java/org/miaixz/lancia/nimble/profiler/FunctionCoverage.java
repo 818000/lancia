@@ -31,10 +31,8 @@ import java.util.List;
 
 /**
  * Coverage data for a JavaScript function.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
+
 public class FunctionCoverage {
 
     /**

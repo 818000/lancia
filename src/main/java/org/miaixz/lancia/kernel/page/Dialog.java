@@ -27,25 +27,22 @@
 */
 package org.miaixz.lancia.kernel.page;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.nimble.log.DialogType;
-import org.miaixz.lancia.worker.CDPSession;
+import org.miaixz.lancia.nimble.logging.DialogType;
+import org.miaixz.lancia.socket.CDPSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Future;
-
-/**
- * 提示弹框信息
- *
- * @author Kimi Liu
- * @since Java 17+
- */
 public class Dialog {
+
+    private static final Logger log = LoggerFactory.getLogger(Dialog.class);
 
     private CDPSession client;
 
@@ -94,21 +91,21 @@ public class Dialog {
 
     /**
      * 接受对话框
-     *
+     * 
      * @param promptText 在提示中输入的文本。如果对话框type不提示，则不会引起任何影响
      * @return 对话框关闭后返回
      */
     public Future<Boolean> accept(String promptText) {
-        return Builder.commonExecutor().submit(() -> {
+        return ForkJoinPool.commonPool().submit(() -> {
             try {
                 Assert.isTrue(!this.handled, "Cannot accept dialog which is already handled!");
                 this.handled = true;
                 Map<String, Object> params = new HashMap<>();
                 params.put("accept", true);
                 params.put("promptText", promptText);
-                this.client.send("Page.handleJavaScriptDialog", params, true);
+                this.client.send("Page.handleJavaScriptDialog", params);
             } catch (Exception e) {
-                Logger.error("Dialog accept error ", e);
+                log.error("Dialog accept error ", e);
                 return false;
             }
             return true;
@@ -117,19 +114,19 @@ public class Dialog {
 
     /**
      * 不接受对话框的内容
-     *
+     * 
      * @return 对话框关闭后返回
      */
     public Future<Boolean> dismiss() {
-        return Builder.commonExecutor().submit(() -> {
+        return ForkJoinPool.commonPool().submit(() -> {
             try {
                 Assert.isTrue(!this.handled, "Cannot dismiss dialog which is already handled!");
                 this.handled = true;
                 Map<String, Object> params = new HashMap<>();
                 params.put("accept", false);
-                this.client.send("Page.handleJavaScriptDialog", params, true);
+                this.client.send("Page.handleJavaScriptDialog", params);
             } catch (Exception e) {
-                Logger.error("Dialog dismiss error ", e);
+                log.error("Dialog dismiss error ", e);
                 return false;
             }
             return true;

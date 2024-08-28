@@ -27,22 +27,19 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.nimble.accessbility.SerializedAXNode;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.beans.IntrospectionException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.nimble.accessbility.SerializedAXNode;
+import org.miaixz.lancia.socket.CDPSession;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+
 public class Accessibility {
 
     private final CDPSession client;
@@ -52,21 +49,20 @@ public class Accessibility {
     }
 
     public SerializedAXNode snapshot(boolean interestingOnly, ElementHandle root)
-            throws IllegalAccessException, IntrospectionException, InvocationTargetException {
-        JSONObject nodes = this.client.send("Accessibility.getFullAXTree", null, false);
+            throws JsonProcessingException, IllegalAccessException, IntrospectionException, InvocationTargetException {
+        JsonNode nodes = this.client.send("Accessibility.getFullAXTree");
         String backendNodeId = null;
         if (root != null) {
             Map<String, Object> params = new HashMap<>();
             params.put("objectId", root.getRemoteObject().getObjectId());
-            JSONObject node = this.client.send("DOM.describeNode", params, true);
-            backendNodeId = node.getString("backendNodeId");
+            JsonNode node = this.client.send("DOM.describeNode", params);
+            backendNodeId = node.get("backendNodeId").asText();
         }
-        List<JSONObject> list = nodes.toJavaObject(new TypeReference<List<JSONObject>>() {
-        });
-        Iterator<JSONObject> elements = list.iterator();
+        Iterator<JsonNode> elements = nodes.elements();
         List<org.miaixz.lancia.nimble.accessbility.AXNode> payloads = new ArrayList<>();
         while (elements.hasNext()) {
-            payloads.add(JSON.toJavaObject(elements.next(), org.miaixz.lancia.nimble.accessbility.AXNode.class));
+            payloads.add(Builder.OBJECTMAPPER.treeToValue(elements.next(),
+                    org.miaixz.lancia.nimble.accessbility.AXNode.class));
         }
         AXNode defaultRoot = AXNode.createTree(payloads);
         AXNode needle = defaultRoot;

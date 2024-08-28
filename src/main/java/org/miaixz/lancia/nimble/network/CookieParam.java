@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.network;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class CookieParam {
 
     private String name;

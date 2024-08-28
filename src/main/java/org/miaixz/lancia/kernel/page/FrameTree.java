@@ -27,25 +27,13 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.lancia.nimble.page.FramePayload;
-
 import java.util.List;
 
-/**
- * 有关框架层次结构
- *
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.lancia.nimble.page.FramePayload;
+
 public class FrameTree {
 
-    /**
-     * Frame information for this tree item.
-     */
     private FramePayload frame;
-    /**
-     * Child frames.
-     */
     private List<FrameTree> childFrames;
 
     public FramePayload getFrame() {

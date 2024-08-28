@@ -27,28 +27,22 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import org.miaixz.bus.core.lang.Charset;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.nimble.network.RemoteAddress;
-import org.miaixz.lancia.nimble.network.ResponsePayload;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * HTTP相应信息
- *
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.nimble.network.RemoteAddress;
+import org.miaixz.lancia.nimble.network.ResponsePayload;
+import org.miaixz.lancia.socket.CDPSession;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 public class Response {
 
     private CDPSession client;
@@ -106,7 +100,7 @@ public class Response {
 
     /**
      * 处理请求体响应
-     *
+     * 
      * @param errorMsg 错误信息
      */
     protected void resolveBody(String errorMsg) {
@@ -128,7 +122,7 @@ public class Response {
 
     /**
      * 获取该响应的byte数组
-     *
+     * 
      * @return 字节数组
      * @throws InterruptedException 被打断异常
      */
@@ -141,12 +135,12 @@ public class Response {
             }
             Map<String, Object> params = new HashMap<>();
             params.put("requestId", this.request.requestId());
-            JSONObject response = this.client.send("Network.getResponseBody", params, true);
+            JsonNode response = this.client.send("Network.getResponseBody", params);
             if (response != null) {
-                if (response.getBoolean("base64Encoded")) {
-                    contentPromise = Base64.getDecoder().decode(response.getString("body"));
+                if (response.get("base64Encoded").asBoolean()) {
+                    contentPromise = Base64.getDecoder().decode(response.get("body").asText());
                 } else {
-                    contentPromise = response.getString("body").getBytes(Charset.UTF_8);
+                    contentPromise = response.get("body").asText().getBytes(StandardCharsets.UTF_8);
                 }
             }
         }
@@ -156,11 +150,12 @@ public class Response {
 
     public String text() throws InterruptedException {
         byte[] content = this.buffer();
-        return new String(content, Charset.UTF_8);
+        return new String(content, StandardCharsets.UTF_8);
     }
 
     public <T> T json(Class<T> clazz) throws IOException, InterruptedException {
-        return JSON.parseObject(this.text(), clazz);
+        String content = this.text();
+        return Builder.OBJECTMAPPER.readValue(content, clazz);
     }
 
     public Request request() {

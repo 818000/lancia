@@ -27,15 +27,11 @@
 */
 package org.miaixz.lancia.kernel.page;
 
+import java.util.List;
+
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Page;
 
-import java.util.List;
-
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class PageExtend {
 
     public static String html(Page page) {

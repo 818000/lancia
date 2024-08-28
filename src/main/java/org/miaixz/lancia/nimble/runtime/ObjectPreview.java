@@ -31,9 +31,6 @@ import java.util.List;
 
 /**
  * Object containing abbreviated remote object value.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class ObjectPreview {
 

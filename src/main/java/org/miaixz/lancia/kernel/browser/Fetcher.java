@@ -28,35 +28,31 @@
 package org.miaixz.lancia.kernel.browser;
 
 import java.io.*;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.lang.exception.InternalException;
-import org.miaixz.bus.core.xyz.IoKit;
 import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.core.xyz.ZipKit;
-import org.miaixz.bus.health.Platform;
-import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.option.FetcherOptions;
+import org.miaixz.lancia.options.FetcherOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.sun.jna.Platform;
 
 /**
  * 用于下载chrome浏览器
@@ -67,67 +63,118 @@ import org.miaixz.lancia.option.FetcherOptions;
 public class Fetcher {
 
     /**
-     * 下载的域名
+     * 该map装有默认的下载chrome的host及不同平台的下载路径，最后拼接成下载的url
+     * <p>
+     * 比如 host 如下 <blockquote>
+     *
+     * <pre>
+     *    https://registry.npmmirror.com/-/binary
+     * </pre>
+     *
+     * </blockquote>
+     * <p>
+     * 如果是win64平台，那么下载路径
+     * <p>
+     * <blockquote>
+     *
+     * <pre>
+     *     %s/chromium-browser-snapshots/Win_x64/%s/%s.zip
+     * </pre>
+     *
+     * </blockquote>
+     * <p>
+     * 下载路径中第一个 %s是host，第一个%s的值是 <blockquote>
+     *
+     * <pre>
+     *     https://registry.npmmirror.com/-/binary
+     * </pre>
+     *
+     * </blockquote>
+     * <p>
+     * 第二个%s版本号，假如版本号是722234，那么第二个s%的值是 <blockquote>
+     *
+     * <pre>
+     * 722234
+     * </pre>
+     *
+     * </blockquote>
+     * <p>
+     * {@link Builder#VERSION}有默认版本号
+     * <p>
+     * 第三个%s是压缩包名称 ,假如是win平台，那么第三个s%的值是 <blockquote>
+     *
+     * <pre>
+     * chrome - win.zip
+     * </pre>
+     *
+     * </blockquote>
+     * <p>
+     * {@link Fetcher#archiveName(String, String)} 用这个方法根据平台类型确定压缩包名称
+     * <p>
+     * 最后拼接成下载的url为https://registry.npmmirror.com/-/binary/chromium-browser-snapshots/Win_x64/127.0.6533.99/chrome-win.zip
      */
-    private final String url;
-    /**
-     * chrome or firefix
-     */
-    private final String product;
-    /**
-     * 下载的文件夹
-     */
-    private final String folder;
+    public static final Map<String, Map<String, String>> downloadURLs = new HashMap<>() {
+        private static final long serialVersionUID = -1L;
+        {
+            put("chrome", new HashMap<>() {
+                private static final long serialVersionUID = -1L;
+                {
+                    put("host", "https://registry.npmmirror.com/-/binary");
+                    put(Builder.LINUX, "%s/chrome-for-testing/%s/linux64/%s.zip");
+                    put(Builder.MAC_ARM64, "%s/chrome-for-testing/%s/mac-arm64/%s.zip");
+                    put(Builder.MAC_X64, "%s/chrome-for-testing/%s/mac-x64/%s.zip");
+                    put(Builder.WIN32, "%s/chrome-for-testing/%s/win32/%s.zip");
+                    put(Builder.WIN64, "%s/chrome-for-testing/%s/win64/%s.zip");
+                }
+            });
+        }
+    };
+    private static final Logger LOGGER = LoggerFactory.getLogger(Fetcher.class);
+
     /**
      * 平台 win linux mac
      */
     private String platform;
 
+    /**
+     * 下载的域名
+     */
+    private String downloadHost;
+
+    /**
+     * 下载的文件夹
+     */
+    private String downloadsFolder;
+
+    /**
+     * 目前支持两种产品：chrome or firefix
+     */
+    private String product;
+
     public Fetcher() {
         this.product = "chrome";
-        this.folder = Builder.join(System.getProperty("user.dir"), ".local-browser");
-        this.url = Builder.DOWNLOAD_URL.get(this.product).get("host");
-        if (platform == null) {
-            if (Platform.isMac()) {
-                this.platform = Platform.is64Bit() ? "mac_arm" : "mac";
-            } else if (Platform.isLinux()) {
-                this.platform = "linux";
-            } else if (Platform.isWindows()) {
-                this.platform = Platform.is64Bit() ? "win64" : "win32";
-            }
-            Assert.notNull(this.platform, "Unsupported platform: " + Platform.getNativeLibraryResourcePrefix());
-        }
-        Assert.notNull(Builder.DOWNLOAD_URL.get(this.product).get(this.platform),
-                "Unsupported platform: " + this.platform);
+        this.downloadsFolder = Builder.join(System.getProperty("user.dir"), ".local-browser");
+        this.downloadHost = downloadURLs.get(this.product).get("host");
+        setPlatform();
+        Assert.notNull(downloadURLs.get(this.product).get(this.platform), "Unsupported platform: " + this.platform);
     }
 
     /**
-     * 创建 Fetcher 对象
+     * 创建 BrowserFetcher 对象
      *
      * @param projectRoot 根目录，储存浏览器得根目录
      * @param options     下载浏览器得一些配置
      */
     public Fetcher(String projectRoot, FetcherOptions options) {
         this.product = (StringKit.isNotEmpty(options.getProduct()) ? options.getProduct() : "chrome").toLowerCase();
-        Assert.isTrue("chrome".equals(product) || "firefox".equals(product),
-                "Unknown product: " + options.getProduct());
-        this.folder = StringKit.isNotEmpty(options.getPath()) ? options.getPath()
+        Assert.isTrue("chrome".equals(product) || "firefox".equals(product), "Unkown product: " + options.getProduct());
+        this.downloadsFolder = StringKit.isNotEmpty(options.getPath()) ? options.getPath()
                 : Builder.join(projectRoot, ".local-browser");
-        this.url = StringKit.isNotEmpty(options.getHost()) ? options.getHost()
-                : Builder.DOWNLOAD_URL.get(this.product).get("host");
+        this.downloadHost = StringKit.isNotEmpty(options.getHost()) ? options.getHost()
+                : downloadURLs.get(this.product).get("host");
         this.platform = StringKit.isNotEmpty(options.getPlatform()) ? options.getPlatform() : null;
-        if (platform == null) {
-            if (Platform.isMac()) {
-                this.platform = Platform.is64Bit() ? "mac_arm" : "mac";
-            } else if (Platform.isLinux()) {
-                this.platform = "linux";
-            } else if (Platform.isWindows()) {
-                this.platform = Platform.is64Bit() ? "win64" : "win32";
-            }
-            Assert.notNull(this.platform, "Unsupported platform: " + Platform.getNativeLibraryResourcePrefix());
-        }
-        Assert.notNull(Builder.DOWNLOAD_URL.get(this.product).get(this.platform),
-                "Unsupported platform: " + this.platform);
+        setPlatform();
+        Assert.notNull(downloadURLs.get(this.product).get(this.platform), "Unsupported platform: " + this.platform);
     }
 
     /**
@@ -137,8 +184,9 @@ public class Fetcher {
      * @throws ExecutionException   异常
      * @throws IOException          异常
      */
-    public static Revision on() throws InterruptedException, ExecutionException, IOException {
-        return on(null);
+    public static Revision downloadIfNotExist()
+            throws InterruptedException, ExecutionException, IOException, URISyntaxException {
+        return downloadIfNotExist(null);
     }
 
     /**
@@ -149,7 +197,8 @@ public class Fetcher {
      * @throws ExecutionException   异常
      * @throws IOException          异常
      */
-    public static Revision on(String version) throws InterruptedException, ExecutionException, IOException {
+    public static Revision downloadIfNotExist(String version)
+            throws InterruptedException, ExecutionException, IOException, URISyntaxException {
         Fetcher fetcher = new Fetcher();
         String downLoadVersion = StringKit.isEmpty(version) ? Builder.VERSION : version;
         Revision revision = fetcher.revisionInfo(downLoadVersion);
@@ -157,6 +206,18 @@ public class Fetcher {
             return fetcher.download(downLoadVersion);
         }
         return revision;
+    }
+
+    private void setPlatform() {
+        if (platform == null) {
+            if (Platform.isMac())
+                this.platform = Platform.is64Bit() ? Builder.MAC_ARM64 : Builder.MAC_X64;
+            else if (Platform.isLinux())
+                this.platform = Builder.LINUX;
+            else if (Platform.isWindows())
+                this.platform = Platform.is64Bit() ? Builder.WIN64 : Builder.WIN32;
+            Assert.notNull(this.platform, "Unsupported platform: " + Builder.platform());
+        }
     }
 
     /**
@@ -168,7 +229,7 @@ public class Fetcher {
      * @throws IOException 异常
      */
     public boolean canDownload(String revision, Proxy proxy) throws IOException {
-        String url = downloadURL(this.product, this.platform, this.url, revision);
+        String url = getDownloadURL(this.product, this.platform, this.downloadHost, revision);
         return httpRequest(proxy, url, "HEAD");
     }
 
@@ -211,85 +272,38 @@ public class Fetcher {
     /**
      * 根据给定得浏览器版本下载浏览器，可以利用下载回调显示下载进度
      *
-     * @param revision         浏览器版本
-     * @param progressCallback 下载回调
-     * @return Revision
+     * @param revision 浏览器版本
+     * @return {@link Revision}
      * @throws IOException          异常
      * @throws InterruptedException 异常
-     * @throws ExecutionException   异常
      */
-    public Revision download(String revision, BiConsumer<Integer, Integer> progressCallback)
-            throws IOException, InterruptedException, ExecutionException {
-        String url = downloadURL(this.product, this.platform, this.url, revision);
-        int lastIndexOf = url.lastIndexOf("/");
-        String archivePath = Builder.join(this.folder, url.substring(lastIndexOf));
+    public Revision download(String revision) throws IOException, InterruptedException {
+        String url = getDownloadURL(this.product, this.platform, this.downloadHost, revision);
+        // 存放浏览器得文件夹 带有平台标识和版本标识
         String folderPath = this.getFolderPath(revision);
         if (existsAsync(folderPath))
             return this.revisionInfo(revision);
-        if (!(existsAsync(this.folder)))
-            mkdirAsync(this.folder);
-        try {
-            if (progressCallback == null) {
-                progressCallback = defaultDownloadCallback();
-            }
-
-            downloadFile(url, archivePath, progressCallback);
-            install(archivePath, folderPath);
-        } finally {
-            unlinkAsync(archivePath);
+        if (!(existsAsync(this.downloadsFolder))) {
+            mkdirAsync(this.downloadsFolder);
         }
+        if (!existsAsync(folderPath)) {
+            mkdirAsync(folderPath);
+        }
+        int lastIndexOf = url.lastIndexOf("/");
+        String archiveName = url.substring(lastIndexOf);
+        // 用shell下载，不用java代码下载了
+        shell(url, folderPath, archiveName);
         Revision revisionInfo = this.revisionInfo(revision);
         if (revisionInfo != null) {
             try {
                 File executableFile = new File(revisionInfo.getExecutablePath());
                 executableFile.setExecutable(true, false);
             } catch (Exception e) {
-                Logger.error("Set executablePath:{} file executation permission fail.",
+                LOGGER.error("Set executablePath:{} file executation permission fail.",
                         revisionInfo.getExecutablePath());
             }
         }
         return revisionInfo;
-    }
-
-    /**
-     * 指定版本下载chromuim
-     *
-     * @param revision 版本
-     * @return 下载后的chromuim包有关信息
-     * @throws IOException          异常
-     * @throws InterruptedException 异常
-     * @throws ExecutionException   异常
-     */
-    public Revision download(String revision) throws IOException, InterruptedException, ExecutionException {
-        return this.download(revision, null);
-    }
-
-    /**
-     * 默认的下载回调
-     *
-     * @return 回调函数
-     */
-    private BiConsumer<Integer, Integer> defaultDownloadCallback() {
-        return (integer1, integer2) -> {
-            BigDecimal decimal1 = new BigDecimal(integer1);
-            BigDecimal decimal2 = new BigDecimal(integer2);
-            int percent = decimal1.divide(decimal2, 2, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).intValue();
-            Logger.info("Download progress: total[{}M],downloaded[{}M],{}", decimal2, decimal1, percent + "%");
-        };
-    }
-
-    /**
-     * 下载最新的浏览器版本
-     *
-     * @param progressCallback 下载回调
-     * @return 浏览器版本
-     * @throws IOException          异常
-     * @throws InterruptedException 异常
-     * @throws ExecutionException   异常
-     */
-    public Revision download(BiConsumer<Integer, Integer> progressCallback)
-            throws IOException, InterruptedException, ExecutionException {
-        return this.download(fetchRevision(), progressCallback);
     }
 
     /**
@@ -298,42 +312,9 @@ public class Fetcher {
      * @return 浏览器版本
      * @throws IOException          异常
      * @throws InterruptedException 异常
-     * @throws ExecutionException   异常
      */
-    public Revision download() throws IOException, InterruptedException, ExecutionException {
-        return this.download(fetchRevision(), null);
-    }
-
-    private String fetchRevision() throws IOException {
-        String downloadUrl = Builder.DOWNLOAD_URL.get(product).get(platform);
-        URL urlSend = new URL(String.format(downloadUrl.substring(0, downloadUrl.length() - 9), this.url));
-        URLConnection conn = urlSend.openConnection();
-        conn.setConnectTimeout(Builder.CONNECT_TIME_OUT);
-        conn.setReadTimeout(Builder.READ_TIME_OUT);
-        String pageContent = Builder.toString(conn.getInputStream());
-        return parseRevision(pageContent);
-    }
-
-    /**
-     * 解析得到最新的浏览器版本
-     *
-     * @param pageContent 页面内容
-     * @return 浏览器版本
-     */
-    private String parseRevision(String pageContent) {
-        String result = null;
-        Pattern pattern = Pattern.compile("<a href=\"/mirrors/chromium-browser-snapshots/(.*)?/\">");
-        Matcher matcher = pattern.matcher(pageContent);
-        while (matcher.find()) {
-            result = matcher.group(1);
-        }
-        String[] split = Objects.requireNonNull(result).split("/");
-        if (split.length == 2) {
-            result = split[1];
-        } else {
-            throw new RuntimeException("cant't find latest revision from pageConten:" + pageContent);
-        }
-        return result;
+    public Revision download() throws IOException, InterruptedException, URISyntaxException {
+        return this.download(Builder.VERSION);
     }
 
     /**
@@ -342,10 +323,10 @@ public class Fetcher {
      * @return 版本集合
      * @throws IOException 异常
      */
-    public List<String> localRevisions() {
-        if (!existsAsync(this.folder))
+    public List<String> localRevisions() throws IOException {
+        if (!existsAsync(this.downloadsFolder))
             return new ArrayList<>();
-        Path path = Paths.get(this.folder);
+        Path path = Paths.get(this.downloadsFolder);
         Stream<Path> fileNames = this.readdirAsync(path);
         return fileNames.map(fileName -> parseFolderPath(this.product, fileName))
                 .filter(entry -> entry != null && this.platform.equals(entry.getPlatform())).map(Revision::getRevision)
@@ -376,7 +357,7 @@ public class Fetcher {
         String[] split = fileName.toString().split("-");
         if (split.length != 2)
             return null;
-        if (Builder.DOWNLOAD_URL.get(product).get(split[0]) == null)
+        if (downloadURLs.get(product).get(split[0]) == null)
             return null;
         Revision entry = new Revision();
         entry.setPlatform(split[0]);
@@ -390,202 +371,96 @@ public class Fetcher {
      *
      * @param downloadsFolder 下载文件夹
      * @return Stream<Path> Stream<Path>
+     * @throws IOException 异常
      */
-    private Stream<Path> readdirAsync(Path downloadsFolder) {
+    private Stream<Path> readdirAsync(Path downloadsFolder) throws IOException {
         Assert.isTrue(Files.isDirectory(downloadsFolder), "downloadsFolder " + downloadsFolder + " is not Directory");
-        try {
-            return Files.list(downloadsFolder);
-        } catch (IOException e) {
-            throw new InternalException(e);
-        }
-    }
-
-    /**
-     * 修改文件权限，与linux上chmod命令一样，并非异步，只是方法名为了与nodejs的puppeteer库一样
-     *
-     * @param executablePath 执行路径
-     * @param perms          权限字符串，例如"775",与linux上文件权限一样
-     * @throws IOException 异常
-     */
-    private void chmodAsync(String executablePath, String perms) throws IOException {
-        Builder.chmod(executablePath, perms);
-    }
-
-    /**
-     * 删除压缩文件
-     *
-     * @param archivePath zip路径
-     * @throws IOException 异常
-     */
-    private void unlinkAsync(String archivePath) throws IOException {
-        Files.deleteIfExists(Paths.get(archivePath));
-    }
-
-    /**
-     * intall archive file: *.zip,*.tar.bz2,*.dmg
-     *
-     * @param archivePath zip路径
-     * @param folderPath  存放的路径
-     * @throws IOException 异常
-     */
-    private void install(String archivePath, String folderPath) throws IOException, InterruptedException {
-        Logger.info("Installing " + archivePath + " to " + folderPath);
-        if (archivePath.endsWith(".zip")) {
-            ZipKit.unzip(archivePath, folderPath);
-        } else if (archivePath.endsWith(".dmg")) {
-            mkdirAsync(folderPath);
-            installDMG(archivePath, folderPath);
-        } else {
-            throw new IllegalArgumentException("Unsupported archive format: " + archivePath);
-        }
-    }
-
-    /**
-     * mount and copy
-     *
-     * @param archivePath zip路径
-     * @param folderPath  存放路径
-     * @return string
-     * @throws IOException          异常
-     * @throws InterruptedException 异常
-     */
-    private String mountAndCopy(String archivePath, String folderPath) throws IOException, InterruptedException {
-        String mountPath = null;
-        BufferedReader reader = null;
-        String line;
-        StringWriter stringWriter = null;
-        try {
-            List<String> arguments = new ArrayList<>();
-            arguments.add("/bin/sh");
-            arguments.add("-c");
-            arguments.add("hdiutil");
-            arguments.add("attach");
-            arguments.add("-nobrowse");
-            arguments.add("-noautoopen");
-            arguments.add(archivePath);
-            ProcessBuilder processBuilder = new ProcessBuilder().command(arguments).redirectErrorStream(true);
-            Process process = processBuilder.start();
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            Pattern pattern = Pattern.compile("/Volumes/(.*)", Pattern.MULTILINE);
-            stringWriter = new StringWriter();
-            while ((line = reader.readLine()) != null) {
-                stringWriter.write(line);
-            }
-            process.waitFor();
-            process.destroyForcibly();
-            Matcher matcher = pattern.matcher(stringWriter.toString());
-            while (matcher.find()) {
-                mountPath = matcher.group();
-            }
-        } finally {
-            IoKit.close(reader);
-            IoKit.close(stringWriter);
-        }
-        if (StringKit.isEmpty(mountPath)) {
-            throw new RuntimeException("Could not find volume path in [" + stringWriter + "]");
-        }
-        Optional<Path> optionl = this.readdirAsync(Paths.get(mountPath))
-                .filter(item -> item.toString().endsWith(".app")).findFirst();
-        if (optionl.isPresent()) {
-            try {
-                Path path = optionl.get();
-                String copyPath = path.toString();
-                Logger.info("Copying " + copyPath + " to " + folderPath);
-                List<String> arguments = new ArrayList<>();
-                arguments.add("/bin/sh");
-                arguments.add("-c");
-                arguments.add("cp");
-                arguments.add("-R");
-                arguments.add(copyPath);
-                arguments.add(folderPath);
-                ProcessBuilder processBuilder2 = new ProcessBuilder().command(arguments);
-                Process process2 = processBuilder2.start();
-                reader = new BufferedReader(new InputStreamReader(process2.getInputStream()));
-                while ((line = reader.readLine()) != null) {
-                    Logger.trace(line);
-                }
-                reader.close();
-                reader = new BufferedReader(new InputStreamReader(process2.getErrorStream()));
-                while ((line = reader.readLine()) != null) {
-                    Logger.error(line);
-                }
-                process2.waitFor();
-                process2.destroyForcibly();
-            } finally {
-                IoKit.close(reader);
-            }
-        }
-        return mountPath;
-    }
-
-    /**
-     * Install *.app directory from dmg file
-     *
-     * @param archivePath zip路径
-     * @param folderPath  存放路径
-     * @throws IOException 异常
-     */
-    private void installDMG(String archivePath, String folderPath) throws IOException, InterruptedException {
-        String mountPath = null;
-        try {
-            mountPath = mountAndCopy(archivePath, folderPath);
-        } finally {
-            unmount(mountPath);
-        }
-    }
-
-    /**
-     * unmount finally
-     *
-     * @param mountPath mount Path
-     * @throws IOException          异常
-     * @throws InterruptedException 异常
-     */
-    private void unmount(String mountPath) throws IOException, InterruptedException {
-        BufferedReader reader = null;
-        if (StringKit.isEmpty(mountPath)) {
-            return;
-        }
-        List<String> arguments = new ArrayList<>();
-        arguments.add("/bin/sh");
-        arguments.add("-c");
-        arguments.add("hdiutil");
-        arguments.add("detach");
-        arguments.add(mountPath);
-        arguments.add("-quiet");
-        try {
-            ProcessBuilder processBuilder3 = new ProcessBuilder().command(arguments);
-            Process process3 = processBuilder3.start();
-            Logger.info("Unmounting " + mountPath);
-            String line;
-            reader = new BufferedReader(new InputStreamReader(process3.getInputStream()));
-            while ((line = reader.readLine()) != null) {
-                Logger.trace(line);
-            }
-            reader.close();
-            reader = new BufferedReader(new InputStreamReader(process3.getErrorStream()));
-            while ((line = reader.readLine()) != null) {
-                Logger.error(line);
-            }
-            process3.waitFor();
-            process3.destroyForcibly();
-        } finally {
-            IoKit.close(reader);
-        }
+        return Files.list(downloadsFolder);
     }
 
     /**
      * 下载浏览器到具体的路径 ContentTypeapplication/x-zip-compressed
      *
-     * @param url              url
-     * @param archivePath      zip路径
-     * @param progressCallback 回调函数
+     * @param url         url
+     * @param archivePath zip路径
      */
-    private void downloadFile(String url, String archivePath, BiConsumer<Integer, Integer> progressCallback)
-            throws IOException, ExecutionException, InterruptedException {
-        Logger.info("Downloading binary from " + url);
-        Builder.download(url, archivePath, progressCallback);
-        Logger.info("Download successfully from " + url);
+    private void shell(String url, String archivePath, String archiveName) throws IOException, InterruptedException {
+        Process process;
+        Path shellPath = null;
+        BufferedReader stderrReader = null;
+        BufferedReader stdoutReader = null;
+        try {
+            if (Platform.isLinux()) {
+                shellPath = copyShellFile(Builder.CHROME_FOR_LINUX);
+                process = new ProcessBuilder("/bin/sh", "-c",
+                        shellPath.toAbsolutePath() + " " + archivePath + " " + url).redirectErrorStream(true).start();
+            } else if (Platform.isWindows()) {
+                shellPath = copyShellFile(Builder.CHROME_FOR_WIN);
+                process = new ProcessBuilder("powershell.exe", "-ExecutionPolicy", "Bypass", "-File",
+                        shellPath.toAbsolutePath().toString(), "-url", url, "-savePath", archivePath, "-archiveName",
+                        archiveName).redirectErrorStream(true).start();
+            } else if (Platform.isMac()) {
+                shellPath = copyShellFile(Builder.CHROME_FOR_MAC);
+                process = Runtime.getRuntime()
+                        .exec(new String[] { "/bin/sh", "-c", shellPath.toAbsolutePath().toString() });
+            } else {
+                throw new InternalException("Unsupported platform: " + Builder.platform());
+            }
+            // 读取输出流
+            if (process != null) {
+                stdoutReader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+                stderrReader = new BufferedReader(
+                        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
+                String stdoutLine;
+                while ((stdoutLine = stdoutReader.readLine()) != null) {
+                    LOGGER.info(stdoutLine);
+                }
+                // 等待进程完成
+                boolean exitCode = process.waitFor(10L, TimeUnit.MINUTES);
+                if (!exitCode) {
+                    process.destroy();
+                    throw new InternalException("install chrome for testing failed");
+                }
+            }
+        } finally {
+            // 关闭资源
+            if (stdoutReader != null) {
+                stdoutReader.close();
+            }
+            if (stderrReader != null) {
+                stderrReader.close();
+            }
+
+            if (shellPath != null) {
+                shellPath.toFile().delete();
+                shellPath.getParent().toFile().delete();
+            }
+
+        }
+    }
+
+    private Path copyShellFile(String path) throws IOException {
+        Path tempDirectory = Paths.get(Builder.createProfileDir(Builder.SHELLS_PREFIX));
+        Path shellPath = tempDirectory.resolve(path);
+        if (Platform.isMac() || Platform.isLinux()) {
+            Files.createFile(shellPath,
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx")));
+        } else if (Platform.isWindows()) {
+            Files.createFile(shellPath);
+        }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(shellPath.toFile()));
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(this.getClass().getResourceAsStream(Normal.META_INF + "/lancia/" + path))))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                writer.write(line);
+                writer.newLine();
+            }
+        } finally {
+            writer.close();
+        }
+        return shellPath;
     }
 
     /**
@@ -605,49 +480,47 @@ public class Fetcher {
      * 根据浏览器版本获取对应浏览器路径
      *
      * @param revision 浏览器版本
-     * @return string
+     * @return the string
      */
     public String getFolderPath(String revision) {
-        return Paths.get(this.folder, this.platform + "-" + revision).toString();
+        return Paths.get(this.downloadsFolder, this.platform + "-" + revision).toString();
     }
 
     /**
      * 获取浏览器版本相关信息
      *
      * @param revision 版本
-     * @return Revision
+     * @return {@link Revision}
      */
     public Revision revisionInfo(String revision) {
         String folderPath = this.getFolderPath(revision);
         String executablePath;
         if ("chrome".equals(this.product)) {
-            if ("mac".equals(this.platform) || "mac_arm".equals(this.platform)) {
-                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision),
-                        "Chromium.app", "Contents", "MacOS", "Chromium");
-            } else if ("linux".equals(this.platform)) {
-                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision), "chrome");
-            } else if ("win32".equals(this.platform) || "win64".equals(this.platform)) {
-                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform, revision),
-                        "chrome.exe");
+            if (Builder.MAC_ARM64.equals(this.platform) || Builder.MAC_X64.equals(this.platform)) {
+                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform), "Chromium.app",
+                        "Contents", "MacOS", "Chromium");
+            } else if (Builder.LINUX.equals(this.platform)) {
+                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform), "chrome");
+            } else if (Builder.WIN32.equals(this.platform) || Builder.WIN64.equals(this.platform)) {
+                executablePath = Builder.join(folderPath, archiveName(this.product, this.platform), "chrome.exe");
             } else {
                 throw new IllegalArgumentException("Unsupported platform: " + this.platform);
             }
         } else if ("firefox".equals(this.product)) {
-            if ("mac".equals(this.platform) || "mac_arm".equals(this.platform)) {
+            if ("mac".equals(this.platform))
                 executablePath = Builder.join(folderPath, "Firefox Nightly.app", "Contents", "MacOS", "firefox");
-            } else if ("linux".equals(this.platform)) {
+            else if ("linux".equals(this.platform))
                 executablePath = Builder.join(folderPath, "firefox", "firefox");
-            } else if ("win32".equals(this.platform) || "win64".equals(this.platform)) {
+            else if ("win32".equals(this.platform) || "win64".equals(this.platform))
                 executablePath = Builder.join(folderPath, "firefox", "firefox.exe");
-            } else {
+            else
                 throw new IllegalArgumentException("Unsupported platform: " + this.platform);
-            }
         } else {
             throw new IllegalArgumentException("Unsupported product: " + this.product);
         }
-        String url = downloadURL(this.product, this.platform, this.url, revision);
+        String url = getDownloadURL(this.product, this.platform, this.downloadHost, revision);
         boolean local = this.existsAsync(folderPath);
-        Logger.info("revision:{}，executablePath:{}，folderPath:{}，local:{}，url:{}，product:{}", revision, executablePath,
+        LOGGER.info("revision:{}，executablePath:{}，folderPath:{}，local:{}，url:{}，product:{}", revision, executablePath,
                 folderPath, local, url, this.product);
         return new Revision(revision, executablePath, folderPath, local, url, this.product);
     }
@@ -663,27 +536,28 @@ public class Fetcher {
     }
 
     /**
-     * 根据平台信息和版本信息确定要下载的浏览器压缩包
+     * 根据平台信息和版本信息确定要下载的浏览器压缩包名称
      *
      * @param product  产品
      * @param platform 平台
-     * @param revision 版本
      * @return 压缩包名字
      */
-    public String archiveName(String product, String platform, String revision) {
+    public String archiveName(String product, String platform) {
         if ("chrome".equals(product)) {
-            if ("linux".equals(platform))
-                return "chrome-linux";
-            if ("mac".equals(platform) || "mac_arm".equals(platform))
-                return "chrome-mac";
-            if ("win32".equals(platform) || "win64".equals(platform)) {
-                // Windows archive name changed at r591479.
-                return Integer.parseInt(revision) > 591479 ? "chrome-win" : "chrome-win32";
-            }
+            if (Builder.LINUX.equals(platform))
+                return "chrome-linux64";
+            if (Builder.MAC_ARM64.equals(platform))
+                return "chrome-mac-arm64";
+            if (Builder.MAC_X64.equals(platform))
+                return "chrome-mac-x64";
+            if (Builder.WIN32.equals(platform))
+                return "chrome-win32";
+            if (Builder.WIN64.equals(platform))
+                return "chrome-win64";
         } else if ("firefox".equals(product)) {
             if ("linux".equals(platform))
                 return "firefox-linux";
-            if ("mac".equals(this.platform) || "mac_arm".equals(this.platform))
+            if ("mac".equals(platform))
                 return "firefox-mac";
             if ("win32".equals(platform) || "win64".equals(platform))
                 return "firefox-" + platform;
@@ -692,7 +566,7 @@ public class Fetcher {
     }
 
     /**
-     * 确定下载的路径
+     * 将几个字符串拼接成浏览器的下载路径
      *
      * @param product  产品：chrome or firefox
      * @param platform win linux mac
@@ -700,9 +574,28 @@ public class Fetcher {
      * @param revision 版本
      * @return 下载浏览器的url
      */
-    public String downloadURL(String product, String platform, String host, String revision) {
-        return String.format(Builder.DOWNLOAD_URL.get(product).get(platform), host, revision,
-                archiveName(product, platform, revision));
+    public String getDownloadURL(String product, String platform, String host, String revision) {
+        return String.format(downloadURLs.get(product).get(platform), host, revision, archiveName(product, platform));
+    }
+
+    public String host() {
+        return downloadHost;
+    }
+
+    public String platform() {
+        return platform;
+    }
+
+    public String getDownloadsFolder() {
+        return downloadsFolder;
+    }
+
+    public void setDownloadsFolder(String downloadsFolder) {
+        this.downloadsFolder = downloadsFolder;
+    }
+
+    public String product() {
+        return product;
     }
 
 }

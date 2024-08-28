@@ -31,9 +31,6 @@ import java.util.List;
 
 /**
  * A node in the accessibility tree.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class AXNode {
 
@@ -157,4 +154,5 @@ public class AXNode {
     public void setBackendDOMNodeId(int backendDOMNodeId) {
         this.backendDOMNodeId = backendDOMNodeId;
     }
+
 }

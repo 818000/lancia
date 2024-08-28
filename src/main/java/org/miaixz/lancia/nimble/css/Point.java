@@ -29,11 +29,8 @@ package org.miaixz.lancia.nimble.css;
 
 import org.miaixz.lancia.nimble.profiler.CoverageRange;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class Point {
+
     private int offset;
 
     private int type;
@@ -74,4 +71,5 @@ public class Point {
     public void setRange(CoverageRange range) {
         this.range = range;
     }
+
 }

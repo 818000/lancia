@@ -27,33 +27,18 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-/**
- * 目标详细内容
- *
- * @author Kimi Liu
- * @since Java 17+
- */
 public class TargetInfo {
 
     private String targetId;
-
     private String type;
-
     private String title;
-
     private String url;
-
     private Boolean attached;
-
     private String openerId;
-
+    private boolean canAccessOpener;
+    private String openerFrameId;
     private String browserContextId;
-
-    private String webSocketDebuggerUrl;
-
-    private String devtoolsFrontendUrl;
-
-    private String description;
+    private String subtype;
 
     public String getTargetId() {
         return targetId;
@@ -111,37 +96,28 @@ public class TargetInfo {
         this.browserContextId = browserContextId;
     }
 
-    public String getWebSocketDebuggerUrl() {
-        return webSocketDebuggerUrl;
+    public String getSubtype() {
+        return subtype;
     }
 
-    public void setWebSocketDebuggerUrl(String webSocketDebuggerUrl) {
-        this.webSocketDebuggerUrl = webSocketDebuggerUrl;
+    public void setSubtype(String subtype) {
+        this.subtype = subtype;
     }
 
-    public String getDevtoolsFrontendUrl() {
-        return devtoolsFrontendUrl;
+    public String getOpenerFrameId() {
+        return openerFrameId;
     }
 
-    public void setDevtoolsFrontendUrl(String devtoolsFrontendUrl) {
-        this.devtoolsFrontendUrl = devtoolsFrontendUrl;
+    public void setOpenerFrameId(String openerFrameId) {
+        this.openerFrameId = openerFrameId;
     }
 
-    public String getDescription() {
-        return description;
+    public boolean getCanAccessOpener() {
+        return canAccessOpener;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    @Override
-    public String toString() {
-        return "TargetInfo{" + "targetId='" + targetId + '\'' + ", type='" + type + '\'' + ", title='" + title + '\''
-                + ", url='" + url + '\'' + ", attached=" + attached + ", openerId='" + openerId + '\''
-                + ", browserContextId='" + browserContextId + '\'' + ", webSocketDebuggerUrl='" + webSocketDebuggerUrl
-                + '\'' + ", devtoolsFrontendUrl='" + devtoolsFrontendUrl + '\'' + ", description='" + description + '\''
-                + '}';
+    public void setCanAccessOpener(boolean canAccessOpener) {
+        this.canAccessOpener = canAccessOpener;
     }
 
 }

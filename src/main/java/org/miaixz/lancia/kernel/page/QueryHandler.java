@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public interface QueryHandler {
 
     String queryOne();

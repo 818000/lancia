@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.dom;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class Margin {
 
     private String top;
@@ -72,4 +68,5 @@ public class Margin {
     public void setRight(String right) {
         this.right = right;
     }
+
 }

@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.emulation;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class MediaFeature {
 
     private String name;
@@ -52,4 +48,5 @@ public class MediaFeature {
     public void setValue(String value) {
         this.value = value;
     }
+
 }

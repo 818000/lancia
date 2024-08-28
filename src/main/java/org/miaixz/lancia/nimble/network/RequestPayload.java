@@ -30,10 +30,7 @@ package org.miaixz.lancia.nimble.network;
 import java.util.Map;
 
 /**
- * HTTP request data. /**
- *
- * @author Kimi Liu
- * @since Java 17+
+ * HTTP request data.
  */
 public class RequestPayload {
 

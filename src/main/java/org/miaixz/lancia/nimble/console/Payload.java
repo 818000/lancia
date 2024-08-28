@@ -29,10 +29,6 @@ package org.miaixz.lancia.nimble.console;
 
 import java.util.List;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class Payload {
 
     private List<Object> args;
@@ -64,4 +60,5 @@ public class Payload {
     public void setSeq(int seq) {
         this.seq = seq;
     }
+
 }

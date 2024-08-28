@@ -27,19 +27,18 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.lancia.option.ScreenshotOptions;
-
 import java.util.function.BiFunction;
 
+import org.miaixz.lancia.options.ScreenshotOptions;
+
 /**
- * 任务队列,截图专用的类
+ * 截图专用的类，
  *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class TaskQueue<R> {
 
     public TaskQueue() {
+
     }
 
     public Object postTask(BiFunction<String, ScreenshotOptions, R> function, String screenshotType,

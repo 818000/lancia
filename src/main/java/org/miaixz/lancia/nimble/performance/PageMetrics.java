@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.performance;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class PageMetrics {
 
     private String title;

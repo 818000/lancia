@@ -27,28 +27,20 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.bus.core.lang.Normal;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.nimble.PageEvaluateType;
-import org.miaixz.lancia.nimble.page.FramePayload;
-import org.miaixz.lancia.option.*;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 
-/**
- * 框架信息
- *
- * @author Kimi Liu
- * @since Java 17+
- */
-public class Frame {
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.Emitter;
+import org.miaixz.lancia.nimble.PageEvaluateType;
+import org.miaixz.lancia.nimble.page.FramePayload;
+import org.miaixz.lancia.options.*;
+import org.miaixz.lancia.socket.CDPSession;
+
+public class Frame extends Emitter<Frame.FrameEvent> {
 
     private String id;
 
@@ -80,10 +72,10 @@ public class Frame {
         this.frameManager = frameManager;
         this.client = client;
         this.parentFrame = parentFrame;
-        this.url = Normal.EMPTY;
+        this.url = "";
         this.id = frameId;
         this.detached = false;
-        this.loaderId = Normal.EMPTY;
+        this.loaderId = "";
         this.lifecycleEvents = new HashSet<>();
         this.mainWorld = new DOMWorld(frameManager, this, frameManager.getTimeoutSettings());
         this.secondaryWorld = new DOMWorld(frameManager, this, frameManager.getTimeoutSettings());
@@ -113,8 +105,8 @@ public class Frame {
         this.url = url;
     }
 
-    public Response waitForNavigation(PageNavigateOptions options, CountDownLatch reloadLatch) {
-        return this.frameManager.waitForFrameNavigation(this, options, reloadLatch);
+    public Response waitForNavigation(WaitForOptions options, boolean reload) {
+        return this.frameManager.waitForFrameNavigation(this, options, reload);
     }
 
     public ExecutionContext executionContext() {
@@ -157,8 +149,7 @@ public class Frame {
         return this.mainWorld.addStyleTag(options);
     }
 
-    public void click(String selector, ClickOptions options, boolean isBlock)
-            throws InterruptedException, ExecutionException {
+    public void click(String selector, ClickOptions options, boolean isBlock) throws InterruptedException {
         this.secondaryWorld.click(selector, options, isBlock);
     }
 
@@ -186,8 +177,8 @@ public class Frame {
      * @param selectorOrFunctionOrTimeout 元素选择器，函数或者超时时间
      * @param options                     可配置等待选项
      * @param args                        functions时对应的function参数
-     * @return 元素处理器
      * @throws InterruptedException 打断异常
+     * @return 元素处理器
      */
     public JSHandle waitFor(String selectorOrFunctionOrTimeout, WaitForSelectorOptions options, List<Object> args)
             throws InterruptedException {
@@ -248,7 +239,7 @@ public class Frame {
         this.lifecycleEvents.add("load");
     }
 
-    public Response goTo(String url, PageNavigateOptions options, boolean isBlock) throws InterruptedException {
+    public Response goTo(String url, GoToOptions options, boolean isBlock) {
         return this.frameManager.navigateFrame(this, url, options, isBlock);
     }
 
@@ -272,7 +263,7 @@ public class Frame {
         return this.secondaryWorld.content();
     }
 
-    public void setContent(String html, PageNavigateOptions options) {
+    public void setContent(String html, GoToOptions options) {
         this.secondaryWorld.setContent(html, options);
     }
 
@@ -346,7 +337,7 @@ public class Frame {
 
     public String getName() {
         if (this.name == null) {
-            return Normal.EMPTY;
+            return "";
         }
         return this.name;
     }
@@ -385,6 +376,22 @@ public class Frame {
 
     public Set<Frame> childFrames() {
         return this.getChildFrames();
+    }
+
+    public enum FrameEvent {
+        FrameNavigated("Frame.FrameNavigated"), FrameSwapped("Frame.FrameSwapped"),
+        LifecycleEvent("Frame.LifecycleEvent"), FrameNavigatedWithinDocument("Frame.FrameNavigatedWithinDocument"),
+        FrameDetached("Frame.FrameDetached"), FrameSwappedByActivation("Frame.FrameSwappedByActivation");
+
+        private final String eventType;
+
+        FrameEvent(String eventType) {
+            this.eventType = eventType;
+        }
+
+        public String getEventType() {
+            return eventType;
+        }
     }
 
 }

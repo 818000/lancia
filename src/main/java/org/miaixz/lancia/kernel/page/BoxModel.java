@@ -27,14 +27,10 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.lancia.nimble.input.ClickablePoint;
-
 import java.util.List;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
+import org.miaixz.lancia.nimble.input.ClickablePoint;
+
 public class BoxModel {
 
     private List<ClickablePoint> content;
@@ -48,6 +44,10 @@ public class BoxModel {
 
     private int height;
 
+    public BoxModel() {
+
+    }
+
     public BoxModel(List<ClickablePoint> content, List<ClickablePoint> padding, List<ClickablePoint> border,
             List<ClickablePoint> margin, int width, int height) {
         this.content = content;
@@ -56,9 +56,6 @@ public class BoxModel {
         this.margin = margin;
         this.width = width;
         this.height = height;
-    }
-
-    public BoxModel() {
     }
 
     public List<ClickablePoint> getContent() {

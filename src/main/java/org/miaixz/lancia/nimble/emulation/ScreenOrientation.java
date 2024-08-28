@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.emulation;
 
 /**
  * Screen orientation.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class ScreenOrientation {
 
@@ -67,4 +64,5 @@ public class ScreenOrientation {
     public void setAngle(int angle) {
         this.angle = angle;
     }
+
 }

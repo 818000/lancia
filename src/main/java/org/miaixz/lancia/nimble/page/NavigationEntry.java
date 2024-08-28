@@ -29,11 +29,9 @@ package org.miaixz.lancia.nimble.page;
 
 /**
  * Navigation history entry.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class NavigationEntry {
+
     /**
      * Unique id of the navigation history entry.
      */

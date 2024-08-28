@@ -27,39 +27,45 @@
 */
 package org.miaixz.lancia.kernel.browser;
 
-import org.miaixz.bus.core.xyz.IoKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.health.Platform;
-import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.BrowserListenerWrapper;
-import org.miaixz.lancia.events.DefaultBrowserListener;
-import org.miaixz.lancia.events.EventEmitter;
-import org.miaixz.lancia.option.ConnectionOptions;
-import org.miaixz.lancia.option.LaunchOptions;
-import org.miaixz.lancia.worker.Connection;
-import org.miaixz.lancia.worker.Transport;
-import org.miaixz.lancia.worker.TransportFactory;
-import org.miaixz.lancia.worker.exception.LaunchException;
-import org.miaixz.lancia.worker.exception.TimeoutException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
-public class Runner extends EventEmitter implements AutoCloseable {
+import org.miaixz.bus.core.lang.exception.LaunchException;
+import org.miaixz.bus.core.lang.exception.TimeoutException;
+import org.miaixz.bus.core.xyz.FileKit;
+import org.miaixz.bus.core.xyz.IoKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.Emitter;
+import org.miaixz.lancia.options.LaunchOptions;
+import org.miaixz.lancia.socket.Connection;
+import org.miaixz.lancia.socket.WebSocketTransport;
+import org.miaixz.lancia.socket.factory.WebSocketTransportFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.win32.StdCallLibrary;
+
+import io.reactivex.rxjava3.disposables.Disposable;
+
+public class Runner extends Emitter<Runner.BroserEvent> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
+
+    private static final Map<Process, String> pidMap = new HashMap<>();
 
     private static final Pattern WS_ENDPOINT_PATTERN = Pattern.compile("^DevTools listening on (ws://.*)$");
     private static final List<Runner> runners = new ArrayList<>();
@@ -67,7 +73,7 @@ public class Runner extends EventEmitter implements AutoCloseable {
     private final String executablePath;
     private final List<String> processArguments;
     private final String tempDirectory;
-    private final List<BrowserListenerWrapper> listeners = new ArrayList<>();
+    private final List<Disposable> disposables = new ArrayList<>();
     private Process process;
     private Connection connection;
     private boolean closed;
@@ -86,34 +92,87 @@ public class Runner extends EventEmitter implements AutoCloseable {
      * @param options 启动参数
      * @throws IOException io异常
      */
-    public void start(LaunchOptions options) throws IOException {
+    public void start(LaunchOptions options) throws IOException, InterruptedException {
         if (process != null) {
             throw new RuntimeException("This process has previously been started.");
         }
         List<String> arguments = new ArrayList<>();
         arguments.add(executablePath);
         arguments.addAll(processArguments);
-
         ProcessBuilder processBuilder = new ProcessBuilder().command(arguments).redirectErrorStream(true);
         process = processBuilder.start();
         this.closed = false;
-
+        pidMap.putIfAbsent(process, Builder.getProcessId(process));
         registerHook();
         addProcessListener(options);
     }
 
+    /*
+     * 获取chrome进程的pid，以方便在关闭浏览器时候能够完全杀死进程
+     * 
+     * @return
+     * 
+     * @throws IOException
+     */
+//    private void findPid() throws IOException, InterruptedException {
+//
+//        Process exec = null;
+//        String command = "ps -ef";
+//        try{
+//            exec = Runtime.getRuntime().exec(command);
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(exec.getInputStream()));
+//            String line;
+//            String pid = "";
+//            while (StringKit.isNotEmpty(line = reader.readLine())) {
+//                if(!line.contains("chrome")) {
+//                    continue;
+//                }
+//                if(line.contains("type=zygote") || !line.contains("type=gpu-process") || line.contains("type=utility") || line.contains("type=renderer") || line.contains("type=crashpad")){
+//                   continue;
+//                }
+//                LOGGER.info("找到目标line {},{}", BrowserRunner.ahead,line);
+//                String[] pidArray = line.trim().split("\\s+");
+//                if(pidArray.length < 2){
+//                    continue;
+//                }
+//                pid =  pidArray[1];
+//                if (BrowserRunner.ahead){
+//                    existedPidSet.add(pid);
+//                    BrowserRunner.ahead = false;
+//                }else {
+//                    if(!existedPidSet.contains(pid)){
+//                        String existedPid = pidMap.putIfAbsent(this.process, pid);
+//                        if(existedPid == null){//找到一个新的pid,不再继续往下找
+//                            LOGGER.info("found this process id {}", pid);
+//                            break;
+//                        }
+//                    }
+//                }
+//
+//
+//            }
+//
+//            if(StringKit.isEmpty(pid) && !ahead){
+//                LOGGER.warn("The id of the process could not be found.");
+//            }
+//        }finally {
+//            destroyCmdExec(exec,command);
+//        }
+//
+//    }
     /**
      * 注册钩子函数，程序关闭时，关闭浏览器
      */
     private void registerHook() {
         runners.add(this);
-        if (!isRegisterShutdownHook) {
-            synchronized (Runner.class) {
-                if ((!isRegisterShutdownHook)) {
-                    RuntimeShutdownHookRegistry hook = new RuntimeShutdownHookRegistry();
-                    hook.register(new Thread(this::close));
-                    isRegisterShutdownHook = true;
-                }
+        if (isRegisterShutdownHook) {
+            return;
+        }
+        synchronized (Runner.class) {
+            if (!isRegisterShutdownHook) {
+                RuntimeShutdownHookRegistry hook = new RuntimeShutdownHookRegistry();
+                hook.register(new Thread(this::closeAllBrowser));
+                isRegisterShutdownHook = true;
             }
         }
     }
@@ -124,133 +183,97 @@ public class Runner extends EventEmitter implements AutoCloseable {
      * @param options 启动参数
      */
     private void addProcessListener(LaunchOptions options) {
-        DefaultBrowserListener<Object> exitListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                Runner runner = (Runner) this.getTarget();
-                runner.kill();
-            }
-        };
-        exitListener.setMethod("exit");
-        exitListener.setTarget(this);
-        this.listeners.add(Builder.addEventListener(this, exitListener.getMethod(), exitListener));
-
+        this.disposables.add(Builder.fromEmitterEvent(this, BroserEvent.EXIT).subscribe((ignore -> this.kill())));
         if (options.getHandleSIGINT()) {
-            DefaultBrowserListener<Object> sigintListener = new DefaultBrowserListener<>() {
-                @Override
-                public void onBrowserEvent(Object event) {
-                    Runner runner = (Runner) this.getTarget();
-                    runner.kill();
-                }
-            };
-            sigintListener.setMethod("SIGINT");
-            sigintListener.setTarget(this);
-            this.listeners.add(Builder.addEventListener(this, sigintListener.getMethod(), sigintListener));
+            this.disposables.add(Builder.fromEmitterEvent(this, BroserEvent.SIGINT).subscribe((ignore -> this.kill())));
         }
-
         if (options.getHandleSIGTERM()) {
-            DefaultBrowserListener<Object> sigtermListener = new DefaultBrowserListener<>() {
-                @Override
-                public void onBrowserEvent(Object event) {
-                    Runner runner = (Runner) this.getTarget();
-                    runner.close();
-                }
-            };
-            sigtermListener.setMethod("SIGTERM");
-            sigtermListener.setTarget(this);
-            this.listeners.add(Builder.addEventListener(this, sigtermListener.getMethod(), sigtermListener));
+            this.disposables.add(
+                    Builder.fromEmitterEvent(this, BroserEvent.SIGTERM).subscribe((ignore -> this.closeAllBrowser())));
         }
-
         if (options.getHandleSIGHUP()) {
-            DefaultBrowserListener<Object> sighubListener = new DefaultBrowserListener<>() {
-                @Override
-                public void onBrowserEvent(Object event) {
-                    Runner runner = (Runner) this.getTarget();
-                    runner.close();
-                }
-            };
-            sighubListener.setMethod("SIGHUP");
-            sighubListener.setTarget(this);
-            this.listeners.add(Builder.addEventListener(this, sighubListener.getMethod(), sighubListener));
+            this.disposables.add(
+                    Builder.fromEmitterEvent(this, BroserEvent.SIGHUP).subscribe((ignore -> this.closeAllBrowser())));
         }
     }
 
     /**
      * kill 掉浏览器进程
      */
-    public void kill() {
-        this.destroyForcibly();
-        // delete user-data-dir
-        try {
-            if (StringKit.isNotEmpty(tempDirectory)) {
-                removeFolderByCmd(tempDirectory);
-//                FileKit.removeFolder(tempDirectory);
-                // 同时把以前没删除干净的文件夹也重新删除一遍
-//                Stream<Path> remainTempDirectories = Files.list(Paths.get(tempDirectory).getParent());
-//                remainTempDirectories.forEach(path -> {
-//                    if (path.getFileName().toString().startsWith(Builder.PROFILE_PREFIX)) {
-////                        FileUtil.removeFolder(path.toString());
-//                        try {
-//                            removeFolderByCmd(path.toString());
-//                        } catch (IOException | InterruptedException e) {
-//
-//                        }
-//                    }
-//                });
-            }
-
-        } catch (Exception e) {
-            Logger.error("kill chrome process error ", e);
+    public boolean kill() {
+        if (this.closed) {
+            return true;
         }
+        try {
+            String pid = pidMap.get(this.process);
+            if ("-1".equals(pid) || StringKit.isEmpty(pid)) {
+                LOGGER.warn("invalid pid ({}) ,kill chrome process failed", pid);
+                return false;
+            }
+            Process exec = null;
+            String command = "";
+            if (Platform.isWindows()) {
+                command = "cmd.exe /c taskkill /PID " + pid + " /F /T ";
+                exec = Runtime.getRuntime().exec(command);
+            } else if (Platform.isLinux() || Platform.isMac()) {
+                command = "kill -9 " + pid;
+                exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c", command });
+            }
+            try {
+                if (exec != null) {
+                    LOGGER.info("kill chrome process by pid,command:  {}", command);
+                    return exec.waitFor(Builder.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+                }
+            } finally {
+                this.destroyCmdProcess(exec, command);
+                if (StringKit.isNotEmpty(this.tempDirectory)) {
+                    FileKit.remove(this.tempDirectory);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("kill chrome process error ", e);
+            return false;
+        }
+        return false;
     }
 
     /**
-     * 强制结束浏览器进程
+     * 关闭cmd exec
+     * 
+     * @param process 进程
+     * @throws InterruptedException 异常
      */
-    public void destroyForcibly() {
-        if (process != null && process.isAlive()) {
+    private void destroyCmdProcess(Process process, String command) throws InterruptedException {
+        if (process == null) {
+            return;
+        }
+        boolean waitForResult = process.waitFor(Builder.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+        if (process.isAlive() && !waitForResult) {
+            process.destroyForcibly();
+        }
+        LOGGER.trace("The current command ({}) exit result : {}.", command, waitForResult);
+    }
+
+    /**
+     * 使用java自带方法关闭chrome进程
+     */
+    public void destroyProcess() throws InterruptedException {
+        process.destroy();
+        if (process != null && process.isAlive() && !process.waitFor(Builder.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)) {
             process.destroyForcibly();
         }
     }
 
     /**
      * 通过命令行删除文件夹
-     *
+     * 
      * @param path 删除的路径
-     * @throws IOException          异常
-     * @throws InterruptedException 异常
      */
-    private void removeFolderByCmd(String path) throws IOException, InterruptedException {
+    private void deleteDir(String path) {
         if (StringKit.isEmpty(path) || "*".equals(path)) {
             return;
         }
-        Process delProcess = null;
-        if (Platform.isWindows()) {
-            delProcess = Runtime.getRuntime().exec("cmd /c rd /s /q " + path);
-        } else if (Platform.isLinux() || Platform.isMac()) {
-            String[] cmd = new String[] { "/bin/sh", "-c", "rm -rf " + path };
-            delProcess = Runtime.getRuntime().exec(cmd);
-        }
-        if (!delProcess.waitFor(10000, TimeUnit.MILLISECONDS)) {
-            delProcess.destroyForcibly();
-        }
-    }
-
-    /**
-     * 连接浏览器
-     *
-     * @param usePipe           是否是pipe连接
-     * @param timeout           超时时间
-     * @param slowMo            放慢频率
-     * @param dumpio            浏览器版本
-     * @param connectionOptions 链接选项
-     * @return
-     */
-    public Connection setUpConnection(boolean usePipe, int timeout, int slowMo, boolean dumpio,
-            ConnectionOptions connectionOptions) throws InterruptedException {
-        Connection connection = this.setUpConnection(usePipe, timeout, slowMo, dumpio);
-        connection.setConnectionOptions(connectionOptions);
-        return connection;
+        FileKit.remove(path);
     }
 
     /**
@@ -261,37 +284,36 @@ public class Runner extends EventEmitter implements AutoCloseable {
      * @param slowMo  放慢频率
      * @param dumpio  浏览器版本
      * @return 连接对象
-     * @throws LaunchException 异常
+     * @throws InterruptedException 打断异常
      */
-    public Connection setUpConnection(boolean usePipe, int timeout, int slowMo, boolean dumpio) {
-        if (usePipe) {
-            // pipe connection
+    public Connection setUpConnection(boolean usePipe, int timeout, int slowMo, boolean dumpio)
+            throws InterruptedException {
+        if (usePipe) {/* pipe connection */
             throw new LaunchException(
-                    "Temporarily not supported pipe connect to chromuim.If you have a pipe connect to chromium idea,please new a issue in github:https://github.com/839128/lancia/issues");
-            /*
-             * InputStream pipeRead = this.getProcess().getInputStream(); OutputStream pipeWrite =
-             * this.getProcess().getOutputStream(); PipeTransport transport = new PipeTransport(pipeRead, pipeWrite);
-             * this.connection = new Connection("", transport, slowMo);
-             */
-        } else {
-            /// websoket connection
+                    "Temporarily not supported pipe connect to chromuim.If you have a pipe connect to chromium idea,pleaze new a issue in github:https://github.com/839128/lancia/issues");
+//            InputStream pipeRead = this.getProcess().getInputStream();
+//            OutputStream pipeWrite = this.getProcess().getOutputStream();
+//            PipeTransport transport = new PipeTransport(pipeRead, pipeWrite);
+//            this.connection = new Connection("", transport, slowMo);
+
+        } else {/* websocket connection */
             String waitForWSEndpoint = waitForWSEndpoint(timeout, dumpio);
-            Transport transport = TransportFactory.create(waitForWSEndpoint);
-            this.connection = new Connection(waitForWSEndpoint, transport, slowMo);
-            Logger.info("Connect to browser by websocket url: " + waitForWSEndpoint);
+            WebSocketTransport transport = WebSocketTransportFactory.create(waitForWSEndpoint);
+            this.connection = new Connection(waitForWSEndpoint, transport, slowMo, timeout);
+            LOGGER.trace("Connect to browser by websocket url: {}", waitForWSEndpoint);
         }
         return this.connection;
     }
 
     /**
-     * 等待浏览器ws url
+     * waiting for browser ws url
      *
      * @param timeout 等待超时时间
      * @param dumpio  浏览器版本
      * @return ws url
      */
     private String waitForWSEndpoint(int timeout, boolean dumpio) {
-        Runner.StreamReader reader = new Runner.StreamReader(timeout, dumpio, process.getInputStream());
+        StreamReader reader = new StreamReader(timeout, dumpio, process.getInputStream());
         reader.start();
         return reader.getResult();
     }
@@ -300,41 +322,36 @@ public class Runner extends EventEmitter implements AutoCloseable {
         return process;
     }
 
-    @Override
-    public void close() {
-        for (int i = 0; i < runners.size(); i++) {
-            Runner runner = runners.get(i);
-            if (runner.getClosed()) {
-                break;
-            }
-
-            if (runner.getConnection() != null && !runner.getConnection().getClosed()) {
-                runner.getConnection().send("Browser.close", null, false);
-            }
-
-            if (StringKit.isNotEmpty(runner.getTempDirectory())) {
-                runner.kill();
-            }
+    // 系统奔溃或正常关闭时候，关闭所有打开的浏览器
+    public void closeAllBrowser() {
+        for (Runner runner : runners) {
+            runner.closeBrowser();
         }
     }
 
     /**
      * 关闭浏览器
      */
-    public void closeQuietly() {
+    public void closeBrowser() {
         if (this.getClosed()) {
             return;
         }
-        Builder.removeEventListeners(this.listeners);
-
-        // 先发送指令关闭
-        if (this.connection != null && !this.connection.getClosed()) {
-            this.connection.send("Browser.close", null, false);
+        // 发送关闭指令
+        if (this.connection != null && !this.connection.closed) {
+            this.connection.send("Browser.close");
         }
-
-        // 再调用 java 的 api 去关闭，但是这个 api 成功率不是100%
-        if (StringKit.isNotEmpty(this.tempDirectory)) {
-            this.kill();
+        // 通过kill命令关闭
+        this.disposables.forEach(Disposable::dispose);
+        boolean killResult = this.kill();
+        if (killResult) {
+            this.closed = true;
+            return;
+        }
+        // 采用java的Process类进行关闭
+        try {
+            this.destroyProcess();
+        } catch (InterruptedException e) {
+            LOGGER.error("Destroy chrome process error.", e);
         }
         this.closed = true;
     }
@@ -349,6 +366,27 @@ public class Runner extends EventEmitter implements AutoCloseable {
 
     public Connection getConnection() {
         return connection;
+    }
+
+    public enum BroserEvent {
+        /**
+         * 浏览器启动
+         */
+        START("start"),
+        /**
+         * 浏览器关闭
+         */
+        EXIT("exit"), SIGINT("SIGINT"), SIGTERM("SIGTERM"), SIGHUP("SIGHUP");
+
+        private String eventName;
+
+        BroserEvent(String eventName) {
+            this.eventName = eventName;
+        }
+
+        public String getEventName() {
+            return eventName;
+        }
     }
 
     /**
@@ -375,8 +413,13 @@ public class Runner extends EventEmitter implements AutoCloseable {
         }
     }
 
-    static class StreamReader {
+    public interface Kernel32 extends StdCallLibrary {
+        Kernel32 INSTANCE = Native.load("kernel32", Kernel32.class);
 
+        long GetProcessId(Long hProcess);
+    }
+
+    static class StreamReader {
         private final StringBuilder ws = new StringBuilder();
         private final AtomicBoolean success = new AtomicBoolean(false);
         private final AtomicReference<String> chromeOutput = new AtomicReference<>("");
@@ -420,11 +463,11 @@ public class Runner extends EventEmitter implements AutoCloseable {
                         chromeOutput.set(chromeOutputBuilder.toString());
                     }
                 } catch (Exception e) {
-                    Logger.error(
+                    LOGGER.error(
                             "Failed to launch the browser process!please see TROUBLESHOOTING: https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md:",
                             e);
                 } finally {
-                    IoKit.close(reader);
+                    IoKit.closeQuietly(reader);
                 }
             });
 
@@ -435,16 +478,12 @@ public class Runner extends EventEmitter implements AutoCloseable {
             try {
                 readThread.join(timeout);
                 if (!success.get()) {
-                    if (readThread != null) {
-                        readThread = null;
-                    }
+                    IoKit.close(readThread);
                     throw new TimeoutException("Timed out after " + timeout
                             + " ms while trying to connect to the browser!" + "Chrome output: " + chromeOutput.get());
                 }
             } catch (InterruptedException e) {
-                if (readThread != null) {
-                    readThread = null;
-                }
+                IoKit.close(readThread);
                 throw new RuntimeException("Interrupted while waiting for dev tools server.", e);
             }
             String url = ws.toString();

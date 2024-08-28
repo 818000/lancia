@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.css;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class Range {
 
     private int start;
@@ -38,6 +34,7 @@ public class Range {
     private int end;
 
     public Range() {
+
     }
 
     public Range(int start, int end) {
@@ -60,4 +57,5 @@ public class Range {
     public void setEnd(int end) {
         this.end = end;
     }
+
 }

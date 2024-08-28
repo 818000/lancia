@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.runtime;
 
 /**
  * Description of an isolated world.
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class ExecutionContextDescription {
 

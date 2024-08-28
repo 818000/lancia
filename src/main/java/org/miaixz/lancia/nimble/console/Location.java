@@ -27,10 +27,6 @@
 */
 package org.miaixz.lancia.nimble.console;
 
-/**
- * @author Kimi Liu
- * @since Java 17+
- */
 public class Location {
 
     private String url;
@@ -85,4 +81,5 @@ public class Location {
         return "Location{" + "url='" + url + '\'' + ", lineNumber=" + lineNumber + ", columnNumber=" + columnNumber
                 + '}';
     }
+
 }

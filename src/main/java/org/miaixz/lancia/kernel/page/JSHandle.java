@@ -27,27 +27,24 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
+import java.util.*;
+
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.worker.CDPSession;
+import org.miaixz.lancia.socket.CDPSession;
 
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 
-/**
- * JS拦截器
- *
- * @author Kimi Liu
- * @since Java 17+
- */
 public class JSHandle {
 
-    private final CDPSession client;
-    private final RemoteObject remoteObject;
     private ExecutionContext context;
+
+    private CDPSession client;
+
+    private RemoteObject remoteObject;
+
     private boolean disposed = false;
 
     public JSHandle(ExecutionContext context, CDPSession client, RemoteObject remoteObject) {
@@ -87,7 +84,7 @@ public class JSHandle {
         String pageFunction = "(object, propertyName) => {\n" + "            const result = { __proto__: null };\n"
                 + "            result[propertyName] = object[propertyName];\n" + "            return result;\n"
                 + "        }";
-        JSHandle objectHandle = (JSHandle) this.evaluateHandle(pageFunction, Collections.singletonList(propertyName));
+        JSHandle objectHandle = (JSHandle) this.evaluateHandle(pageFunction, Arrays.asList(propertyName));
         Map<String, JSHandle> properties = objectHandle.getProperties();
         JSHandle result = properties.get(propertyName);
         objectHandle.dispose();
@@ -98,17 +95,19 @@ public class JSHandle {
         Map<String, Object> params = new HashMap<>();
         params.put("objectId", this.remoteObject.getObjectId());
         params.put("ownProperties", true);
-        JSONObject response = this.client.send("Runtime.getProperties", params, true);
-        Map<String, JSHandle> result = new HashMap<>();
-        List<JSONObject> list = response.getObject("result", new TypeReference<List<JSONObject>>() {
-        });
-        Iterator<JSONObject> iterator = list.iterator();
+        JsonNode response = this.client.send("Runtime.getProperties", params);
+        Map<String, JSHandle> result = new LinkedHashMap<>();
+        Iterator<JsonNode> iterator = response.get("result").iterator();
         while (iterator.hasNext()) {
-            JSONObject property = iterator.next();
-            if (!property.getBoolean("enumerable"))
+            JsonNode property = iterator.next();
+            if (!property.get("enumerable").asBoolean())
                 continue;
-            result.put(property.getString("name"), createJSHandle(this.context,
-                    JSON.toJavaObject(property.getJSONObject("value"), RemoteObject.class)));
+            try {
+                result.put(property.get("name").asText(), createJSHandle(this.context,
+                        Builder.OBJECTMAPPER.treeToValue(property.get("value"), RemoteObject.class)));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         }
         return result;
     }
@@ -120,14 +119,18 @@ public class JSHandle {
             params.put("objectId", this.remoteObject.getObjectId());
             params.put("returnByValue", true);
             params.put("awaitPromise", true);
-            JSONObject response = this.client.send("Runtime.callFunctionOn", params, true);
-            return Builder.valueFromRemoteObject(
-                    JSON.parseObject(JSON.toJSONString(response.get("result")), RemoteObject.class));
-
+            JsonNode response = this.client.send("Runtime.callFunctionOn", params);
+            try {
+                return Builder.valueFromRemoteObject(
+                        Builder.OBJECTMAPPER.treeToValue(response.get("result"), RemoteObject.class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         }
         return Builder.valueFromRemoteObject(this.remoteObject);
     }
 
+    /* This always returns null but children can define this and return an ElementHandle */
     public ElementHandle asElement() {
         return null;
     }

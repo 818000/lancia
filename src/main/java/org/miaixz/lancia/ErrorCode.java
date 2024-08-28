@@ -27,12 +27,6 @@
 */
 package org.miaixz.lancia;
 
-/**
- * 错误码
- *
- * @author Kimi Liu
- * @since Java 17+
- */
 public enum ErrorCode {
 
     ABORTED("Aborted"), ACCESSDENIED("AccessDenied"), ADDRESSUNREACHABLE("AddressUnreachable"),

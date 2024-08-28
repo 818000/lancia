@@ -27,9 +27,10 @@
 */
 package org.miaixz.lancia.kernel.browser;
 
+import com.sun.jna.Platform;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.health.Platform;
+import org.miaixz.lancia.Builder;
 
 /**
  * @author Kimi Liu
@@ -132,16 +133,16 @@ public class Revision {
     public void setPlatform(String platform) {
         if (StringKit.isNotEmpty(platform)) {
             this.platform = platform;
-        } else {
-            if (Platform.isMac()) {
-                this.platform = Platform.is64Bit() ? "mac_arm" : "mac";
-            } else if (Platform.isLinux()) {
-                this.platform = "linux";
-            } else if (Platform.isWindows()) {
-                this.platform = Platform.is64Bit() ? "win64" : "win32";
-            }
+            return;
         }
-        Assert.notNull(this.platform, "Unsupported platform: " + Platform.getNativeLibraryResourcePrefix());
+        if (platform == null) {
+            if (com.sun.jna.Platform.isMac())
+                this.platform = com.sun.jna.Platform.is64Bit() ? Builder.MAC_ARM64 : Builder.MAC_X64;
+            else if (com.sun.jna.Platform.isLinux())
+                this.platform = Builder.LINUX;
+            else if (com.sun.jna.Platform.isWindows())
+                this.platform = Platform.is64Bit() ? Builder.WIN64 : Builder.WIN32;
+            Assert.notNull(this.platform, "Unsupported platform: " + Builder.platform());
+        }
     }
-
 }

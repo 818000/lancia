@@ -27,24 +27,22 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import com.alibaba.fastjson.JSONObject;
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.DefaultBrowserListener;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.logger.Logger;
+import org.miaixz.lancia.Builder;
+import org.miaixz.lancia.events.TracingCompleteEvent;
+import org.miaixz.lancia.socket.CDPSession;
 
 /**
- * You can use [`tracing.start`](#tracingstartoptions) and [`tracing.stop`](#tracingstop)to create a trace file which
+ * You can use [`tracing.start`](#tracingstartoptions) and [`tracing.stop`](#tracingstop) to create a trace file which
  * can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/)
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class Tracing {
 
@@ -75,10 +73,10 @@ public class Tracing {
 
     /**
      * 每个浏览器一次只能激活一条跟踪
-     *
-     * @param path        跟踪文件写入的路径
-     * @param screenshots 捕获跟踪中的屏幕截图
-     * @param categories  指定要使用的自定义类别替换默认值
+     * 
+     * @param path        A path to write the trace file to. 跟踪文件写入的路径
+     * @param screenshots captures screenshots in the trace 捕获跟踪中的屏幕截图
+     * @param categories  specify custom categories to use instead of default. 指定要使用的自定义类别替换默认值
      */
     public void start(String path, boolean screenshots, Set<String> categories) {
         Assert.isTrue(!this.recording, "Cannot start recording trace while already recording trace.");
@@ -91,30 +89,21 @@ public class Tracing {
         Map<String, Object> params = new HashMap<>();
         params.put("transferMode", "ReturnAsStream");
         params.put("categories", String.join(",", categories));
-        this.client.send("Tracing.start", params, true);
+        this.client.send("Tracing.start", params);
     }
 
     /**
-     * 停止追踪
+     * stop tracing
      */
     public void stop() {
-        DefaultBrowserListener<JSONObject> traceListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(JSONObject event) {
-                Tracing tracing;
-                try {
-                    tracing = (Tracing) this.getTarget();
-                    Builder.readProtocolStream(tracing.getClient(),
-                            event.getString(Builder.RECV_MESSAGE_STREAM_PROPERTY), tracing.getPath(), true);
-                } catch (IOException ignored) {
-
-                }
+        this.client.once(CDPSession.CDPSessionEvent.Tracing_tracingComplete, (Consumer<TracingCompleteEvent>) event -> {
+            try {
+                Builder.readProtocolStream(Tracing.this.getClient(), event.getStream(), Tracing.this.getPath(), true);
+            } catch (IOException e) {
+                Logger.error("Error reading trace", e);
             }
-        };
-        traceListener.setTarget(this);
-        traceListener.setMethod("Tracing.tracingComplete");
-        this.client.addListener(traceListener.getMethod(), traceListener, true);
-        this.client.send("Tracing.end", null, true);
+        });
+        this.client.send("Tracing.end");
         this.recording = false;
     }
 

@@ -27,17 +27,16 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.lancia.nimble.page.FileChooserOpenedPayload;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.util.List;
 
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.lancia.nimble.page.FileChooserOpenedEvent;
+import org.miaixz.lancia.socket.CDPSession;
+
 /**
- * FileChooser对象通过“ page.waitForFileChooser”方法返回 通过文件选择器，您可以对请求文件的页面做出反应
+ * FileChooser objects are returned via the 'page.waitForFileChooser' method.
  *
- * @author Kimi Liu
- * @since Java 17+
+ * File choosers let you react to the page requesting for a file.
  */
 public class FileChooser {
 
@@ -50,9 +49,10 @@ public class FileChooser {
     private boolean multiple;
 
     public FileChooser() {
+
     }
 
-    public FileChooser(CDPSession client, ElementHandle element, FileChooserOpenedPayload event) {
+    public FileChooser(CDPSession client, ElementHandle element, FileChooserOpenedEvent event) {
         this.client = client;
         this.element = element;
         this.multiple = !"selectSingle".equals(event.getMode());

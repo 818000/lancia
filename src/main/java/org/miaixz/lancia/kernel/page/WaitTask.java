@@ -27,37 +27,39 @@
 */
 package org.miaixz.lancia.kernel.page;
 
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.nimble.PageEvaluateType;
 
-import java.math.BigDecimal;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-/**
- * 等待任务
- *
- * @author Kimi Liu
- * @since Java 17+
- */
 public class WaitTask {
 
-    private final AtomicInteger runCount;
-    private final DOMWorld domWorld;
-    private final String polling;
-    private final int timeout;
-    private final String predicateBody;
-    private final List<Object> args;
+    private AtomicInteger runCount;
+
     private boolean terminated;
+
     private JSHandle promise;
+
+    private DOMWorld domWorld;
+
+    private String polling;
+
+    private int timeout;
+
+    private String predicateBody;
+
+    private List<Object> args;
+
     private CountDownLatch waitPromiseLatch;
 
     public WaitTask(DOMWorld domWorld, String predicateBody, String predicateQueryHandlerBody, PageEvaluateType type,
@@ -123,7 +125,7 @@ public class WaitTask {
         // throw an error - ignore this predicate run altogether.
         boolean isChanged = false;
         try {
-            this.domWorld.evaluate("s => !s", Collections.singletonList(success));
+            this.domWorld.evaluate("s => !s", Arrays.asList(success));
         } catch (Exception e) {
             isChanged = true;
         }

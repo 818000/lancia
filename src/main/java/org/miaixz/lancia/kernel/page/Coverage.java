@@ -27,29 +27,28 @@
 */
 package org.miaixz.lancia.kernel.page;
 
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.lancia.nimble.css.Point;
-import org.miaixz.lancia.nimble.css.Range;
-import org.miaixz.lancia.nimble.profiler.CoverageEntry;
-import org.miaixz.lancia.nimble.profiler.CoverageRange;
-import org.miaixz.lancia.worker.CDPSession;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.lancia.nimble.css.Point;
+import org.miaixz.lancia.nimble.css.Range;
+import org.miaixz.lancia.nimble.profiler.CoverageEntry;
+import org.miaixz.lancia.nimble.profiler.CoverageRange;
+import org.miaixz.lancia.socket.CDPSession;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 /**
- * Coverage收集有关页面使用的JavaScript和CSS部分的信息
- *
- * @author Kimi Liu
- * @since Java 17+
+ * Coverage gathers information about parts of JavaScript and CSS that were used by the page.
  */
 public class Coverage {
 
-    private final CSSCoverage cssCoverage;
+    private CSSCoverage cssCoverage;
 
-    private final JSCoverage jsCoverage;
+    private JSCoverage jsCoverage;
 
     public Coverage(CDPSession client) {
         this.cssCoverage = new CSSCoverage(client);
@@ -64,20 +63,21 @@ public class Coverage {
                 points.add(createPoint(range.getStartOffset(), 1, range));
             }
         }
-        // 对点进行排序以形成有效的括号序列
+        // Sort points to form a valid parenthesis sequence.
         points.sort((a, b) -> {
-            // 以增加的偏移量排序
+
+            // Sort with increasing offsets.
             if (a.getOffset() != b.getOffset())
                 return a.getOffset() - b.getOffset();
-            // 所有“结束”点应在“开始”点之前
+            // All "end" points should go before "start" points.
             if (a.getType() != b.getType())
                 return b.getType() - a.getType();
             int aLength = a.getRange().getEndOffset() - a.getRange().getStartOffset();
             int bLength = b.getRange().getEndOffset() - b.getRange().getStartOffset();
-            // 对于两个“start”，范围更大的点排在第一位
+            // For two "start" points, the one with longer range goes first.
             if (a.getType() == 0)
                 return bLength - aLength;
-            // 对于两个“end”，范围更短的点排在第一位
+            // For two "end" points, the one with shorter range goes first.
             return aLength - bLength;
         });
 
@@ -121,7 +121,7 @@ public class Coverage {
         this.jsCoverage.start(resetOnNavigation, reportAnonymousScripts);
     }
 
-    public List<CoverageEntry> stopJSCoverage() {
+    public List<CoverageEntry> stopJSCoverage() throws JsonProcessingException {
         return this.jsCoverage.stop();
     }
 

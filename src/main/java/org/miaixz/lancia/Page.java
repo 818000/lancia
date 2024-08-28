@@ -27,76 +27,74 @@
 */
 package org.miaixz.lancia;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.events.DefaultBrowserListener;
-import org.miaixz.lancia.events.EventEmitter;
-import org.miaixz.lancia.events.EventHandler;
-import org.miaixz.lancia.events.Events;
-import org.miaixz.lancia.kernel.browser.Context;
-import org.miaixz.lancia.kernel.page.TaskQueue;
-import org.miaixz.lancia.kernel.page.*;
-import org.miaixz.lancia.nimble.PageEvaluateType;
-import org.miaixz.lancia.nimble.console.Location;
-import org.miaixz.lancia.nimble.console.Payload;
-import org.miaixz.lancia.nimble.dom.Margin;
-import org.miaixz.lancia.nimble.emulation.MediaFeature;
-import org.miaixz.lancia.nimble.emulation.ScreenOrientation;
-import org.miaixz.lancia.nimble.log.DialogType;
-import org.miaixz.lancia.nimble.log.EntryAddedPayload;
-import org.miaixz.lancia.nimble.network.Cookie;
-import org.miaixz.lancia.nimble.network.CookieParam;
-import org.miaixz.lancia.nimble.network.DeleteCookiesParameters;
-import org.miaixz.lancia.nimble.page.FileChooserOpenedPayload;
-import org.miaixz.lancia.nimble.page.GetNavigationHistoryReturnValue;
-import org.miaixz.lancia.nimble.page.JavascriptDialogOpeningPayload;
-import org.miaixz.lancia.nimble.page.NavigationEntry;
-import org.miaixz.lancia.nimble.performance.Metric;
-import org.miaixz.lancia.nimble.performance.Metrics;
-import org.miaixz.lancia.nimble.performance.MetricsPayload;
-import org.miaixz.lancia.nimble.performance.PageMetrics;
-import org.miaixz.lancia.nimble.runtime.*;
-import org.miaixz.lancia.nimble.webAuthn.Credentials;
-import org.miaixz.lancia.option.*;
-import org.miaixz.lancia.worker.CDPSession;
-import org.miaixz.lancia.worker.Connection;
-import org.miaixz.lancia.worker.exception.PageCrashException;
-import org.miaixz.lancia.worker.exception.TerminateException;
-import org.miaixz.lancia.worker.exception.TimeoutException;
-
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.ProtocolException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-/**
- * 页面信息
- *
- * @author Kimi Liu
- * @since Java 17+
- */
-public class Page extends EventEmitter {
+import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.exception.InternalException;
+import org.miaixz.bus.core.lang.exception.PageException;
+import org.miaixz.bus.core.lang.exception.TimeoutException;
+import org.miaixz.bus.core.xyz.CollKit;
+import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.lancia.events.AttachedToTargetEvent;
+import org.miaixz.lancia.events.DetachedFromTargetEvent;
+import org.miaixz.lancia.events.ExceptionThrownEvent;
+import org.miaixz.lancia.kernel.browser.Context;
+import org.miaixz.lancia.kernel.page.*;
+import org.miaixz.lancia.nimble.PageEvaluateType;
+import org.miaixz.lancia.nimble.console.Location;
+import org.miaixz.lancia.nimble.console.Payload;
+import org.miaixz.lancia.nimble.emulation.MediaFeature;
+import org.miaixz.lancia.nimble.logging.DialogType;
+import org.miaixz.lancia.nimble.logging.EntryAddedEvent;
+import org.miaixz.lancia.nimble.network.Cookie;
+import org.miaixz.lancia.nimble.network.CookieParam;
+import org.miaixz.lancia.nimble.network.DeleteCookiesParameters;
+import org.miaixz.lancia.nimble.page.FileChooserOpenedEvent;
+import org.miaixz.lancia.nimble.page.GetNavigationHistoryReturnValue;
+import org.miaixz.lancia.nimble.page.JavascriptDialogOpeningEvent;
+import org.miaixz.lancia.nimble.page.NavigationEntry;
+import org.miaixz.lancia.nimble.performance.Metric;
+import org.miaixz.lancia.nimble.performance.Metrics;
+import org.miaixz.lancia.nimble.performance.MetricsEvent;
+import org.miaixz.lancia.nimble.performance.PageMetrics;
+import org.miaixz.lancia.nimble.runtime.BindingCalledEvent;
+import org.miaixz.lancia.nimble.runtime.ConsoleAPICalledEvent;
+import org.miaixz.lancia.nimble.runtime.RemoteObject;
+import org.miaixz.lancia.nimble.runtime.StackTrace;
+import org.miaixz.lancia.nimble.webAuthn.Credentials;
+import org.miaixz.lancia.options.*;
+import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.socket.Connection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private static final ExecutorService reloadExecutor = Executors.newSingleThreadExecutor();
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.subjects.SingleSubject;
+
+public class Page extends Emitter<Page.PageEvent> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Page.class);
     private static final String ABOUT_BLANK = "about:blank";
-    private static final Map<String, Double> unitToPixels = new HashMap<>() {
+    private static final Map<String, Double> unitToPixels = new HashMap<String, Double>() {
         private static final long serialVersionUID = -4861220887908575532L;
 
         {
@@ -119,13 +117,13 @@ public class Page extends EventEmitter {
     private final Tracing tracing;
     private final Map<String, Function<List<?>, Object>> pageBindings;
     private final Coverage coverage;
-    private final TaskQueue<String> screenshotTaskQueue;
     private final Map<String, Worker> workers;
+    private final SingleSubject<Exception> sessionCloseSubject = SingleSubject.create();
     private boolean closed;
     private boolean javascriptEnabled;
     private Viewport viewport;
 
-    public Page(CDPSession client, Target target, boolean ignoreHTTPSErrors, TaskQueue<String> screenshotTaskQueue) {
+    public Page(CDPSession client, Target target) {
         super();
         this.closed = false;
         this.client = client;
@@ -135,272 +133,98 @@ public class Page extends EventEmitter {
         this.timeoutSettings = new TimeoutSettings();
         this.touchscreen = new Touchscreen(client, keyboard);
         this.accessibility = new Accessibility(client);
-        this.frameManager = new FrameManager(client, this, ignoreHTTPSErrors, timeoutSettings);
+        this.frameManager = new FrameManager(client, this, timeoutSettings);
         this.emulationManager = new EmulationManager(client);
         this.tracing = new Tracing(client);
         this.pageBindings = new HashMap<>();
         this.coverage = new Coverage(client);
         this.javascriptEnabled = true;
         this.viewport = null;
-        this.screenshotTaskQueue = screenshotTaskQueue;
         this.workers = new HashMap<>();
-        DefaultBrowserListener<Target> attachedListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Target event) {
-                Page page = (Page) this.getTarget();
-                if (!"worker".equals(event.getTargetInfo().getType())) {
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("sessionId", event.getSessionId());
-                    client.send("Target.detachFromTarget", params, false);
-                    return;
-                }
-                CDPSession session = Connection.fromSession(page.client()).session(event.getSessionId());
-                Worker worker = new Worker(session, event.getTargetInfo().getUrl(), page::addConsoleMessage,
-                        page::handleException);
-                page.workers().putIfAbsent(event.getSessionId(), worker);
-                page.emit(Events.PAGE_WORKERCREATED.getName(), worker);
-            }
-        };
-        attachedListener.setMethod("Target.attachedToTarget");
-        attachedListener.setTarget(this);
-        attachedListener.setResolveType(Target.class);
-        this.client.addListener(attachedListener.getMethod(), attachedListener);
+        Map<FrameManager.FrameManagerEvent, Consumer<?>> frameManagerHandlers = Collections
+                .unmodifiableMap(new HashMap<FrameManager.FrameManagerEvent, Consumer<?>>() {
+                    {
+                        put(FrameManager.FrameManagerEvent.FrameAttached, ((Consumer<Frame>) (frame) -> {
+                            Page.this.emit(PageEvent.FRAMEATTACHED, frame);
+                        }));
+                        put(FrameManager.FrameManagerEvent.FrameDetached, ((Consumer<Frame>) (frame) -> {
+                            Page.this.emit(PageEvent.FRAMEDETACHED, frame);
+                        }));
+                        put(FrameManager.FrameManagerEvent.FrameNavigated, ((Consumer<Frame>) (frame) -> {
+                            Page.this.emit(PageEvent.FRAMENAVIGATED, frame);
+                        }));
+                    }
+                });
+        frameManagerHandlers.forEach(this.frameManager::on);
 
-        DefaultBrowserListener<Target> detachedListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Target event) {
-                Page page = (Page) this.getTarget();
-                Worker worker = page.workers().get(event.getSessionId());
-                if (worker == null) {
-                    return;
-                }
-                page.emit(Events.PAGE_WORKERDESTROYED.getName(), worker);
-                page.workers().remove(event.getSessionId());
-            }
-        };
-        detachedListener.setMethod("Target.detachedFromTarget");
-        detachedListener.setTarget(this);
-        detachedListener.setResolveType(Target.class);
-        this.client.addListener(detachedListener.getMethod(), detachedListener);
-
-        DefaultBrowserListener<Object> frameAttachedListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_FRAMEATTACHED.getName(), event);
-            }
-        };
-        frameAttachedListener.setMethod(Events.FRAME_MANAGER_FRAME_ATTACHED.getName());
-        frameAttachedListener.setTarget(this);
-        this.frameManager.addListener(frameAttachedListener.getMethod(), frameAttachedListener);
-
-        DefaultBrowserListener<Object> frameDetachedListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_FRAMEDETACHED.getName(), event);
-            }
-        };
-        frameDetachedListener.setMethod(Events.FRAME_MANAGER_FRAME_DETACHED.getName());
-        frameDetachedListener.setTarget(this);
-        this.frameManager.addListener(frameDetachedListener.getMethod(), frameDetachedListener);
-
-        DefaultBrowserListener<Object> frameNavigatedListener = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_FRAMENAVIGATED.getName(), event);
-            }
-        };
-        frameNavigatedListener.setMethod(Events.FRAME_MANAGER_FRAME_NAVIGATED.getName());
-        frameNavigatedListener.setTarget(this);
-        this.frameManager.addListener(frameNavigatedListener.getMethod(), frameNavigatedListener);
-
-        NetworkManager networkManager = this.frameManager.getNetworkManager();
-
-        DefaultBrowserListener<Request> requestLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Request event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_REQUEST.getName(), event);
-            }
-        };
-        requestLis.setMethod(Events.NETWORK_MANAGER_REQUEST.getName());
-        requestLis.setTarget(this);
-        networkManager.addListener(requestLis.getMethod(), requestLis);
-
-        DefaultBrowserListener<Response> responseLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Response event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_RESPONSE.getName(), event);
-            }
-        };
-        responseLis.setMethod(Events.NETWORK_MANAGER_RESPONSE.getName());
-        responseLis.setTarget(this);
-        networkManager.addListener(responseLis.getMethod(), responseLis);
-
-        DefaultBrowserListener<Request> requestFailedLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Request event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_REQUESTFAILED.getName(), event);
-            }
-        };
-        requestFailedLis.setMethod(Events.NETWORK_MANAGER_REQUEST_FAILED.getName());
-        requestFailedLis.setTarget(this);
-        networkManager.addListener(requestFailedLis.getMethod(), requestFailedLis);
-
-        DefaultBrowserListener<Request> requestFinishedLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Request event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_REQUESTFINISHED.getName(), event);
-            }
-        };
-        requestFinishedLis.setMethod(Events.NETWORK_MANAGER_REQUEST_FINISHED.getName());
-        requestFinishedLis.setTarget(this);
-        networkManager.addListener(requestFinishedLis.getMethod(), requestFinishedLis);
-
+        Map<NetworkManager.NetworkManagerEvent, Consumer<?>> networkManagerHandlers = Collections
+                .unmodifiableMap(new HashMap<NetworkManager.NetworkManagerEvent, Consumer<?>>() {
+                    {
+                        put(NetworkManager.NetworkManagerEvent.Request, ((Consumer<Request>) (request) -> {
+                            Page.this.emit(PageEvent.REQUEST, request);
+                        }));
+                        put(NetworkManager.NetworkManagerEvent.RequestServedFromCache,
+                                ((Consumer<Request>) (request) -> {
+                                    Page.this.emit(PageEvent.REQUESTSERVEDFROMCACHE, request);
+                                }));
+                        put(NetworkManager.NetworkManagerEvent.Response, ((Consumer<Response>) (response) -> {
+                            Page.this.emit(PageEvent.RESPONSE, response);
+                        }));
+                        put(NetworkManager.NetworkManagerEvent.RequestFailed, ((Consumer<Request>) (request) -> {
+                            Page.this.emit(PageEvent.REQUESTFAILED, request);
+                        }));
+                        put(NetworkManager.NetworkManagerEvent.RequestFinished, ((Consumer<Request>) (request) -> {
+                            Page.this.emit(PageEvent.REQUESTFINISHED, request);
+                        }));
+                    }
+                });
+        networkManagerHandlers.forEach((key, value) -> this.frameManager.networkManager().on(key, value));
+        Map<CDPSession.CDPSessionEvent, Consumer<?>> sessionHandlers = Collections
+                .unmodifiableMap(new HashMap<CDPSession.CDPSessionEvent, Consumer<?>>() {
+                    {
+                        put(CDPSession.CDPSessionEvent.CDPSession_Disconnected,
+                                ((ignore) -> sessionCloseSubject.onSuccess(new InternalException("Target closed"))));
+                        put(CDPSession.CDPSessionEvent.Page_domContentEventFired,
+                                ((ignore) -> Page.this.emit(PageEvent.DOMCONTENTLOADED, null)));
+                        put(CDPSession.CDPSessionEvent.Page_loadEventFired,
+                                ((ignore) -> Page.this.emit(PageEvent.LOAD, null)));
+                        put(CDPSession.CDPSessionEvent.Page_javascriptDialogOpening,
+                                ((Consumer<JavascriptDialogOpeningEvent>) Page.this::onDialog));
+                        put(CDPSession.CDPSessionEvent.Runtime_exceptionThrown,
+                                (Consumer<ExceptionThrownEvent>) Page.this::handleException);
+                        put(CDPSession.CDPSessionEvent.Inspector_targetCrashed, (arg) -> {
+                            Page.this.onTargetCrashed();
+                        });
+                        put(CDPSession.CDPSessionEvent.Performance_metrics,
+                                (Consumer<MetricsEvent>) Page.this::emitMetrics);
+                        put(CDPSession.CDPSessionEvent.Log_entryAdde,
+                                (Consumer<EntryAddedEvent>) Page.this::onLogEntryAdded);
+                        put(CDPSession.CDPSessionEvent.Page_fileChooserOpened,
+                                (Consumer<FileChooserOpenedEvent>) Page.this::onFileChooser);
+                        put(CDPSession.CDPSessionEvent.Target_attachedToTarget,
+                                (Consumer<AttachedToTargetEvent>) Page.this::onAttachedToTarget);
+                        put(CDPSession.CDPSessionEvent.Target_detachedFromTarget,
+                                (Consumer<DetachedFromTargetEvent>) Page.this::onDetachedFromTarget);
+                        put(CDPSession.CDPSessionEvent.Runtime_consoleAPICalled,
+                                (Consumer<ConsoleAPICalledEvent>) Page.this::onConsoleAPI);
+                        put(CDPSession.CDPSessionEvent.Runtime_bindingCalled,
+                                (Consumer<BindingCalledEvent>) Page.this::onBindingCalled);
+                    }
+                });
         this.fileChooserInterceptors = new CopyOnWriteArraySet<>();
-
-        DefaultBrowserListener<Object> domContentEventFiredLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_DOMContentLoaded.getName(), event);
-            }
-        };
-        domContentEventFiredLis.setMethod("Page.domContentEventFired");
-        domContentEventFiredLis.setTarget(this);
-        this.client.addListener(domContentEventFiredLis.getMethod(), domContentEventFiredLis);
-
-        DefaultBrowserListener<Object> loadEventFiredLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                Page page = (Page) this.getTarget();
-                page.emit(Events.PAGE_LOAD.getName(), event);
-            }
-        };
-        loadEventFiredLis.setMethod("Page.loadEventFired");
-        loadEventFiredLis.setTarget(this);
-        this.client.addListener(loadEventFiredLis.getMethod(), loadEventFiredLis);
-
-        DefaultBrowserListener<ConsoleAPICalledPayload> consoleAPICalledLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(ConsoleAPICalledPayload event) {
-                Page page = (Page) this.getTarget();
-                page.onConsoleAPI(event);
-            }
-        };
-        consoleAPICalledLis.setMethod("Runtime.consoleAPICalled");
-        consoleAPICalledLis.setTarget(this);
-        this.client.addListener(consoleAPICalledLis.getMethod(), consoleAPICalledLis);
-
-        DefaultBrowserListener<BindingCalledPayload> bindingCalledLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(BindingCalledPayload event) {
-                Page page = (Page) this.getTarget();
-                page.onBindingCalled(event);
-            }
-        };
-        bindingCalledLis.setMethod("Runtime.bindingCalled");
-        bindingCalledLis.setTarget(this);
-        this.client.addListener(bindingCalledLis.getMethod(), bindingCalledLis);
-
-        DefaultBrowserListener<JavascriptDialogOpeningPayload> javascriptDialogOpeningLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(JavascriptDialogOpeningPayload event) {
-                Page page = (Page) this.getTarget();
-                page.onDialog(event);
-            }
-        };
-        javascriptDialogOpeningLis.setMethod("Page.javascriptDialogOpening");
-        javascriptDialogOpeningLis.setTarget(this);
-        this.client.addListener(javascriptDialogOpeningLis.getMethod(), javascriptDialogOpeningLis);
-
-        DefaultBrowserListener<JSONObject> exceptionThrownLis = new DefaultBrowserListener<JSONObject>() {
-            @Override
-            public void onBrowserEvent(JSONObject event) {
-                Page page = (Page) this.getTarget();
-                JSONObject exceptionDetails = event.getJSONObject("exceptionDetails");
-                if (exceptionDetails == null) {
-                    return;
-                }
-                ExceptionDetails value = JSON.toJavaObject(exceptionDetails, ExceptionDetails.class);
-                page.handleException(value);
-
-            }
-        };
-        exceptionThrownLis.setMethod("Runtime.exceptionThrown");
-        exceptionThrownLis.setTarget(this);
-        this.client.addListener(exceptionThrownLis.getMethod(), exceptionThrownLis);
-
-        DefaultBrowserListener<Object> targetCrashedLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                Page page = (Page) this.getTarget();
-                page.onTargetCrashed();
-            }
-        };
-        targetCrashedLis.setMethod("Inspector.targetCrashed");
-        targetCrashedLis.setTarget(this);
-        this.client.addListener(targetCrashedLis.getMethod(), targetCrashedLis);
-
-        DefaultBrowserListener<MetricsPayload> metricsLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(MetricsPayload event) {
-                Page page = (Page) this.getTarget();
-                try {
-                    page.emitMetrics(event);
-                } catch (IllegalAccessException | IntrospectionException | InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-        metricsLis.setMethod("Inspector.targetCrashed");
-        metricsLis.setTarget(this);
-        this.client.addListener(metricsLis.getMethod(), metricsLis);
-
-        DefaultBrowserListener<EntryAddedPayload> entryAddedLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(EntryAddedPayload event) {
-                Page page = (Page) this.getTarget();
-                page.onLogEntryAdded(event);
-            }
-        };
-        entryAddedLis.setMethod("Log.entryAdded");
-        entryAddedLis.setTarget(this);
-        this.client.addListener(entryAddedLis.getMethod(), entryAddedLis);
-
-        DefaultBrowserListener<FileChooserOpenedPayload> fileChooserOpenedLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(FileChooserOpenedPayload event) {
-                Page page = (Page) this.getTarget();
-                page.onFileChooser(event);
-            }
-        };
-        fileChooserOpenedLis.setMethod("Page.fileChooserOpened");
-        fileChooserOpenedLis.setTarget(this);
-        this.client.addListener(fileChooserOpenedLis.getMethod(), fileChooserOpenedLis);
-
+        sessionHandlers.forEach(this.client::on);
     }
 
     /**
      * 创建一个page对象
      *
-     * @param client              与页面通讯的客户端
-     * @param target              目标
-     * @param ignoreHTTPSErrors   是否忽略https错误
-     * @param viewport            视图
-     * @param screenshotTaskQueue 截图队列
+     * @param client   与页面通讯的客户端
+     * @param target   目标
+     * @param viewport 视图
      * @return 页面实例
-     * @throws ExecutionException   并发异常
-     * @throws InterruptedException 线程打断异常
      */
-    public static Page create(CDPSession client, Target target, boolean ignoreHTTPSErrors, Viewport viewport,
-            TaskQueue<String> screenshotTaskQueue) throws ExecutionException, InterruptedException {
-        Page page = new Page(client, target, ignoreHTTPSErrors, screenshotTaskQueue);
+    public static Page create(CDPSession client, Target target, Viewport viewport) {
+        Page page = new Page(client, target);
         page.initialize();
         if (viewport != null) {
             page.setViewport(viewport);
@@ -409,101 +233,184 @@ public class Page extends EventEmitter {
     }
 
     /**
+     * 反之使用的时候不小心暂停WebSocketConnectReadThread线程，还是使用异步吧
+     *
+     * @param event DetachedFromTargetEvent
+     */
+    private void onDetachedFromTarget(DetachedFromTargetEvent event) {
+        CompletableFuture.runAsync(() -> {
+            Worker worker = this.workers().get(event.getSessionId());
+            if (worker == null) {
+                return;
+            }
+            this.emit(PageEvent.WORKERDESTROYED, worker);
+            this.workers().remove(event.getSessionId());
+        });
+    };
+
+    /**
+     * 这里是WebSocketConnectReadThread 线程执行的方法，不能暂停！！
+     *
+     * @param event AttachedToTargetEvent
+     */
+    private void onAttachedToTarget(AttachedToTargetEvent event) {
+        CompletableFuture.runAsync(() -> {
+            if (!"worker".equals(event.getTargetInfo().getType())) {
+                Map<String, Object> params = new HashMap<>();
+                params.put("sessionId", event.getSessionId());
+                /*
+                 * If we don't detach from service workers, they will never die
+                 */
+                client.send("Target.detachFromTarget", params, null, true);
+                return;
+            }
+            CDPSession session = Connection.fromSession(this.client).session(event.getSessionId());
+            Worker worker = new Worker(session, event.getTargetInfo().getUrl(), event.getTargetInfo().getTargetId(),
+                    TargetType.valueOf(event.getTargetInfo().getType()), this::addConsoleMessage,
+                    this::handleException);
+            this.workers().putIfAbsent(event.getSessionId(), worker);
+            this.emit(PageEvent.WORKERCREATED, worker);
+        });
+    }
+
+    /**
      * 监听页面的关闭事件
      *
      * @param handler 要提供的处理器
      */
-    public void onClose(EventHandler<Object> handler) {
-        this.on(Events.PAGE_CLOSE.getName(), handler);
+    public void onClose(Consumer<Object> handler) {
+        this.on(PageEvent.CLOSE, handler);
     }
 
-    public void onConsole(EventHandler<ConsoleMessage> handler) {
-        this.on(Events.PAGE_CONSOLE.getName(), handler);
+    public void onConsole(Consumer<ConsoleMessage> handler) {
+        this.on(PageEvent.CONSOLE, handler);
     }
 
-    public void onDialog(EventHandler<Dialog> handler) {
-        this.on(Events.PAGE_DIALOG.getName(), handler);
+    public void onDialog(Consumer<Dialog> handler) {
+        this.on(PageEvent.DIALOG, handler);
     }
 
-    public void onError(EventHandler<Error> handler) {
-        this.on(Events.PAGE_ERROR.getName(), handler);
-    }
-
-    /**
-     * frame attach的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
-     *
-     * @param handler 事件处理器
-     */
-    public void onFrameattached(EventHandler<Frame> handler) {
-        this.on(Events.PAGE_FRAMEATTACHED.getName(), handler);
+    public void onError(Consumer<Error> handler) {
+        this.on(PageEvent.ERROR, handler);
     }
 
     /**
-     * frame detached的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * frame attach的时候触发
+     * <p>
+     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
+     * </p>
+     * <p>
+     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
+     * </p>
+     * <p>
+     * 可以在将这些方法的调用移动到另外一个线程中
+     * </p>
      *
      * @param handler 事件处理器
      */
-    public void onFramedetached(EventHandler<Frame> handler) {
-        this.on(Events.PAGE_FRAMEDETACHED.getName(), handler);
+    public void onFrameAttached(Consumer<Frame> handler) {
+        this.on(PageEvent.FRAMEATTACHED, handler);
     }
 
     /**
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * frame detached的时候触发
+     * <p>
+     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
+     * </p>
+     * <p>
+     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
+     * </p>
+     * <p>
+     * 可以在将这些方法的调用移动到另外一个线程中
+     * </p>
      *
      * @param handler 事件处理器
      */
-    public void onFramenavigated(EventHandler<Frame> handler) {
-        this.on(Events.PAGE_FRAMENAVIGATED.getName(), handler);
-    }
-
-    public void onLoad(EventHandler<Object> handler) {
-        this.on(Events.PAGE_LOAD.getName(), handler);
-    }
-
-    public void onMetrics(EventHandler<PageMetrics> handler) {
-        this.on(Events.PAGE_METRICS.getName(), handler);
-    }
-
-    public void onPageerror(EventHandler<RuntimeException> handler) {
-        this.on(Events.PAGE_ERROR.getName(), handler);
-    }
-
-    public void onPopup(EventHandler<Error> handler) {
-        this.on(Events.PAGE_POPUP.getName(), handler);
-    }
-
-    public void onRequest(EventHandler<Request> handler) {
-        this.on(Events.PAGE_REQUEST.getName(), handler);
-    }
-
-    public void onRequestfailed(EventHandler<Request> handler) {
-        this.on(Events.PAGE_REQUESTFAILED.getName(), handler);
-    }
-
-    public void onRequestfinished(EventHandler<Request> handler) {
-        this.on(Events.PAGE_REQUESTFINISHED.getName(), handler);
-    }
-
-    public void onResponse(EventHandler<Response> handler) {
-        this.on(Events.PAGE_RESPONSE.getName(), handler);
+    public void onFrameDetached(Consumer<Frame> handler) {
+        this.on(PageEvent.FRAMEDETACHED, handler);
     }
 
     /**
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * <p>
+     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
+     * </p>
+     * <p>
+     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
+     * </p>
+     * <p>
+     * 可以在将这些方法的调用移动到另外一个线程中
+     * </p>
      *
      * @param handler 事件处理器
      */
-    public void onWorkercreated(EventHandler<Worker> handler) {
-        this.on(Events.PAGE_WORKERCREATED.getName(), handler);
+    public void onFrameNavigated(Consumer<Frame> handler) {
+        this.on(PageEvent.FRAMENAVIGATED, handler);
+    }
+
+    public void onLoad(Consumer<Object> handler) {
+        this.on(PageEvent.LOAD, handler);
+    }
+
+    public void onMetrics(Consumer<PageMetrics> handler) {
+        this.on(PageEvent.METRICS, handler);
+    }
+
+    public void onPageError(Consumer<RuntimeException> handler) {
+        this.on(PageEvent.PAGEERROR, handler);
+    }
+
+    public void onPopup(Consumer<Error> handler) {
+        this.on(PageEvent.POPUP, handler);
+    }
+
+    public void onRequest(Consumer<Request> handler) {
+        this.on(PageEvent.REQUEST, handler);
+    }
+
+    public void onRequestFailed(Consumer<Request> handler) {
+        this.on(PageEvent.REQUESTFAILED, handler);
+    }
+
+    public void onRequestFinished(Consumer<Request> handler) {
+        this.on(PageEvent.REQUESTFINISHED, handler);
+    }
+
+    public void onResponse(Consumer<Response> handler) {
+        this.on(PageEvent.RESPONSE, handler);
     }
 
     /**
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * <p>
+     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法
+     * </p>
+     * <p>
+     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
+     * </p>
+     * <p>
+     * 可以在将这些方法的调用移动到另外一个线程中
+     * </p>
      *
      * @param handler 事件处理器
      */
-    public void onWorkerdestroyed(EventHandler<Worker> handler) {
-        this.on(Events.PAGE_WORKERDESTROYED.getName(), handler);
+    public void onWorkerCreated(Consumer<Worker> handler) {
+        this.on(PageEvent.WORKERCREATED, handler);
+    }
+
+    /**
+     * <p>
+     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法
+     * </p>
+     * <p>
+     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
+     * </p>
+     * <p>
+     * 可以在将这些方法的调用移动到另外一个线程中
+     * </p>
+     *
+     * @param handler 事件处理器
+     */
+    public void onWorkerDestroyed(Consumer<Worker> handler) {
+        this.on(PageEvent.WORKERDESTROYED, handler);
     }
 
     /**
@@ -550,7 +457,10 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 返回主 Frame 保证页面一直有有一个主 frame
+     * <p>
+     * 返回主 Frame
+     * </p>
+     * 保证页面一直有有一个主 frame
      *
      * @return {@link Frame}
      */
@@ -628,7 +538,7 @@ public class Page extends EventEmitter {
      * 相当于多个tab时，切换到某个tab。
      */
     public void bringToFront() {
-        this.client.send("Page.bringToFront", null, true);
+        this.client.send("Page.bringToFront");
     }
 
     /**
@@ -696,8 +606,10 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * page.close() 在 beforeunload 处理之前默认不执行 <strong>注意 如果 runBeforeUnload 设置为true，可能会弹出一个 beforeunload 对话框。
-     * 这个对话框需要通过页面的 'dialog' 事件手动处理</strong>
+     * page.close() 在 beforeunload 处理之前默认不执行
+     * <p>
+     * <strong>注意 如果 runBeforeUnload 设置为true，可能会弹出一个 beforeunload 对话框。 这个对话框需要通过页面的 'dialog' 事件手动处理</strong>
+     * </p>
      *
      * @param runBeforeUnload 默认 false. 是否执行 before unload
      * @throws InterruptedException 异常
@@ -707,67 +619,177 @@ public class Page extends EventEmitter {
                 "Protocol error: Connection closed. Most likely the page has been closed.");
 
         if (runBeforeUnload) {
-            this.client.send("Page.close", null, false);
+            this.client.send("Page.close", null, null, false);
         } else {
             Map<String, Object> params = new HashMap<>();
             params.put("targetId", this.target.getTargetId());
-            this.client.getConnection().send("Target.closeTarget", params, true);
-            this.target.WaiforisClosedPromise();
+            this.client.getConnection().send("Target.closeTarget", params);
+            this.target.waitForTargetClose();
         }
     }
 
     /**
-     * 截图 备注 在OS X上 截图需要至少1/6秒。查看讨论：https://crbug.com/741689
+     * <p>
+     * 截图
+     * </p>
+     * 备注 在OS X上 截图需要至少1/6秒。：<a href="https://crbug.com/741689">查看讨论</a>。
      *
      * @param options 截图选项
      * @return 图片base64的字节
-     * @throws IOException 异常
      */
-    public String screenshot(ScreenshotOptions options) throws IOException {
-        String screenshotType = null;
-        // options.type takes precedence over inferring the type from options.path
-        // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
-        if (StringKit.isNotEmpty(options.getType())) {
-            Assert.isTrue("png".equals(options.getType()) || "jpeg".equals(options.getType()),
-                    "Unknown options.type value: " + options.getType());
-            screenshotType = options.getType();
-        } else if (StringKit.isNotEmpty(options.getPath())) {
-            String mimeType = Files.probeContentType(Paths.get(options.getPath()));
-            if ("image/png".equals(mimeType))
-                screenshotType = "png";
-            else if ("image/jpeg".equals(mimeType))
-                screenshotType = "jpeg";
-            Assert.isTrue(StringKit.isNotEmpty(screenshotType), "Unsupported screenshot mime type: " + mimeType);
-        }
-
-        if (StringKit.isEmpty(screenshotType))
-            screenshotType = "png";
-
-        if (options.getQuality() > 0) {
-            Assert.isTrue("jpeg".equals(screenshotType),
-                    "options.quality is unsupported for the " + screenshotType + " screenshots");
-            Assert.isTrue(options.getQuality() <= 100,
-                    "Expected options.quality to be between 0 and 100 (inclusive), got " + options.getQuality());
-        }
-
-        Assert.isTrue(options.getClip() == null || !options.getFullPage(),
-                "options.clip and options.fullPage are exclusive");
-        if (options.getClip() != null) {
-            Assert.isTrue(options.getClip().getWidth() != 0, "Expected options.clip.width not to be 0.");
-            Assert.isTrue(options.getClip().getHeight() != 0, "Expected options.clip.height not to be 0.");
-        }
-
-        return (String) this.screenshotTaskQueue.postTask((type, op) -> {
-            try {
-                return screenshotTask(type, op);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
+    @SuppressWarnings({ "unchecked" })
+    public String screenshot(ScreenshotOptions options) {
+        synchronized (this.browserContext()) {// 一个上下文只能有一个截图操作
+            this.bringToFront();
+            if (StringKit.isEmpty(options.getType()) && StringKit.isNotEmpty(options.getPath())) {
+                String filePath = options.getPath();
+                String extension = filePath.substring(filePath.lastIndexOf('.') + 1).toLowerCase();
+                switch (extension) {
+                case "png":
+                    options.setType("png");
+                    break;
+                case "jpeg":
+                case "jpg":
+                    options.setType("jpeg");
+                    break;
+                case "webp":
+                    options.setType("webp");
+                    break;
+                }
             }
-        }, screenshotType, options);
+            if (options.getQuality() != 0) {
+                Assert.isTrue(options.getQuality() > 0 && options.getQuality() <= 100,
+                        "Expected quality (" + options.getQuality() + ") to be between 0 and 100 ,inclusive).");
+                Assert.isTrue(
+                        StringKit.isNotEmpty(options.getType())
+                                && Arrays.asList("jpeg", "webp").contains(options.getType()),
+                        StringKit.isEmpty(options.getType()) ? "png"
+                                : options.getType() + "screenshots do not support quality.");
+            }
+
+            if (options.getClip() != null) {
+                Assert.isTrue(options.getClip().getWidth() > 0, "'width' in 'clip' must be positive.");
+                Assert.isTrue(options.getClip().getHeight() > 0, "'height' in 'clip' must be positive.");
+            }
+            Viewport viewport = null;
+            try {
+                if (options.getClip() != null) {
+                    // If `captureBeyondViewport` is `false`, then we set the viewport to
+                    // capture the full page. Note this may be affected by on-page CSS and
+                    // JavaScript.
+                    Assert.isTrue(!options.getFullPage(), "'clip' and 'fullPage' are mutually exclusive");
+                    options.setClip(roundRectangle(normalizeRectangle(options.getClip())));
+                } else {
+                    if (options.getFullPage()) {
+                        if (!options.getCaptureBeyondViewport()) {
+                            LinkedHashMap<String, Integer> scrollDimensions = (LinkedHashMap<String, Integer>) this
+                                    .mainFrame()
+                                    .evaluate("() => {\n" + "              const element = document.documentElement;\n"
+                                            + "              return {\n"
+                                            + "                width: element.scrollWidth,\n"
+                                            + "                height: element.scrollHeight,\n" + "              };\n"
+                                            + "            }", null);
+
+                            viewport = this.viewport();
+                            viewport.setWidth(scrollDimensions.get("width"));
+                            viewport.setHeight(scrollDimensions.get("height"));
+                            this.setViewport(viewport);
+                        }
+                    } else {
+                        options.setCaptureBeyondViewport(false);
+                    }
+                }
+                return this._screenshot(options);
+            } catch (Exception e) {
+                LOGGER.error("_screenshot error: ", e);
+            } finally {
+                if (viewport != null) {
+                    this.setViewport(viewport);
+                }
+            }
+            return "";
+        }
+
+    }
+
+    @SuppressWarnings({ "unchecked" })
+    private String _screenshot(ScreenshotOptions options) {
+        Map<String, Object> params = new HashMap<>();
+        try {
+            if (options.getOmitBackground() && ("png".equals(options.getType()) || "webp".equals(options.getType()))) {
+                this.emulationManager.setTransparentBackgroundColor();
+            }
+            if (options.getClip() != null && !options.getCaptureBeyondViewport()) {
+                LinkedHashMap<String, Integer> viewportNode = (LinkedHashMap<String, Integer>) this.mainFrame()
+                        .evaluate("() => {\n" + "          const {\n" + "            height,\n"
+                                + "            pageLeft: x,\n" + "            pageTop: y,\n" + "            width,\n"
+                                + "          } = window.visualViewport;\n" + "          return {x, y, height, width};\n"
+                                + "        }", null);
+                ClipOverwrite clip = getIntersectionRect(options.getClip(), viewportNode);
+                params.put("format", options.getType());
+                params.put("optimizeForSpeed", options.getOptimizeForSpeed());
+                params.put("quality", Math.round(options.getQuality()));
+                params.put("clip", clip);
+            }
+            JsonNode result = this.client.send("Page.captureScreenshot", params);
+            String data = result.get("data").asText();
+            byte[] buffer = Base64.getDecoder().decode(data);
+            if (StringKit.isNotEmpty(options.getPath())) {
+                Files.write(Paths.get(options.getPath()), buffer, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            }
+            return data;
+        } catch (Exception var) {
+            LOGGER.error("_screenshot error: ", var);
+        } finally {
+            this.emulationManager.resetDefaultBackgroundColor();
+        }
+        return null;
+    }
+
+    /**
+     * @see <a href=
+     *      "https://w3c.github.io/webdriver-bidi/#rectangle-intersection">href="https://w3c.github.io/webdriver-bidi/#rectangle-intersection</a>
+     */
+    private ClipOverwrite getIntersectionRect(ClipOverwrite clip, LinkedHashMap<String, Integer> viewport) {
+        double x = Math.max(clip.getX(), viewport.get("x"));
+        double y = Math.max(clip.getY(), viewport.get("y"));
+        return new ClipOverwrite(x, y,
+                Math.max(Math.min(clip.getX() + clip.getWidth(), viewport.get("x") + viewport.get("width")) - x, 0),
+                Math.max(Math.min(clip.getY() + clip.getHeight(), viewport.get("y") + viewport.get("height")) - y, 0),
+                1);
+    }
+
+    private ClipOverwrite roundRectangle(ClipOverwrite clip) {
+        double x = Math.round(clip.getX());
+        double y = Math.round(clip.getY());
+        double width = Math.round(clip.getWidth() + clip.getX() - x);
+        double height = Math.round(clip.getHeight() + clip.getY() - y);
+        ClipOverwrite screenshotClip = new ClipOverwrite(x, y, width, height, 1);
+        screenshotClip.setScale(clip.getScale());
+        return screenshotClip;
+    }
+
+    /**
+     * @see <a href=
+     *      "https://w3c.github.io/webdriver-bidi/#normalize-rect">href="https://w3c.github.io/webdriver-bidi/#normalize-rect</a>
+     */
+    private ClipOverwrite normalizeRectangle(ClipOverwrite clip) {
+        ClipOverwrite screenshotClip = new ClipOverwrite();
+        if (clip.getWidth() < 0) {
+            screenshotClip.setX(clip.getX() + clip.getWidth());
+            screenshotClip.setWidth(-clip.getWidth());
+        } else {
+            screenshotClip.setX(clip.getX());
+            screenshotClip.setWidth(clip.getWidth());
+        }
+        if (clip.getHeight() < 0) {
+            screenshotClip.setY(clip.getY() + clip.getHeight());
+            screenshotClip.setHeight(-clip.getHeight());
+        } else {
+            screenshotClip.setY(clip.getY());
+            screenshotClip.setHeight(clip.getHeight());
+        }
+        return screenshotClip;
     }
 
     /**
@@ -802,14 +824,17 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 设置绕过页面的安全政策 注意 CSP 发生在 CSP 初始化而不是评估阶段。也就是说应该在导航到这个域名前设置
+     * 设置绕过页面的安全政策
+     * <p>
+     * 注意 CSP 发生在 CSP 初始化而不是评估阶段。也就是说应该在导航到这个域名前设置
+     * </p>
      *
      * @param enabled 是否绕过页面的安全政策
      */
     public void setBypassCSP(boolean enabled) {
         Map<String, Object> params = new HashMap<>();
         params.put("enabled", enabled);
-        this.client.send("Page.setBypassCSP", params, true);
+        this.client.send("Page.setBypassCSP", params);
     }
 
     /**
@@ -827,7 +852,7 @@ public class Page extends EventEmitter {
      * @param html 分派给页面的HTML。
      */
     public void setContent(String html) {
-        this.setContent(html, new PageNavigateOptions());
+        this.setContent(html, new GoToOptions());
     }
 
     /**
@@ -840,7 +865,7 @@ public class Page extends EventEmitter {
      *                DOMContentLoaded 事件触发后，设置HTML内容完成。 networkidle0 - 不再有网络连接时（至少500毫秒之后），设置HTML内容完成 networkidle2 -
      *                只剩2个网络连接时（至少500毫秒之后），设置HTML内容完成
      */
-    public void setContent(String html, PageNavigateOptions options) {
+    public void setContent(String html, GoToOptions options) {
         this.frameManager.mainFrame().setContent(html, options);
     }
 
@@ -854,19 +879,23 @@ public class Page extends EventEmitter {
         Map<String, Object> params = new HashMap<>();
         if (urls == null)
             urls = new ArrayList<>();
-        if (urls.size() == 0)
+        if (urls.isEmpty())
             urls.add(this.url());
         params.put("urls", urls);
-        JSONObject result = this.client.send("Network.getCookies", params, true);
-        JSONArray cookiesNode = result.getJSONArray("cookies");
-        Iterator<Object> elements = cookiesNode.iterator();
+        JsonNode result = this.client.send("Network.getCookies", params);
+        JsonNode cookiesNode = result.get("cookies");
+        Iterator<JsonNode> elements = cookiesNode.elements();
         List<Cookie> cookies = new ArrayList<>();
         while (elements.hasNext()) {
-            JSONObject cookieNode = (JSONObject) elements.next();
+            JsonNode cookieNode = elements.next();
             Cookie cookie;
-            cookie = JSON.toJavaObject(cookieNode, Cookie.class);
-            cookie.setPriority(null);
-            cookies.add(cookie);
+            try {
+                cookie = Builder.OBJECTMAPPER.treeToValue(cookieNode, Cookie.class);
+                cookie.setPriority(null);
+                cookies.add(cookie);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         }
         return cookies;
     }
@@ -903,13 +932,13 @@ public class Page extends EventEmitter {
         this.deleteCookie(deleteCookiesParameters);
         Map<String, Object> params = new HashMap<>();
         params.put("cookies", cookies);
-        this.client.send("Network.setCookies", params, true);
+        this.client.send("Network.setCookies", params);
     }
 
     /**
-     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, PageNavigateOptions, boolean)}
-     * ${@link Page#goBack(PageNavigateOptions)} ${@link Page#goForward(PageNavigateOptions)}
-     * ${@link Page#reload(PageNavigateOptions)} ${@link Page#waitForNavigation()}
+     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, GoToOptions,boolean)}
+     * ${@link Page#goBack(WaitForOptions)} ${@link Page#goForward(WaitForOptions)} ${@link Page#reload(WaitForOptions)}
+     * ${@link Page#waitForNavigation()}
      *
      * @param timeout 超时时间
      */
@@ -947,7 +976,7 @@ public class Page extends EventEmitter {
         params.put("longitude", longitude);
         params.put("latitude", latitude);
         params.put("accuracy", accuracy);
-        this.client.send("Emulation.setGeolocationOverride", params, true);
+        this.client.send("Emulation.setGeolocationOverride", params);
     }
 
     /**
@@ -971,7 +1000,7 @@ public class Page extends EventEmitter {
         this.javascriptEnabled = enabled;
         Map<String, Object> params = new HashMap<>();
         params.put("value", !enabled);
-        this.client.send("Emulation.setScriptExecutionDisabled", params, true);
+        this.client.send("Emulation.setScriptExecutionDisabled", params);
     }
 
     /**
@@ -983,6 +1012,56 @@ public class Page extends EventEmitter {
         this.frameManager.networkManager().setOfflineMode(enabled);
     }
 
+//    private String screenshotTask(String format, ScreenshotOptions options) throws IOException{
+//        Map<String, Object> params = new HashMap<>();
+//        params.put("targetId", this.target.getTargetId());
+//        this.client.send("Target.activateTarget", params);
+//        ScreenshotClip clip = null;
+//        if (options.getClip() != null) {
+//            clip = processClip(options.getClip());
+//        }
+//        if (options.getFullPage()) {
+//            JsonNode metrics = this.client.send("Page.getLayoutMetrics");
+//            double width = Math.ceil(metrics.get("contentSize").get("width").asDouble());
+//            double height = Math.ceil(metrics.get("contentSize").get("height").asDouble());
+//            clip = new ScreenshotClip(0, 0, width, height, 1);
+//            ScreenOrientation screenOrientation;
+//            if (this.viewport.getIsLandscape()) {
+//                screenOrientation = new ScreenOrientation(90, "landscapePrimary");
+//            } else {
+//                screenOrientation = new ScreenOrientation(0, "portraitPrimary");
+//            }
+//            params.clear();
+//            params.put("mobile", this.viewport.getIsMobile());
+//            params.put("width", width);
+//            params.put("height", height);
+//            params.put("deviceScaleFactor", this.viewport.getDeviceScaleFactor());
+//            params.put("screenOrientation", screenOrientation);
+//            this.client.send("Emulation.setDeviceMetricsOverride", params);
+//        }
+//        boolean shouldSetDefaultBackground = options.getOmitBackground() && "png".equals(format);
+//        if (shouldSetDefaultBackground) {
+//            setTransparentBackgroundColor();
+//        }
+//        params.clear();
+//        params.put("format", format);
+//        params.put("quality", options.getQuality());
+//        params.put("clip", clip);
+//        JsonNode result = this.client.send("Page.captureScreenshot", params);
+//        if (shouldSetDefaultBackground) {
+//            this.client.send("Emulation.setDefaultBackgroundColorOverride");
+//        }
+//        if (options.getFullPage() && this.viewport != null)
+//            this.setViewport(this.viewport);
+//        String data = result.get("data").asText();
+////            byte[] buffer = decoder.decodeBuffer(data);
+//        byte[] buffer = Base64.getDecoder().decode(data);
+//        if (StringKit.isNotEmpty(options.getPath())) {
+//            Files.write(Paths.get(options.getPath()), buffer, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+//        }
+//        return data;
+//    }
+
     /**
      * 启用请求拦截器，会激活 request.abort, request.continue 和 request.respond 方法。这提供了修改页面发出的网络请求的功能。
      * 一旦启用请求拦截，每个请求都将停止，除非它继续，响应或中止
@@ -993,57 +1072,6 @@ public class Page extends EventEmitter {
         this.frameManager.networkManager().setRequestInterception(value);
     }
 
-    private String screenshotTask(String format, ScreenshotOptions options)
-            throws IOException, ExecutionException, InterruptedException {
-        Map<String, Object> params = new HashMap<>();
-        params.put("targetId", this.target.getTargetId());
-        this.client.send("Target.activateTarget", params, true);
-        ClipOverwrite clip = null;
-        if (options.getClip() != null) {
-            clip = processClip(options.getClip());
-        }
-        if (options.getFullPage()) {
-            JSONObject metrics = this.client.send("Page.getLayoutMetrics", null, true);
-            double width = Math.ceil(metrics.getJSONObject("contentSize").getDouble("width"));
-            double height = Math.ceil(metrics.getJSONObject("contentSize").getDouble("height"));
-            clip = new ClipOverwrite(0, 0, width, height, 1);
-            ScreenOrientation screenOrientation;
-            if (this.viewport.getIsLandscape()) {
-                screenOrientation = new ScreenOrientation(90, "landscapePrimary");
-            } else {
-                screenOrientation = new ScreenOrientation(0, "portraitPrimary");
-            }
-            params.clear();
-            params.put("mobile", this.viewport.getIsMobile());
-            params.put("width", width);
-            params.put("height", height);
-            params.put("deviceScaleFactor", this.viewport.getDeviceScaleFactor());
-            params.put("screenOrientation", screenOrientation);
-            this.client.send("Emulation.setDeviceMetricsOverride", params, true);
-        }
-        boolean shouldSetDefaultBackground = options.getOmitBackground() && "png".equals(format);
-        if (shouldSetDefaultBackground) {
-            setTransparentBackgroundColor();
-        }
-        params.clear();
-        params.put("format", format);
-        params.put("quality", options.getQuality());
-        params.put("clip", clip);
-        JSONObject result = this.client.send("Page.captureScreenshot", params, true);
-        if (shouldSetDefaultBackground) {
-            this.client.send("Emulation.setDefaultBackgroundColorOverride", null, true);
-        }
-        if (options.getFullPage() && this.viewport != null)
-            this.setViewport(this.viewport);
-        String data = result.getString("data");
-//            byte[] buffer = decoder.decodeBuffer(data);
-        byte[] buffer = Base64.getDecoder().decode(data);
-        if (StringKit.isNotEmpty(options.getPath())) {
-            Files.write(Paths.get(options.getPath()), buffer, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        }
-        return data;
-    }
-
     private void setTransparentBackgroundColor() {
         Map<String, Object> params = new HashMap<>();
         Map<String, Integer> colorMap = new HashMap<>();
@@ -1052,7 +1080,7 @@ public class Page extends EventEmitter {
         colorMap.put("b", 0);
         colorMap.put("a", 0);
         params.put("color", colorMap);
-        this.client.send("Emulation.setDefaultBackgroundColorOverride", params, true);
+        this.client.send("Emulation.setDefaultBackgroundColorOverride", params);
     }
 
     private ClipOverwrite processClip(Clip clip) {
@@ -1063,8 +1091,8 @@ public class Page extends EventEmitter {
         return new ClipOverwrite(x, y, width, height, 1);
     }
 
-    private void onFileChooser(FileChooserOpenedPayload event) {
-        Builder.commonExecutor().submit(() -> {
+    private void onFileChooser(FileChooserOpenedEvent event) {
+        ForkJoinPool.commonPool().submit(() -> {
             if (CollKit.isEmpty(this.fileChooserInterceptors))
                 return;
             Frame frame = this.frameManager.frame(event.getFrameId());
@@ -1078,26 +1106,25 @@ public class Page extends EventEmitter {
         });
     }
 
-    private void onLogEntryAdded(EntryAddedPayload event) {
+    private void onLogEntryAdded(EntryAddedEvent event) {
         if (CollKit.isNotEmpty(event.getEntry().getArgs()))
             event.getEntry().getArgs().forEach(arg -> Builder.releaseObject(this.client, arg, false));
         if (!"worker".equals(event.getEntry().getSource()))
-            this.emit(Events.PAGE_CONSOLE.getName(),
+            this.emit(PageEvent.CONSOLE,
                     new ConsoleMessage(event.getEntry().getLevel(), event.getEntry().getText(), Collections.emptyList(),
                             new Location(event.getEntry().getUrl(), event.getEntry().getLineNumber())));
     }
 
-    private void emitMetrics(MetricsPayload event)
-            throws IllegalAccessException, IntrospectionException, InvocationTargetException {
+    private void emitMetrics(MetricsEvent event) {
         PageMetrics pageMetrics = new PageMetrics();
         Metrics metrics = this.buildMetricsObject(event.getMetrics());
         pageMetrics.setMetrics(metrics);
         pageMetrics.setTitle(event.getTitle());
-        this.emit(Events.PAGE_METRICS.getName(), pageMetrics);
+        this.emit(PageEvent.METRICS, pageMetrics);
     }
 
     private void onTargetCrashed() {
-        this.emit("error", new PageCrashException("Page crashed!"));
+        this.emit(PageEvent.ERROR, new PageException("Page crashed!"));
     }
 
     /**
@@ -1105,7 +1132,7 @@ public class Page extends EventEmitter {
      *
      * @param event 触发事件
      */
-    private void onDialog(JavascriptDialogOpeningPayload event) {
+    private void onDialog(JavascriptDialogOpeningEvent event) {
         DialogType dialogType = null;
         if ("alert".equals(event.getType()))
             dialogType = DialogType.Alert;
@@ -1117,10 +1144,10 @@ public class Page extends EventEmitter {
             dialogType = DialogType.BeforeUnload;
         Assert.isTrue(dialogType != null, "Unknown javascript dialog type: " + event.getType());
         Dialog dialog = new Dialog(this.client, dialogType, event.getMessage(), event.getDefaultPrompt());
-        this.emit(Events.PAGE_DIALOG.getName(), dialog);
+        this.emit(PageEvent.DIALOG, dialog);
     }
 
-    private void onConsoleAPI(ConsoleAPICalledPayload event) {
+    private void onConsoleAPI(ConsoleAPICalledEvent event) {
         if (event.getExecutionContextId() == 0) {
             // DevTools protocol stores the last 1000 console messages. These
             // messages are always reported even for removed execution contexts. In
@@ -1148,9 +1175,14 @@ public class Page extends EventEmitter {
         this.addConsoleMessage(event.getType(), values, event.getStackTrace());
     }
 
-    private void onBindingCalled(BindingCalledPayload event) {
+    private void onBindingCalled(BindingCalledEvent event) {
         String payloadStr = event.getPayload();
-        Payload payload = JSON.parseObject(payloadStr, Payload.class);
+        Payload payload;
+        try {
+            payload = Builder.OBJECTMAPPER.readValue(payloadStr, Payload.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         String expression;
         try {
             Object result = this.pageBindings.get(event.getName()).apply(payload.getArgs());
@@ -1163,7 +1195,7 @@ public class Page extends EventEmitter {
         Map<String, Object> params = new HashMap<>();
         params.put("expression", expression);
         params.put("contextId", event.getExecutionContextId());
-        this.client.send("Runtime.evaluate", params, false);
+        this.client.send("Runtime.evaluate", params, null, false);
     }
 
     private String deliverError() {
@@ -1179,7 +1211,10 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 如果是一个浏览器多个页面的情况，每个页面都可以有单独的viewport 注意 在大部分情况下，改变 viewport 会重新加载页面以设置 isMobile 或者 hasTouch
+     * 如果是一个浏览器多个页面的情况，每个页面都可以有单独的viewport
+     * <p>
+     * 注意 在大部分情况下，改变 viewport 会重新加载页面以设置 isMobile 或者 hasTouch
+     * </p>
      *
      * @param viewport 设置的视图
      */
@@ -1196,14 +1231,14 @@ public class Page extends EventEmitter {
         params.put("autoAttach", true);
         params.put("waitForDebuggerOnStart", false);
         params.put("flatten", true);
-        this.client.send("Target.setAutoAttach", params, false);
+        this.client.send("Target.setAutoAttach", params);
         params.clear();
-        this.client.send("Performance.enable", params, false);
-        this.client.send("Log.enable", params, true);
+        this.client.send("Performance.enable", params);
+        this.client.send("Log.enable", params);
     }
 
     private void addConsoleMessage(String type, List<JSHandle> args, StackTrace stackTrace) {
-        if (this.getListenerCount(Events.PAGE_CONSOLE.getName()) == 0) {
+        if (this.listenerCount(PageEvent.CONSOLE) == 0) {
             args.forEach(arg -> arg.dispose(false));
             return;
         }
@@ -1213,21 +1248,26 @@ public class Page extends EventEmitter {
             if (StringKit.isNotEmpty(remoteObject.getObjectId()))
                 textTokens.add(arg.toString());
             else {
-                textTokens.add(JSON.toJSONString(Builder.valueFromRemoteObject(remoteObject)));
+                try {
+                    textTokens
+                            .add(Builder.OBJECTMAPPER.writeValueAsString(Builder.valueFromRemoteObject(remoteObject)));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
-        Location location = stackTrace != null && stackTrace.getCallFrames().size() > 0 ? new Location(
+        Location location = stackTrace != null && !stackTrace.getCallFrames().isEmpty() ? new Location(
                 stackTrace.getCallFrames().get(0).getUrl(), stackTrace.getCallFrames().get(0).getLineNumber(),
                 stackTrace.getCallFrames().get(0).getColumnNumber()) : new Location();
         ConsoleMessage message = new ConsoleMessage(type, String.join(" ", textTokens), args, location);
-        this.emit(Events.PAGE_CONSOLE.getName(), message);
+        this.emit(PageEvent.CONSOLE, message);
     }
 
-    private void handleException(ExceptionDetails exceptionDetails) {
-        String message = Builder.getExceptionMessage(exceptionDetails);
+    private void handleException(ExceptionThrownEvent event) {
+        String message = Builder.getExceptionMessage(event.getExceptionDetails());
         RuntimeException err = new RuntimeException(message);
 //        err.setStackTrace(null); // Don't report clientside error with a node stack attached
-        this.emit(Events.PAGE_PageError.getName(), err);
+        this.emit(PageEvent.PAGEERROR, err);
     }
 
     /**
@@ -1240,67 +1280,127 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 导航到指定的url,可以配置是否阻塞，可以配合下面这个方法使用，但是不限于这个方法 {@link Page#waitForResponse(String)}
-     * 因为如果不阻塞的话，页面在加载完成时，waitForResponse等waitFor方法会接受不到结果而抛出超时异常
-     *
+     * <p>
+     * 导航到指定的url,可以配置是否阻塞，可以配合下面这个方法使用，但是不限于这个方法
+     * </p>
+     * {@link Page#waitForResponse(String)} 因为如果不阻塞的话，页面在加载完成时，waitForResponse等waitFor方法会接受不到结果而抛出超时异常
+     * 
      * @param url     导航的地址
      * @param isBlock true代表阻塞
-     * @return 不阻塞的话返回null
      * @throws InterruptedException 打断异常
+     * @return 不阻塞的话返回null
      */
-    public Response goTo(String url, boolean isBlock) throws InterruptedException {
-        return this.goTo(url, new PageNavigateOptions(), isBlock);
+    public Response goTo(String url, boolean isBlock) {
+        return this.goTo(url, new GoToOptions(), isBlock);
     }
 
     /**
-     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名
      * <p>
-     * 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效 超时 主页面不能加载
+     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名
+     *
+     * <p>
+     * 以下情况此方法将报错：
+     * <p>
+     * 发生了 SSL 错误 (比如有些自签名的https证书).
+     * <p>
+     * 目标地址无效
+     * <p>
+     * 超时
+     * <p>
+     * 主页面不能加载
      *
      * @param url      url
-     * @param options: timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
-     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
-     *                 只有2个网络连接时触发（至少500毫秒后） referer Referer header value. If provided it will take preference over the
-     *                 referer header value set by page.setExtraHTTPHeaders().
+     * @param options:
+     *                 <p>
+     *                 timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
+     *                 <p>
+     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
+     *                 <p>
+     *                 load - 页面的load事件触发时
+     *                 <p>
+     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时
+     *                 <p>
+     *                 networkidle0 - 不再有网络连接时触发（至少500毫秒后）
+     *                 <p>
+     *                 networkidle2 - 只有2个网络连接时触发（至少500毫秒后）
+     *                 <p>
+     *                 referer Referer header value. If provided it will take preference over the referer header value
+     *                 set by page.setExtraHTTPHeaders().
      * @return Response
      * @throws InterruptedException 异常
      */
-    public Response goTo(String url, PageNavigateOptions options) throws InterruptedException {
+    public Response goTo(String url, GoToOptions options) {
         return this.goTo(url, options, true);
     }
 
     /**
-     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效 超时 主页面不能加载
+     * <p>
+     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名
+     *
+     * <p>
+     * 以下情况此方法将报错：
+     * <p>
+     * 发生了 SSL 错误 (比如有些自签名的https证书).
+     * <p>
+     * 目标地址无效
+     * <p>
+     * 超时
+     * <p>
+     * 主页面不能加载
      *
      * @param url      url
-     * @param options: timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
-     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
-     *                 只有2个网络连接时触发（至少500毫秒后） referer Referer header value. If provided it will take preference over the
-     *                 referer header value set by page.setExtraHTTPHeaders().
+     * @param options:
+     *                 <p>
+     *                 timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
+     *                 <p>
+     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
+     *                 <p>
+     *                 load - 页面的load事件触发时
+     *                 <p>
+     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时
+     *                 <p>
+     *                 networkidle0 - 不再有网络连接时触发（至少500毫秒后）
+     *                 <p>
+     *                 networkidle2 - 只有2个网络连接时触发（至少500毫秒后）
+     *                 <p>
+     *                 referer Referer header value. If provided it will take preference over the referer header value
+     *                 set by page.setExtraHTTPHeaders().
      * @param isBlock  是否阻塞，不阻塞代表只是发导航命令出去，并不等待导航结果，同时也不会抛异常
-     * @return Response
      * @throws InterruptedException 打断异常
+     * @return Response
      */
-    public Response goTo(String url, PageNavigateOptions options, boolean isBlock) throws InterruptedException {
+    public Response goTo(String url, GoToOptions options, boolean isBlock) {
         return this.frameManager.getMainFrame().goTo(url, options, isBlock);
     }
 
     /**
-     * 导航到某个网站 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效 超时 主页面不能加载
+     * 导航到某个网站
+     * <p>
+     * 以下情况此方法将报错：
+     * </p>
+     * <p>
+     * 发生了 SSL 错误 (比如有些自签名的https证书).
+     * </p>
+     * <p>
+     * 目标地址无效
+     * </p>
+     * <p>
+     * 超时
+     * </p>
+     * <p>
+     * 主页面不能加载
+     * </p>
      *
      * @param url 导航到的地址. 地址应该带有http协议, 比如 https://.
      * @return 响应
-     * @throws InterruptedException 打断异常
      */
-    public Response goTo(String url) throws InterruptedException {
+    public Response goTo(String url) {
         return this.goTo(url, true);
     }
 
     /**
      * 删除cookies
-     *
+     * 
      * @param cookies 指定删除的cookies
      * @throws IllegalAccessException    异常
      * @throws IntrospectionException    异常
@@ -1313,7 +1413,7 @@ public class Page extends EventEmitter {
             if (StringKit.isEmpty(cookie.getUrl()) && pageURL.startsWith("http"))
                 cookie.setUrl(pageURL);
             Map<String, Object> params = getProperties(cookie);
-            this.client.send("Network.deleteCookies", params, true);
+            this.client.send("Network.deleteCookies", params);
         }
     }
 
@@ -1329,13 +1429,17 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 根据指定的参数和 user agent 生成模拟器。此方法是和下面两个方法效果相同 ${@link Page#setViewport(Viewport)} ${@link Page#setUserAgent(String)}
+     * 根据指定的参数和 user agent 生成模拟器。此方法是和下面两个方法效果相同
+     * <p>
+     * ${@link Page#setViewport(Viewport)}
+     * </p>
+     * <p>
+     * ${@link Page#setUserAgent(String)}
+     * </p>
      *
      * @param options Device 模拟器枚举类
-     * @throws InterruptedException 线程被打断异常
-     * @throws ExecutionException   并发异常
      */
-    public void emulate(Device options) throws ExecutionException, InterruptedException {
+    public void emulate(Device options) {
         this.setViewport(options.getViewport());
         this.setUserAgent(options.getUserAgent());
     }
@@ -1380,7 +1484,7 @@ public class Page extends EventEmitter {
     /**
      * 更改页面的时区，传null将禁用将时区仿真 <a href=
      * "https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1">时区id列表</a>
-     *
+     * 
      * @param timezoneId 时区id
      */
     public void emulateTimezone(String timezoneId) {
@@ -1390,7 +1494,7 @@ public class Page extends EventEmitter {
                 timezoneId = "";
             }
             params.put("timezoneId", timezoneId);
-            this.client.send("Emulation.setTimezoneOverride", params, true);
+            this.client.send("Emulation.setTimezoneOverride", params);
         } catch (Exception e) {
             if (e.getMessage().contains("Invalid timezone"))
                 throw new IllegalArgumentException("Invalid timezone ID: " + timezoneId);
@@ -1400,18 +1504,18 @@ public class Page extends EventEmitter {
 
     /**
      * 模拟页面上给定的视力障碍,不同视力障碍，截图有不同效果
-     *
+     * 
      * @param type 视力障碍类型
      */
     public void emulateVisionDeficiency(VisionDeficiency type) {
         Map<String, Object> params = new HashMap<>();
         params.put("type", type.getValue());
-        this.client.send("Emulation.setEmulatedVisionDeficiency", params, true);
+        this.client.send("Emulation.setEmulatedVisionDeficiency", params);
     }
 
     /**
      * 此方法是{@link Page#evaluateOnNewDocument(String, Object...)}的简化版，自动判断参数pageFunction是 Javascript 函数还是 Javascript 的字符串
-     *
+     * 
      * @param pageFunction 要执行的字符串
      * @param args         如果是 Javascript 函数的话，对应函数上的参数
      */
@@ -1421,9 +1525,14 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 在新dom产生之际执行给定的javascript 当你的js代码为函数时，type={@link PageEvaluateType#FUNCTION}
+     * 在新dom产生之际执行给定的javascript
+     * <p>
+     * 当你的js代码为函数时，type={@link PageEvaluateType#FUNCTION}
+     * </p>
+     * <p>
      * 当你的js代码为字符串时，type={@link PageEvaluateType#STRING}
-     *
+     * </p>
+     * 
      * @param pageFunction js代码
      * @param type         一般为PageEvaluateType#FUNCTION
      * @param args         当你js代码是函数时，你的函数的参数
@@ -1440,13 +1549,17 @@ public class Page extends EventEmitter {
                 if (arg == null) {
                     argsList.add("undefined");
                 } else {
-                    argsList.add(JSON.toJSONString(arg));
+                    try {
+                        argsList.add(Builder.OBJECTMAPPER.writeValueAsString(arg));
+                    } catch (JsonProcessingException e) {
+                        argsList.add("undefined");
+                    }
                 }
             });
             String source = "(" + pageFunction + ")(" + String.join(",", argsList) + ")";
             params.put("source", source);
         }
-        this.client.send("Page.addScriptToEvaluateOnNewDocument", params, true);
+        this.client.send("Page.addScriptToEvaluateOnNewDocument", params);
     }
 
     /**
@@ -1467,20 +1580,19 @@ public class Page extends EventEmitter {
         String expression = Builder.evaluationString(addPageBinding(), PageEvaluateType.FUNCTION, name);
         Map<String, Object> params = new HashMap<>();
         params.put("name", name);
-        this.client.send("Runtime.addBinding", params, true);
+        this.client.send("Runtime.addBinding", params);
         params.clear();
         params.put("source", expression);
-        this.client.send("Page.addScriptToEvaluateOnNewDocument", params, true);
+        this.client.send("Page.addScriptToEvaluateOnNewDocument", params);
         List<Frame> frames = this.frames();
         if (frames.isEmpty()) {
             return;
         }
-
-        CompletionService completionService = Builder.completionService();
-        frames.forEach(frame -> completionService.submit(() -> frame.evaluate(expression, null)));
-        for (int i = 0; i < frames.size(); i++) {
-            completionService.take().get();
-        }
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        frames.forEach(frame -> {
+            futures.add(CompletableFuture.runAsync(() -> frame.evaluate(expression, null)));
+        });
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     private String addPageBinding() {
@@ -1514,34 +1626,50 @@ public class Page extends EventEmitter {
     }
 
     public Response goBack() {
-        return this.go(-1, new PageNavigateOptions());
+        return this.go(-1, new WaitForOptions());
     }
 
     /**
-     * 导航到页面历史的前一个页面 options 的 referer参数不用填，填了也用不上
+     * 导航到页面历史的前一个页面
      * <p>
-     * options 导航配置，可选值： otimeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     * owaitUntil 满足什么条件认为页面跳转完成，默认是load事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： oload - 页面的load事件触发时 odomcontentloaded -
-     * 页面的DOMContentLoaded事件触发时 onetworkidle0 - 不再有网络连接时触发（至少500毫秒后） onetworkidle2 - 只有2个网络连接时触发（至少500毫秒后）
+     * options 的 referer参数不用填，填了也用不上
+     * </p>
+     * <p>
+     * options 导航配置，可选值：
+     * <p>
+     * otimeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
+     * <p>
+     * owaitUntil 满足什么条件认为页面跳转完成，默认是load事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
+     * <p>
+     * oload - 页面的load事件触发时
+     * <p>
+     * odomcontentloaded - 页面的DOMContentLoaded事件触发时
+     * <p>
+     * onetworkidle0 - 不再有网络连接时触发（至少500毫秒后）
+     * <p>
+     * onetworkidle2 - 只有2个网络连接时触发（至少500毫秒后）
      *
      * @param options 见上面注释
      * @return 响应
      */
-    public Response goBack(PageNavigateOptions options) {
+    public Response goBack(WaitForOptions options) {
         return this.go(-1, options);
     }
 
     public Response goForward() {
-        return this.go(+1, new PageNavigateOptions());
+        return this.go(+1, new WaitForOptions());
     }
 
     /**
-     * 导航到页面历史的后一个页面。 options 的 referer参数不用填，填了也用不上
+     * 导航到页面历史的后一个页面。
+     * <p>
+     * options 的 referer参数不用填，填了也用不上
+     * </p>
      *
-     * @param options 可以看{@link Page#goTo(String, PageNavigateOptions, boolean)}方法介绍
+     * @param options 可以看{@link Page#goTo(String, GoToOptions,boolean)}方法介绍
      * @return Response 响应
      */
-    public Response goForward(PageNavigateOptions options) {
+    public Response goForward(WaitForOptions options) {
         return this.go(+1, options);
     }
 
@@ -1563,7 +1691,7 @@ public class Page extends EventEmitter {
         return this.closed;
     }
 
-    public void setClosed(boolean closed) {
+    protected void setClosed(boolean closed) {
         this.closed = closed;
     }
 
@@ -1576,75 +1704,95 @@ public class Page extends EventEmitter {
      * @throws InvocationTargetException 异常
      */
     public Metrics metrics() throws IllegalAccessException, IntrospectionException, InvocationTargetException {
-        JSONObject responseNode = this.client.send("Performance.getMetrics", null, true);
+        JsonNode responseNode = this.client.send("Performance.getMetrics");
         List<Metric> metrics = new ArrayList<>();
-        List<JSONObject> list = responseNode.getObject("metrics", new TypeReference<List<JSONObject>>() {
-        });
-        for (JSONObject next : list) {
-            Metric value = JSON.toJavaObject(next, Metric.class);
-            metrics.add(value);
-
+        Iterator<JsonNode> elements = responseNode.get("metrics").elements();
+        while (elements.hasNext()) {
+            JsonNode next = elements.next();
+            try {
+                Metric value = Builder.OBJECTMAPPER.treeToValue(next, Metric.class);
+                metrics.add(value);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         }
         return this.buildMetricsObject(metrics);
     }
 
     /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') <strong>注意
-     * 目前仅支持无头模式的 Chrome</strong>
-     *
-     * @param path pdf存放的路径
-     * @throws IOException 异常
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
+     * <p>
+     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
+     * </p>
      */
-    public void pdf(String path) throws IOException {
-        this.pdf(new PDFOptions(path));
+    public byte[] pdf(PDFOptions options) {
+        return this.pdf(options, LengthUnit.IN);
     }
 
     /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') <strong>注意
-     * 目前仅支持无头模式的 Chrome</strong>
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
+     * <p>
+     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
+     * </p>
+     *
+     * @param path pdf存放的路径
+     */
+    public void pdf(String path) {
+        this.pdf(new PDFOptions(path), LengthUnit.IN);
+    }
+
+    /**
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
+     * <p>
+     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
+     * </p>
      *
      * @param options 选项
      * @return pdf文件的字节数组数据
-     * @throws IOException 异常
      */
-    public byte[] pdf(PDFOptions options) throws IOException {
+    public byte[] pdf(PDFOptions options, LengthUnit lengthUnit) {
         double paperWidth = 8.5;
         double paperHeight = 11;
-
-        if (StringKit.isNotEmpty(options.getFormat())) {
-            PaperFormats format = PaperFormats.valueOf(options.getFormat().toLowerCase());
+        if (options.getFormat() != null) {
+            PaperFormats format = options.getFormat();
             paperWidth = format.getWidth();
             paperHeight = format.getHeight();
         } else {
-            Double width = convertPrintParameterToInches(options.getWidth());
+            Double width = convertPrintParameterToInches(options.getWidth(), lengthUnit);
             if (width != null) {
                 paperWidth = width;
             }
-            Double height = convertPrintParameterToInches(options.getHeight());
+            Double height = convertPrintParameterToInches(options.getHeight(), lengthUnit);
             if (height != null) {
                 paperHeight = height;
             }
         }
-
-        Margin margin = options.getMargin();
+        PDFMargin margin = options.getMargin();
         Number marginTop, marginLeft, marginBottom, marginRight;
-
-        if ((marginTop = convertPrintParameterToInches(margin.getTop())) == null) {
+        if ((marginTop = convertPrintParameterToInches(margin.getTop(), lengthUnit)) == null) {
             marginTop = 0;
         }
-
-        if ((marginLeft = convertPrintParameterToInches(margin.getLeft())) == null) {
+        if ((marginLeft = convertPrintParameterToInches(margin.getLeft(), lengthUnit)) == null) {
             marginLeft = 0;
         }
-
-        if ((marginBottom = convertPrintParameterToInches(margin.getBottom())) == null) {
+        if ((marginBottom = convertPrintParameterToInches(margin.getBottom(), lengthUnit)) == null) {
             marginBottom = 0;
         }
-
-        if ((marginRight = convertPrintParameterToInches(margin.getRight())) == null) {
+        if ((marginRight = convertPrintParameterToInches(margin.getRight(), lengthUnit)) == null) {
             marginRight = 0;
         }
+        if (options.getOutline()) {
+            options.setTagged(true);
+        }
+        if (options.getOmitBackground()) {
+            this.emulationManager.setTransparentBackgroundColor();
+        }
+        if (options.getWaitForFonts()) {
+//            this.bringToFront();
+            Single.fromCallable(() -> this.mainFrame().evaluate("() => { return document.fonts.ready;}", null))
+                    .timeout(options.getTimeout(), TimeUnit.MILLISECONDS).blockingSubscribe();
 
+        }
         Map<String, Object> params = new HashMap<>();
         params.put("transferMode", "ReturnAsStream");
         params.put("landscape", options.getLandscape());
@@ -1661,21 +1809,28 @@ public class Page extends EventEmitter {
         params.put("marginRight", marginRight);
         params.put("pageRanges", options.getPageRanges());
         params.put("preferCSSPageSize", options.getPreferCSSPageSize());
-        JSONObject result = this.client.send("Page.printToPDF", params, true);
+        params.put("generateTaggedPDF", options.getTagged());
+        params.put("generateDocumentOutline", options.getOutline());
 
-        if (result != null) {
-            String handle = result.getString(Builder.RECV_MESSAGE_STREAM_PROPERTY);
-            Assert.isTrue(handle != null,
-                    "Page.printToPDF result has no stream handle. Please check your chrome version. result=" + result);
-            return (byte[]) Builder.readProtocolStream(this.client, handle, options.getPath(), false);
+        JsonNode result = Single.fromCallable(() -> this.client.send("Page.printToPDF", params))
+                .timeout(options.getTimeout(), TimeUnit.MILLISECONDS).blockingGet();
+        if (result == null) {
+            throw new InternalException("Page.printToPDF no response");
         }
-        throw new ProtocolException("Page.printToPDF no response");
+        JsonNode handle = result.get(Builder.MESSAGE_STREAM_PROPERTY);
+        Assert.isTrue(handle != null,
+                "Page.printToPDF result has no stream handle. Please check your chrome version. result=" + result);
+        try {
+            return (byte[]) Builder.readProtocolStream(this.client, handle.asText(), options.getPath(), false);
+        } catch (IOException e) {
+            throw new InternalException(e);
+        }
     }
 
     /**
-     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, PageNavigateOptions, boolean)}
-     * ${@link Page#goBack(PageNavigateOptions)} ${@link Page#goForward(PageNavigateOptions)}
-     * ${@link Page#reload(PageNavigateOptions)} ${@link Page#waitForNavigation()}
+     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, GoToOptions,boolean)}
+     * ${@link Page#goBack(WaitForOptions)} ${@link Page#goForward(WaitForOptions)} ${@link Page#reload(WaitForOptions)}
+     * ${@link Page#waitForNavigation()}
      *
      * @param timeout 超时时间
      */
@@ -1694,7 +1849,7 @@ public class Page extends EventEmitter {
         return context.queryObjects(prototypeHandle);
     }
 
-    private Double convertPrintParameterToInches(String parameter) {
+    private Double convertPrintParameterToInches(String parameter, LengthUnit lengthUnit) {
         if (StringKit.isEmpty(parameter)) {
             return null;
         }
@@ -1703,7 +1858,6 @@ public class Page extends EventEmitter {
             pixels = Double.parseDouble(parameter);
         } else if (parameter.endsWith("px") || parameter.endsWith("in") || parameter.endsWith("cm")
                 || parameter.endsWith("mm")) {
-
             String unit = parameter.substring(parameter.length() - 2).toLowerCase();
             String valueText;
             if (unitToPixels.containsKey(unit)) {
@@ -1720,87 +1874,88 @@ public class Page extends EventEmitter {
         } else {
             throw new IllegalArgumentException("page.pdf() Cannot handle parameter type: " + parameter);
         }
-        return pixels / 96;
+        return pixels / unitToPixels.get(lengthUnit.getValue());
     }
 
     /**
      * 重新加载页面
      *
-     * @param options 与${@link Page#goTo(String, PageNavigateOptions, boolean)}中的options是一样的配置
+     * @param options 与${@link Page#goTo(String, GoToOptions,boolean)}中的options是一样的配置
      * @return 响应
      */
-    public Response reload(PageNavigateOptions options) {
-        CountDownLatch reloadLatch = new CountDownLatch(1);
-        Page.reloadExecutor.submit(() -> {
-            /* 执行reload命令，不用等待返回 */
-            try {
-                reloadLatch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            this.client.send("Page.reload", null, true);
-        });
-
-        /* 等待页面导航结果返回 */
-        return this.waitForNavigation(options, reloadLatch);
+    public Response reload(WaitForOptions options) {
+        return this.waitForNavigation(options, true);
     }
 
-    private Metrics buildMetricsObject(List<Metric> metrics)
-            throws IntrospectionException, InvocationTargetException, IllegalAccessException {
+    private Metrics buildMetricsObject(List<Metric> metrics) {
         Metrics result = new Metrics();
         if (CollKit.isNotEmpty(metrics)) {
             for (Metric metric : metrics) {
                 if (Builder.SUPPORTED_METRICS.contains(metric.getName())) {
-                    PropertyDescriptor descriptor = new PropertyDescriptor(metric.getName(), Metrics.class);
-                    descriptor.getWriteMethod().invoke(result, metric.getValue());
+                    try {
+                        PropertyDescriptor descriptor = new PropertyDescriptor(metric.getName(), Metrics.class);
+                        descriptor.getWriteMethod().invoke(result, metric.getValue());
+                    } catch (IntrospectionException | IllegalAccessException | InvocationTargetException e) {
+                        throw new InternalException(e);
+                    }
                 }
             }
         }
         return result;
     }
 
-    private Response go(int delta, PageNavigateOptions options) {
-        JSONObject historyNode = this.client.send("Page.getNavigationHistory", null, true);
-        GetNavigationHistoryReturnValue history = JSON.toJavaObject(historyNode, GetNavigationHistoryReturnValue.class);
-        NavigationEntry entry = history.getEntries().get(history.getCurrentIndex() + delta);
-        if (entry == null) {
-            return null;
+    private Response go(int delta, WaitForOptions options) {
+        JsonNode historyNode = this.client.send("Page.getNavigationHistory");
+        GetNavigationHistoryReturnValue history;
+        try {
+            history = Builder.OBJECTMAPPER.treeToValue(historyNode, GetNavigationHistoryReturnValue.class);
+        } catch (JsonProcessingException e) {
+            throw new InternalException(e);
         }
-
+        NavigationEntry entry = history.getEntries().get(history.getCurrentIndex() + delta);
+        if (entry == null)
+            return null;
+        Response response = this.waitForNavigation(options, false);
         Map<String, Object> params = new HashMap<>();
         params.put("entryId", entry.getId());
-        this.client.send("Page.navigateToHistoryEntry", params, true);
-        return this.waitForNavigation(options, null);
+        this.client.send("Page.navigateToHistoryEntry", params);
+        return response;
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
+     * <p>
+     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @return 响应
      */
     public Response waitForNavigation() {
-        return this.waitForNavigation(new PageNavigateOptions(), null);
+        return this.waitForNavigation(new WaitForOptions(), false);
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
+     * <p>
+     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @param options PageNavigateOptions
      * @return 响应
      */
-    public Response waitForNavigation(PageNavigateOptions options) {
-        return this.frameManager.mainFrame().waitForNavigation(options, null);
+    public Response waitForNavigation(WaitForOptions options) {
+        return this.frameManager.mainFrame().waitForNavigation(options, false);
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
+     * <p>
+     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
-     * @param options     PageNavigateOptions
-     * @param reloadLatch reload页面，这个参数配合{@link Page#setViewport(Viewport)}中的reload方法使用
+     * @param options PageNavigateOptions
+     * @param reload  reload页面，这个参数配合{@link Page#setViewport(Viewport)}中的reload方法使用
      * @return 响应
      */
-    private Response waitForNavigation(PageNavigateOptions options, CountDownLatch reloadLatch) {
-        return this.frameManager.mainFrame().waitForNavigation(options, reloadLatch);
+    private Response waitForNavigation(WaitForOptions options, boolean reload) {
+        return this.frameManager.mainFrame().waitForNavigation(options, reload);
     }
 
     /**
@@ -1856,7 +2011,7 @@ public class Page extends EventEmitter {
         Assert.isTrue("screen".equals(type) || "print".equals(type) || type == null, "Unsupported media type: " + type);
         Map<String, Object> params = new HashMap<>();
         params.put("media", type);
-        this.client.send("Emulation.setEmulatedMedia", params, true);
+        this.client.send("Emulation.setEmulatedMedia", params);
     }
 
     public void emulateMediaFeatures(List<MediaFeature> features) {
@@ -1864,7 +2019,7 @@ public class Page extends EventEmitter {
         Map<String, Object> params = new HashMap<>();
         if (features == null) {
             params.put("features", null);
-            this.client.send("Emulation.setEmulatedMedia", params, true);
+            this.client.send("Emulation.setEmulatedMedia", params);
         }
         if (CollKit.isNotEmpty(features)) {
             features.forEach(mediaFeature -> {
@@ -1873,15 +2028,24 @@ public class Page extends EventEmitter {
             });
         }
         params.put("features", features);
-        this.client.send("Emulation.setEmulatedMedia", params, true);
+        this.client.send("Emulation.setEmulatedMedia", params);
     }
 
     /**
      * 此方法根据第一个参数的不同有不同的结果：
+     *
      * <p>
      * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或
-     * page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
-     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
+     * page.waitForXPath的简写
+     * </p>
+     * <p>
+     * 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
+     * </p>
+     * <p>
+     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve
+     * </p>
+     * <p>
+     * 否则会报错
      *
      * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
      * @return 代表页面元素的一个实例
@@ -1893,16 +2057,25 @@ public class Page extends EventEmitter {
 
     /**
      * 此方法根据第一个参数的不同有不同的结果：
+     *
      * <p>
      * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或
-     * page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
-     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
+     * page.waitForXPath的简写
+     * </p>
+     * <p>
+     * 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
+     * </p>
+     * <p>
+     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve
+     * </p>
+     * <p>
+     * 否则会报错
      *
      * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
      * @param options                     可选的等待参数
      * @param args                        传给 pageFunction 的参数
-     * @return 代表页面元素的一个实例
      * @throws InterruptedException 打断异常
+     * @return 代表页面元素的一个实例
      */
     public JSHandle waitFor(String selectorOrFunctionOrTimeout, WaitForSelectorOptions options, List<Object> args)
             throws InterruptedException {
@@ -1928,11 +2101,11 @@ public class Page extends EventEmitter {
         if (timeout <= 0)
             timeout = this.timeoutSettings.timeout();
         int finalTimeout = timeout;
-        return Builder.commonExecutor().submit(() -> {
+        return ForkJoinPool.commonPool().submit(() -> {
             if (CollKit.isEmpty(this.fileChooserInterceptors)) {
                 Map<String, Object> params = new HashMap<>();
                 params.put("enabled", true);
-                this.client.send("Page.setInterceptFileChooserDialog", params, true);
+                this.client.send("Page.setInterceptFileChooserDialog", params);
             }
             CountDownLatch latch = new CountDownLatch(1);
             FileChooserCallBack callback = new FileChooserCallBack(latch);
@@ -2021,20 +2194,24 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
-     * PageEvaluateType.FUNCTION
+     * 等到某个请求，url或者predicate只有有一个不为空
+     * <p>
+     * 当url不为空时， type = PageEvaluateType.STRING
+     * </p>
+     * <p>
+     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
+     * </p>
      *
      * @param url       等待的请求
      * @param predicate 方法
      * @param timeout   超时时间
      * @return 要等到的请求
-     * @throws InterruptedException 异常
      */
-    public Request waitForRequest(String url, Predicate<Request> predicate, int timeout) throws InterruptedException {
+    public Request waitForRequest(String url, Predicate<Request> predicate, int timeout) {
         if (timeout <= 0) {
             timeout = this.timeoutSettings.timeout();
         }
-        Predicate<Request> predi = request -> {
+        io.reactivex.rxjava3.functions.Predicate<Request> requestPredicate = request -> {
             if (StringKit.isNotEmpty(url)) {
                 return url.equals(request.url());
             } else if (predicate != null) {
@@ -2042,27 +2219,26 @@ public class Page extends EventEmitter {
             }
             return false;
         };
-        DefaultBrowserListener<Object> listener = null;
+        Disposable closeDisposable = null;
+        Disposable requestDisposable = null;
         try {
-            listener = sessionClosePromise();
-            return (Request) Builder.waitForEvent(this.frameManager.networkManager(),
-                    Events.NETWORK_MANAGER_REQUEST.getName(), predi, timeout, "Wait for request timeout");
-        } finally {
-            if (listener != null)
-                this.client.removeListener(Events.CDPSESSION_DISCONNECTED.getName(), listener);
-        }
-    }
-
-    private DefaultBrowserListener<Object> sessionClosePromise() {
-        DefaultBrowserListener<Object> disConnectLis = new DefaultBrowserListener<>() {
-            @Override
-            public void onBrowserEvent(Object event) {
-                throw new TerminateException("Target closed");
+            Observable<Object> closeObservable = Builder.fromEmitterEvent(this, PageEvent.CLOSE).map((s) -> {
+                throw new InternalException("Page closed!");
+            });
+            closeDisposable = closeObservable.subscribe();
+            Observable<Request> requestObservable = Builder
+                    .<Request, PageEvent>fromEmitterEvent(this, PageEvent.REQUEST).filter(requestPredicate)
+                    .timeout(timeout, TimeUnit.MILLISECONDS);
+            requestDisposable = requestObservable.subscribe();
+            Object o = Observable.ambArray(requestObservable, closeObservable).blockingFirst();
+            if (o instanceof Request) {
+                return (Request) o;
             }
-        };
-        disConnectLis.setMethod(Events.CDPSESSION_DISCONNECTED.getName());
-        this.client.addListener(disConnectLis.getMethod(), disConnectLis, true);
-        return disConnectLis;
+            return null;
+        } finally {
+            Optional.ofNullable(closeDisposable).ifPresent(Disposable::dispose);
+            Optional.ofNullable(requestDisposable).ifPresent(Disposable::dispose);
+        }
     }
 
     /**
@@ -2088,8 +2264,13 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空,默认等待的时间是30s 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
-     * PageEvaluateType.FUNCTION
+     * 等到某个请求，url或者predicate只有有一个不为空,默认等待的时间是30s
+     * <p>
+     * 当url不为空时， type = PageEvaluateType.STRING
+     * </p>
+     * <p>
+     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
+     * </p>
      *
      * @param url       等待的请求
      * @param predicate 方法
@@ -2101,20 +2282,23 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
-     * PageEvaluateType.FUNCTION
+     * 等到某个请求，url或者predicate只有有一个不为空
+     * <p>
+     * 当url不为空时， type = PageEvaluateType.STRING
+     * </p>
+     * <p>
+     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
+     * </p>
      *
      * @param url       等待的请求
      * @param predicate 方法
      * @param timeout   超时时间
      * @return 要等到的请求
-     * @throws InterruptedException 异常
      */
-    public Response waitForResponse(String url, Predicate<Response> predicate, int timeout)
-            throws InterruptedException {
+    public Response waitForResponse(String url, Predicate<Response> predicate, int timeout) {
         if (timeout <= 0)
             timeout = this.timeoutSettings.timeout();
-        Predicate<Response> predi = response -> {
+        io.reactivex.rxjava3.functions.Predicate<Response> predi = response -> {
             if (StringKit.isNotEmpty(url)) {
                 return url.equals(response.url());
             } else if (predicate != null) {
@@ -2122,14 +2306,25 @@ public class Page extends EventEmitter {
             }
             return false;
         };
-        DefaultBrowserListener<Object> listener = null;
+        Disposable responseDisposable = null;
+        Disposable closeDisposable = null;
         try {
-            listener = sessionClosePromise();
-            return (Response) Builder.waitForEvent(this.frameManager.networkManager(),
-                    Events.NETWORK_MANAGER_RESPONSE.getName(), predi, timeout, "Wait for response timeout");
+            Observable<Response> responseObservable = Builder
+                    .<Response, PageEvent>fromEmitterEvent(this, PageEvent.RESPONSE).filter(predi)
+                    .timeout(timeout, TimeUnit.MILLISECONDS);
+            responseDisposable = responseObservable.subscribe();
+            Observable<Object> closeObservable = Builder.fromEmitterEvent(this, PageEvent.CLOSE).map((s) -> {
+                throw new InternalException("Page closed!");
+            });
+            closeDisposable = closeObservable.subscribe();
+            Object o = Observable.ambArray(responseObservable, closeObservable).blockingFirst();
+            if (o instanceof Response) {
+                return (Response) o;
+            }
+            return null;
         } finally {
-            if (listener != null)
-                this.client.removeListener(Events.CDPSESSION_DISCONNECTED.getName(), listener);
+            Optional.ofNullable(closeDisposable).ifPresent(Disposable::dispose);
+            Optional.ofNullable(responseDisposable).ifPresent(Disposable::dispose);
         }
     }
 
@@ -2137,8 +2332,8 @@ public class Page extends EventEmitter {
      * 等待指定的选择器匹配的元素出现在页面中，如果调用此方法时已经有匹配的元素，那么此方法立即返回。 如果指定的选择器在超时时间后扔不出现，此方法会报错。
      *
      * @param selector 要等待的元素选择器
-     * @return ElementHandle
      * @throws InterruptedException 打断异常
+     * @return ElementHandle
      */
     public ElementHandle waitForSelector(String selector) throws InterruptedException {
         return this.waitForSelector(selector, new WaitForSelectorOptions());
@@ -2149,8 +2344,8 @@ public class Page extends EventEmitter {
      *
      * @param selector 要等待的元素选择器
      * @param options  可选参数
-     * @return ElementHandle
      * @throws InterruptedException 打断异常
+     * @return ElementHandle
      */
     public ElementHandle waitForSelector(String selector, WaitForSelectorOptions options) throws InterruptedException {
         return this.mainFrame().waitForSelector(selector, options);
@@ -2160,8 +2355,8 @@ public class Page extends EventEmitter {
      * 等待指定的xpath匹配的元素出现在页面中，如果调用此方法时已经有匹配的元素，那么此方法立即返回。 如果指定的xpath在超时时间后扔不出现，此方法会报错。
      *
      * @param xpath 要等待的元素的xpath
-     * @return JSHandle
      * @throws InterruptedException 打断异常
+     * @return JSHandle
      */
     public JSHandle waitForXPath(String xpath) throws InterruptedException {
         return this.mainFrame().waitForXPath(xpath, new WaitForSelectorOptions());
@@ -2172,8 +2367,8 @@ public class Page extends EventEmitter {
      *
      * @param xpath   要等待的元素的xpath
      * @param options 可选参数
-     * @return JSHandle
      * @throws InterruptedException 打断异常
+     * @return JSHandle
      */
     public JSHandle waitForXPath(String xpath, WaitForSelectorOptions options) throws InterruptedException {
         return this.mainFrame().waitForXPath(xpath, options);
@@ -2222,7 +2417,10 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
+     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件
+     * <p>
+     * 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
+     * </p>
      *
      * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
      * @param text     要输入的内容
@@ -2233,7 +2431,10 @@ public class Page extends EventEmitter {
     }
 
     /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
+     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件
+     * <p>
+     * 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
+     * </p>
      *
      * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
      * @param text     要输入的内容
@@ -2264,6 +2465,139 @@ public class Page extends EventEmitter {
 
     public Coverage coverage() {
         return this.coverage;
+    }
+
+    public enum PageEvent {
+        /**
+         * Emitted when the page closes.
+         */
+        CLOSE("close"),
+        /**
+         * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or
+         * `console.dir`. Also emitted if the page throws an error or a warning.
+         *
+         * @remarks A `console` event provides a {@link ConsoleMessage} representing the console message that was
+         *          logged.
+         * @example An example of handling `console` event:
+         *          <p>
+         *          ```ts page.on('console', msg => { for (let i = 0; i < msg.args().length; ++i) console.log(`${i}:
+         *          ${msg.args()[i]}`); }); page.evaluate(() => console.log('hello', 5, {foo: 'bar'})); ```
+         */
+        CONSOLE("console"),
+        /**
+         * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Puppeteer
+         * can respond to the dialog via {@link Dialog#accept} or {@link Dialog#dismiss}.
+         */
+        DIALOG("dialog"),
+        /**
+         * Emitted when the JavaScript
+         * <a href="https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded">DOMContentLoaded</a> event is
+         * dispatched.
+         */
+        DOMCONTENTLOADED("domcontentloaded"),
+        /**
+         * Emitted when the page crashes. Will contain an `Error`.
+         */
+        ERROR("error"),
+        /**
+         * Emitted when a frame is attached. Will contain a {@link Frame}.
+         */
+        FRAMEATTACHED("frameattached"),
+        /**
+         * Emitted when a frame is detached. Will contain a {@link Frame}.
+         */
+        FRAMEDETACHED("framedetached"),
+        /**
+         * Emitted when a frame is navigated to a new URL. Will contain a {@link Frame}.
+         */
+        FRAMENAVIGATED("framenavigated"),
+        /**
+         * Emitted when the JavaScript <a href="https://developer.mozilla.org/en-US/docs/Web/Events/load">load</a> event
+         * is dispatched.
+         */
+        LOAD("load"),
+        /**
+         * Emitted when the JavaScript code makes a call to `console.timeStamp`. For the list of metrics see
+         * {@link Page#metrics | page.metrics}.
+         *
+         * @remarks Contains an object with two properties:
+         *          <p>
+         *          - `title`: the title passed to `console.timeStamp` - `metrics`: object containing metrics as
+         *          key/value pairs. The values will be `number`s.
+         */
+        METRICS("metrics"),
+        /**
+         * Emitted when an uncaught exception happens within the page. Contains an `Error`.
+         */
+        PAGEERROR("pageerror"),
+        /**
+         * Emitted when the page opens a new tab or window.
+         * <p>
+         * Contains a {@link Page} corresponding to the popup window.
+         *
+         * @example ```ts const [popup] = await Promise.all([ new Promise(resolve => page.once('popup', resolve)),
+         *          page.click('a[target=_blank]'), ]); ```
+         *          <p>
+         *          ```ts const [popup] = await Promise.all([ new Promise(resolve => page.once('popup', resolve)),
+         *          page.evaluate(() => window.open('https://example.com')), ]); ```
+         */
+        POPUP("popup"),
+        /**
+         * Emitted when a page issues a request and contains a {@link Request}.
+         *
+         * @remarks The object is readonly. See {@link Page#setRequestInterception} for intercepting and mutating
+         *          requests.
+         */
+        REQUEST("request"),
+        /**
+         * Emitted when a request ended up loading from cache. Contains a {@link Request}.
+         *
+         * @remarks For certain requests, might contain undefined. {@link <a href="https://crbug.com/750469">crbug</a>}
+         */
+        REQUESTSERVEDFROMCACHE("requestservedfromcache"),
+        /**
+         * Emitted when a request fails, for example by timing out.
+         * <p>
+         * Contains a {@link Request}.
+         *
+         * @remarks HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so
+         *          request will complete with `requestfinished` event and not with `requestfailed`.
+         */
+        REQUESTFAILED("requestfailed"),
+        /**
+         * Emitted when a request finishes successfully. Contains a {@link Request}.
+         */
+        REQUESTFINISHED("requestfinished"),
+        /**
+         * Emitted when a response is received. Contains a {@link Response}.
+         */
+        RESPONSE("response"),
+        /**
+         * Emitted when a dedicated
+         * {@link <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">WebWorker</a>} is spawned
+         * by the page.
+         */
+        WORKERCREATED("workercreated"),
+        /**
+         * Emitted when a dedicated
+         * {@link <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">WebWorker</a>} is destroyed
+         * by the page.
+         */
+        WORKERDESTROYED("workerdestroyed");
+
+        private String eventName;
+
+        PageEvent(String eventName) {
+            this.eventName = eventName;
+        }
+
+        public String getEventName() {
+            return eventName;
+        }
+
+        public void setEventName(String eventName) {
+            this.eventName = eventName;
+        }
     }
 
     static class FileChooserCallBack {
@@ -2304,10 +2638,9 @@ public class Page extends EventEmitter {
                 boolean await = this.latch.await(finalTimeout, TimeUnit.MILLISECONDS);
                 if (!await) {
                     throw new TimeoutException(
-                            "Waiting for file chooser failed: timeout " + finalTimeout + "ms exceeded");
+                            "waiting for file chooser failed: timeout " + finalTimeout + "ms exceeded");
                 }
             }
         }
     }
-
 }

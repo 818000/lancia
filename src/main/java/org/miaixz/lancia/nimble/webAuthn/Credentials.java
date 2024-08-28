@@ -29,9 +29,6 @@ package org.miaixz.lancia.nimble.webAuthn;
 
 /**
  * 验证信息
- *
- * @author Kimi Liu
- * @since Java 17+
  */
 public class Credentials {
 
