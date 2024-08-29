@@ -26,7 +26,10 @@
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia.worker.enums;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum FrameManagerType {
     FrameAttached("FrameManager.FrameAttached"), FrameNavigated("FrameManager.FrameNavigated"),
     FrameDetached("FrameManager.FrameDetached"), FrameSwapped("FrameManager.FrameSwapped"),

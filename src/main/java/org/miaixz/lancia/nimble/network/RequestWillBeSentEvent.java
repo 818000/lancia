@@ -27,15 +27,18 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import org.miaixz.lancia.kernel.page.Request;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.kernel.page.Request;
 
 /**
  * Fired when page is about to send HTTP request.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

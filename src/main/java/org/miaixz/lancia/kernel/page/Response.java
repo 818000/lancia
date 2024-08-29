@@ -43,6 +43,12 @@ import org.miaixz.lancia.socket.CDPSession;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * HTTP相应信息
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Response {
 
     private CDPSession client;

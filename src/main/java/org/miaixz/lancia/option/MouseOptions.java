@@ -34,7 +34,10 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
+ * 鼠标选项
  *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

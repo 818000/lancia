@@ -34,6 +34,10 @@ import org.miaixz.lancia.kernel.page.Worker;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.factory.SessionFactory;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class WorkerTarget extends Target {
 
     public WorkerTarget(TargetInfo targetInfo, CDPSession session, Context context, TargetManager targetManager,

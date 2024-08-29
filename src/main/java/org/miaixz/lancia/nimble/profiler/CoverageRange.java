@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Coverage data for a source range.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

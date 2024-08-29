@@ -41,6 +41,10 @@ import org.miaixz.lancia.worker.enums.TargetType;
 
 import io.reactivex.rxjava3.subjects.SingleSubject;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class PageTarget extends Target {
 
     private final Viewport defaultViewport;

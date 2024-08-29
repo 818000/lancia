@@ -27,16 +27,18 @@
 */
 package org.miaixz.lancia.nimble.accessbility;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
 /**
  * A single computed AX property.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

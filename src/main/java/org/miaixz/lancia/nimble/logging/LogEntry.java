@@ -29,13 +29,14 @@ package org.miaixz.lancia.nimble.logging;
 
 import java.util.List;
 
+import org.miaixz.lancia.nimble.runtime.RemoteObject;
+import org.miaixz.lancia.nimble.runtime.StackTrace;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.nimble.runtime.StackTrace;
 
 /**
  * Log entry.

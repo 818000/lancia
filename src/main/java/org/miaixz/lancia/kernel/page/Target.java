@@ -45,6 +45,12 @@ import org.miaixz.lancia.worker.enums.TargetType;
 
 import io.reactivex.rxjava3.subjects.SingleSubject;
 
+/**
+ * 目标内容
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Target {
 
     private final Set<Target> childTargets = new HashSet<>();

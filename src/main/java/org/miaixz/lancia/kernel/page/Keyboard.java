@@ -37,7 +37,12 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.nimble.input.KeyDefinition;
 import org.miaixz.lancia.nimble.input.KeyDescription;
 import org.miaixz.lancia.socket.CDPSession;
-
+/**
+ * 键盘信息
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Keyboard {
 
     private static final Map<String, KeyDefinition> keyDefinitions = new HashMap<>();

@@ -59,12 +59,19 @@ import org.miaixz.lancia.option.ConnectOptions;
 import org.miaixz.lancia.option.FetcherOptions;
 import org.miaixz.lancia.option.LaunchOptions;
 import org.miaixz.lancia.socket.Connection;
-import org.miaixz.lancia.socket.WebSocketTransport;
+import org.miaixz.lancia.socket.Transport;
+import org.miaixz.lancia.socket.factory.SocketTransportFactory;
 import org.miaixz.lancia.worker.enums.TargetType;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * Chrome启动支持
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class ChromeLauncher implements Launcher {
 
     private String projectRoot;
@@ -330,12 +337,12 @@ public class ChromeLauncher implements Launcher {
                 connection = new Connection("", options.getTransport(), options.getSlowMo(),
                         options.getProtocolTimeout());
             } else if (StringKit.isNotEmpty(options.getBrowserWSEndpoint())) {
-                WebSocketTransport connectionTransport = WebSocketTransport.create(options.getBrowserWSEndpoint());
+                Transport connectionTransport = SocketTransportFactory.of(options.getBrowserWSEndpoint());
                 connection = new Connection(options.getBrowserWSEndpoint(), connectionTransport, options.getSlowMo(),
                         options.getTimeout());
             } else if (StringKit.isNotEmpty(options.getBrowserURL())) {
                 String connectionURL = getWSEndpoint(options.getBrowserURL());
-                WebSocketTransport connectionTransport = WebSocketTransport.create(connectionURL);
+                Transport connectionTransport = SocketTransportFactory.of(connectionURL);
                 connection = new Connection(connectionURL, connectionTransport, options.getSlowMo(),
                         options.getTimeout());
             } else {
@@ -351,7 +358,7 @@ public class ChromeLauncher implements Launcher {
             return Browser.create("chrome", connection, browserContextIds, options.isAcceptInsecureCerts(),
                     options.getDefaultViewport(), null, closeFunction, options.getTargetFilter(),
                     options.getIsPageTarget(), true);
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

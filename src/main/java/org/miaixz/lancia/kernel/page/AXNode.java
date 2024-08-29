@@ -43,6 +43,10 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.nimble.accessbility.AXProperty;
 import org.miaixz.lancia.nimble.accessbility.SerializedAXNode;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class AXNode {
 
     public static final String[] tristateProperties = new String[] { "checked", "pressed" };

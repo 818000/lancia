@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.lang.exception.LaunchException;
 import org.miaixz.bus.core.lang.exception.TimeoutException;
 import org.miaixz.bus.core.xyz.FileKit;
@@ -52,12 +53,16 @@ import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
 import org.miaixz.lancia.option.LaunchOptions;
 import org.miaixz.lancia.socket.Connection;
-import org.miaixz.lancia.socket.WebSocketTransport;
-import org.miaixz.lancia.socket.factory.WebSocketTransportFactory;
+import org.miaixz.lancia.socket.Transport;
+import org.miaixz.lancia.socket.factory.SocketTransportFactory;
 import org.miaixz.lancia.worker.enums.RunnerType;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Runner extends Emitter<RunnerType> {
 
     private static final Map<Process, String> pidMap = new HashMap<>();
@@ -202,11 +207,11 @@ public class Runner extends Emitter<RunnerType> {
         try {
             String pid = pidMap.get(this.process);
             if ("-1".equals(pid) || StringKit.isEmpty(pid)) {
-                Logger.warn("invalid pid ({}) ,kill chrome process failed", pid);
+                // Logger.warn("invalid pid ({}) ,kill chrome process failed", pid);
                 return false;
             }
             Process exec = null;
-            String command = "";
+            String command = Normal.EMPTY;
             if (Platform.isWindows()) {
                 command = "cmd.exe /c taskkill /PID " + pid + " /F /T ";
                 exec = Runtime.getRuntime().exec(command);
@@ -293,7 +298,7 @@ public class Runner extends Emitter<RunnerType> {
 
         } else {/* websocket connection */
             String waitForWSEndpoint = waitForWSEndpoint(timeout, dumpio);
-            WebSocketTransport transport = WebSocketTransportFactory.create(waitForWSEndpoint);
+            Transport transport = SocketTransportFactory.of(waitForWSEndpoint);
             this.connection = new Connection(waitForWSEndpoint, transport, slowMo, timeout);
             Logger.trace("Connect to browser by websocket url: {}", waitForWSEndpoint);
         }

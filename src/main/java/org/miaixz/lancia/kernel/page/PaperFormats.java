@@ -26,7 +26,10 @@
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia.kernel.page;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum PaperFormats {
 
     letter(8.5, 11), legal(8.5, 14), tabloid(11, 17), ledger(17, 11), a0(33.1, 46.8), a1(23.4, 33.1), a2(16.54, 23.4),

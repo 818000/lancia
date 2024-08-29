@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Mirror object referencing original JavaScript object.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

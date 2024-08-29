@@ -33,6 +33,10 @@ import org.miaixz.lancia.option.data.Viewport;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.factory.SessionFactory;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class DevToolsTarget extends PageTarget {
 
     public DevToolsTarget(TargetInfo targetInfo, CDPSession session, Context context, TargetManager targetManager,

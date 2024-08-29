@@ -31,7 +31,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.CompletableFuture;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class AsyncDisposableStack implements AutoCloseable {
 
     private boolean disposed = false;

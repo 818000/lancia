@@ -42,7 +42,10 @@ import org.miaixz.lancia.socket.CDPSession;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
- * Coverage gathers information about parts of JavaScript and CSS that were used by the page.
+ * Coverage收集有关页面使用的JavaScript和CSS部分的信息
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Coverage {
 

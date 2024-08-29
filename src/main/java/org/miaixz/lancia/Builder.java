@@ -48,11 +48,11 @@ import org.miaixz.bus.health.Platform;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.kernel.page.QueryHandler;
 import org.miaixz.lancia.kernel.page.QuerySelector;
-import org.miaixz.lancia.worker.enums.PageEvaluateType;
 import org.miaixz.lancia.nimble.runtime.CallFrame;
 import org.miaixz.lancia.nimble.runtime.ExceptionDetails;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.PageEvaluateType;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -68,9 +68,25 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.internal.disposables.CancellableDisposable;
 
 /**
- * 一些公共方法
+ * 公共方法
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Builder {
+
+    public static final String NONE = "NONE";
+    public static final String ONEWAY = "ONEWAY";
+    public static final String TWOWAY = "TWOWAY";
+
+    public static final String MATCHED = "MATCHED";
+    public static final String NOT_MATCHED = "NOT_MATCHED";
+    public static final String CONTINUOUS = "CONTINUOUS";
+    public static final String TEXT = "TEXT";
+    public static final String BINARY = "BINARY";
+    public static final String PING = "PING";
+    public static final String PONG = "PONG";
+    public static final String CLOSING = "CLOSING";
 
     public static final Map<String, QueryHandler> CUSTOM_QUERY_HANDLERS = new HashMap<>();
     /**

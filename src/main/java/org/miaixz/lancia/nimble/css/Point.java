@@ -27,13 +27,18 @@
 */
 package org.miaixz.lancia.nimble.css;
 
+import org.miaixz.lancia.nimble.profiler.CoverageRange;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.nimble.profiler.CoverageRange;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

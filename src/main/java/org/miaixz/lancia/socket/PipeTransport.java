@@ -38,8 +38,11 @@ import org.miaixz.bus.logger.Logger;
 
 /**
  * 与chromuim通过pipe通信暂时没实现
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
-public class PipeTransport implements ConnectionTransport {
+public class PipeTransport implements Transport {
 
     private InputStream pipeReader;
 

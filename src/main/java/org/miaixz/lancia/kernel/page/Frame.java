@@ -35,12 +35,17 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
-import org.miaixz.lancia.worker.enums.PageEvaluateType;
 import org.miaixz.lancia.nimble.page.FramePayload;
 import org.miaixz.lancia.option.*;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.worker.enums.FrameEvent;
-
+import org.miaixz.lancia.worker.enums.PageEvaluateType;
+/**
+ * 框架信息
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Frame extends Emitter<FrameEvent> {
 
     private String id;

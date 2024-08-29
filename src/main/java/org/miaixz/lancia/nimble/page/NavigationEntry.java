@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Navigation history entry.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

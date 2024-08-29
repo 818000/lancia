@@ -29,6 +29,10 @@ package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.lancia.nimble.network.SecurityDetailsPayload;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class SecurityDetails {
 
     private String subjectName;

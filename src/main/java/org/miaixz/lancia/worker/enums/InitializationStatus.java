@@ -26,7 +26,10 @@
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia.worker.enums;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum InitializationStatus {
 
     SUCCESS("success"), ABORTED("aborted");

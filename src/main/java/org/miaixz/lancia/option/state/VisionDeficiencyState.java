@@ -32,7 +32,10 @@ import org.miaixz.lancia.worker.enums.VisionDeficiency;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

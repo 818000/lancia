@@ -37,6 +37,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Detailed information about exception (or error) that was thrown during script compilation or execution.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

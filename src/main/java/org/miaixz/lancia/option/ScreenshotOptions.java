@@ -31,7 +31,12 @@ import org.miaixz.lancia.option.data.Clip;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
+/**
+ * 截图可选项
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

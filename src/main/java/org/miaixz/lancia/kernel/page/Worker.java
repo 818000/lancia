@@ -45,7 +45,10 @@ import org.miaixz.lancia.worker.enums.TargetType;
 import org.miaixz.lancia.worker.events.ExceptionThrownEvent;
 
 /**
- * The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
+ * 在页面对象上会发出“ workercreated”和“ workerdestroyed”事件，以表示工人的生命周期。
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Worker {
 

@@ -38,6 +38,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * 浏览器启动选项
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

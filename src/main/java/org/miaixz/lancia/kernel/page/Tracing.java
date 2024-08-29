@@ -44,6 +44,8 @@ import org.miaixz.lancia.worker.events.TracingCompleteEvent;
 /**
  * You can use [`tracing.start`](#tracingstartoptions) and [`tracing.stop`](#tracingstop) to create a trace file which
  * can be opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/)
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Tracing {
 

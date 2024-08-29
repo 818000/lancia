@@ -60,6 +60,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * web socket client 浏览器级别的连接
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Connection extends Emitter<CDPSessionEvent> implements Consumer<String> {
 
@@ -142,7 +144,7 @@ public class Connection extends Emitter<CDPSessionEvent> implements Consumer<Str
     };
 
     private final String url;
-    private final ConnectionTransport transport;
+    private final Transport transport;
     private final int delay;
     private final int timeout;
     private final Map<String, CDPSession> sessions = new HashMap<>();
@@ -151,7 +153,7 @@ public class Connection extends Emitter<CDPSessionEvent> implements Consumer<Str
     Set<String> manuallyAttached = new HashSet<>();
     private List<String> events = null;
 
-    public Connection(String url, ConnectionTransport transport, int delay, int timeout) {
+    public Connection(String url, Transport transport, int delay, int timeout) {
         super();
         this.url = url;
         this.transport = transport;
@@ -289,6 +291,7 @@ public class Connection extends Emitter<CDPSessionEvent> implements Consumer<Str
                 if (!match) {// 不匹配就是没有监听该事件
                     return;
                 }
+
                 this.emit(CDPSessionEvent.valueOf(method.replace(".", "_")), classes.get(method) == null ? null
                         : Builder.OBJECTMAPPER.treeToValue(paramsNode, classes.get(method)));
             }

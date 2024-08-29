@@ -29,6 +29,8 @@ package org.miaixz.lancia.worker.enums;
 
 /**
  * 视力缺陷类,设置不同级别的实力缺陷，截图有不同的效果
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public enum VisionDeficiency {
 

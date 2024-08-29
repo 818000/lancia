@@ -36,7 +36,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * message that send to browser
- *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class SendMsg {
 

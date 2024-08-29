@@ -28,7 +28,10 @@
 package org.miaixz.lancia.kernel.page;
 
 import java.util.List;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 import org.miaixz.lancia.nimble.input.ClickablePoint;
 
 public class BoxModel {

@@ -26,7 +26,10 @@
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia.worker.enums;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum NetworkManagerType {
     Request("NetworkManager.Request"), RequestServedFromCache("NetworkManager.RequestServedFromCache"),
     Response("NetworkManager.Response"), RequestFailed("NetworkManager.RequestFailed"),

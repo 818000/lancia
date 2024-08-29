@@ -29,6 +29,10 @@ package org.miaixz.lancia.kernel.page;
 
 import org.miaixz.lancia.Builder;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class TimeoutSettings {
 
     private int defaultNavigationTimeout;

@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Authorization challenge for HTTP status code 401 or 407.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

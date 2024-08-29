@@ -32,7 +32,10 @@ import java.util.List;
 import org.miaixz.lancia.nimble.console.Location;
 
 /**
- * ConsoleMessage objects are dispatched by page via the 'console' event.
+ * 通过console事件按页面调度ConsoleMessage对象
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class ConsoleMessage {
 

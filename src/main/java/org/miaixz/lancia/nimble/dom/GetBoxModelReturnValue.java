@@ -27,13 +27,17 @@
 */
 package org.miaixz.lancia.nimble.dom;
 
+import org.miaixz.lancia.nimble.input.BoxModel;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.nimble.input.BoxModel;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

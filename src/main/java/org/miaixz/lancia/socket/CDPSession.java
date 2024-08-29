@@ -54,6 +54,8 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * Documentation on DevTools Protocol can be found here: DevTools Protocol Viewer. Getting Started with :
  * <a href="https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md">DevTools Protocol</a>
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class CDPSession extends Emitter<CDPSessionEvent> {
 

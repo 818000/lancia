@@ -29,14 +29,17 @@ package org.miaixz.lancia.option;
 
 import java.util.Map;
 
-import org.miaixz.lancia.socket.ConnectionTransport;
+import org.miaixz.lancia.socket.Transport;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder
@@ -46,7 +49,7 @@ public class ConnectOptions extends BrowserConnectOptions {
 
     private String browserWSEndpoint;
     private String browserURL;
-    private ConnectionTransport transport;
+    private Transport transport;
     private Map<String, String> headers;
 
 }

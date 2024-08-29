@@ -37,6 +37,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * HTTP response data.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

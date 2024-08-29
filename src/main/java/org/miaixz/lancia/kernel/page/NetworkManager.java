@@ -43,7 +43,12 @@ import org.miaixz.lancia.worker.enums.CDPSessionEvent;
 import org.miaixz.lancia.worker.enums.NetworkManagerType;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+/**
+ * 网络管理
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class NetworkManager extends Emitter<NetworkManagerType> {
 
     /**

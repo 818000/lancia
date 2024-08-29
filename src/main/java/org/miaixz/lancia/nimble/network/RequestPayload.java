@@ -27,16 +27,18 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Map;
-
 /**
  * HTTP request data.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Fired when HTTP request has failed to load.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

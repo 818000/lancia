@@ -39,16 +39,19 @@ import org.miaixz.bus.core.lang.exception.ProtocolException;
 import org.miaixz.bus.core.xyz.CollKit;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.worker.enums.PageEvaluateType;
 import org.miaixz.lancia.nimble.runtime.ExceptionDetails;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextDescription;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.PageEvaluateType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class ExecutionContext {
 
     public static final String EVALUATION_SCRIPT_URL = "__puppeteer_evaluation_script__";

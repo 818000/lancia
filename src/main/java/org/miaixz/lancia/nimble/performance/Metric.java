@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Run-time execution metric.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

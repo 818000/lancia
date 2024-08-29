@@ -32,7 +32,10 @@ import org.miaixz.lancia.option.data.ActiveProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Timing information for the request.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

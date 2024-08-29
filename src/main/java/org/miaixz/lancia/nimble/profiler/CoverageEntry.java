@@ -29,13 +29,17 @@ package org.miaixz.lancia.nimble.profiler;
 
 import java.util.List;
 
+import org.miaixz.lancia.nimble.css.Range;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.nimble.css.Range;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

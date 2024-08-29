@@ -27,15 +27,18 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import org.miaixz.lancia.nimble.runtime.StackTrace;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.nimble.runtime.StackTrace;
 
 /**
  * Information about the request initiator.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

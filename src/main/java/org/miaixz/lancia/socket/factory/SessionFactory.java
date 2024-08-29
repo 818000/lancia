@@ -28,7 +28,10 @@
 package org.miaixz.lancia.socket.factory;
 
 import org.miaixz.lancia.socket.CDPSession;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @FunctionalInterface
 public interface SessionFactory {
 

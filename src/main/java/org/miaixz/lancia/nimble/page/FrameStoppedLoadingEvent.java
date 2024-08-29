@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Fired when frame has stopped loading.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

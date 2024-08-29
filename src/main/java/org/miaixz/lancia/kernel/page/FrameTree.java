@@ -31,6 +31,12 @@ import java.util.List;
 
 import org.miaixz.lancia.nimble.page.FramePayload;
 
+/**
+ * 有关框架层次结构
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class FrameTree {
 
     private FramePayload frame;

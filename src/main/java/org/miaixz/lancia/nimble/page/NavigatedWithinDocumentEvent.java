@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Fired when same-document navigation happens, e.g. due to history API usage or anchor navigation.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

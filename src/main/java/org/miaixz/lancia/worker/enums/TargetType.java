@@ -26,7 +26,10 @@
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia.worker.enums;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum TargetType {
 
     PAGE("page"), BACKGROUND_PAGE("background_page"), SERVICE_WORKER("service-worker"), SHARED_WORKER("shared-worker"),

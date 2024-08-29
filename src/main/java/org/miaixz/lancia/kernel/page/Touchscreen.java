@@ -34,6 +34,12 @@ import java.util.Map;
 
 import org.miaixz.lancia.socket.CDPSession;
 
+/**
+ * 屏幕触摸
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Touchscreen {
 
     private CDPSession client;

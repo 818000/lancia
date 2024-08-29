@@ -39,6 +39,12 @@ import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.nimble.logging.DialogType;
 import org.miaixz.lancia.socket.CDPSession;
 
+/**
+ * 提示弹框信息
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Dialog {
 
     private CDPSession client;

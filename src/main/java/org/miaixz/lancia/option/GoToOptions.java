@@ -40,6 +40,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * ${@link Page#goTo} 导航到页面的用的
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

@@ -60,6 +60,9 @@ import io.reactivex.rxjava3.core.Observable;
 
 /**
  * 浏览器实例
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Browser extends Emitter<BrowserEvent> {
 

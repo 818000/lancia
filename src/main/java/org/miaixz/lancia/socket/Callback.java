@@ -35,7 +35,10 @@ import org.miaixz.bus.core.lang.exception.ProtocolException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.reactivex.rxjava3.subjects.SingleSubject;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Callback {
 
     public String label;

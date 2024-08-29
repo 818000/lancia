@@ -37,6 +37,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * {@link Frame#click(String, ClickOptions,boolean)}
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

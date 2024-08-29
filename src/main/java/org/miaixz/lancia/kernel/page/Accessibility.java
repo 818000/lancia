@@ -40,6 +40,10 @@ import org.miaixz.lancia.socket.CDPSession;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Accessibility {
 
     private final CDPSession client;

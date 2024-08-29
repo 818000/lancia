@@ -33,6 +33,10 @@ import org.miaixz.lancia.kernel.page.TargetInfo;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.factory.SessionFactory;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class OtherTarget extends Target {
 
     public OtherTarget(TargetInfo targetInfo, CDPSession session, Context context, TargetManager targetManager,

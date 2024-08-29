@@ -29,18 +29,21 @@ package org.miaixz.lancia.nimble.fetch;
 
 import java.util.List;
 
+import org.miaixz.lancia.nimble.network.RequestPayload;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.nimble.network.RequestPayload;
 
 /**
  * Issued when the domain is enabled and the request URL matches the specified filter. The request is paused until the
  * client responds with one of continueRequest, failRequest or fulfillRequest. The stage of the request can be
  * determined by presence of responseErrorReason and responseStatusCode -- the request is at the response stage if
  * either of these fields is present and in the request stage otherwise.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

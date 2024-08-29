@@ -44,20 +44,12 @@ import org.miaixz.lancia.worker.enums.ErrorCode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+
 /**
- * Whenever the page sends a request, such as for a network resource, the following events are emitted by puppeteer's
- * page:
- * <p>
- * 'request' emitted when the request is issued by the page. 'response' emitted when/if the response is received for the
- * request. 'requestfinished' emitted when the response body is downloaded and the request is complete. If request fails
- * at some point, then instead of 'requestfinished' event (and possibly instead of 'response' event), the
- * 'requestfailed' event is emitted.
- * <p>
- * NOTE HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
- * complete with 'requestfinished' event.
- * <p>
- * If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a
- * new request is issued to a redirected url.
+ * HTTP请求信息
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Request {
 

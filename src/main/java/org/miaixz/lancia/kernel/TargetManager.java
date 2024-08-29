@@ -35,6 +35,10 @@ import org.miaixz.lancia.kernel.page.TargetInfo;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.worker.enums.TargetManagerType;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public abstract class TargetManager extends Emitter<TargetManagerType> {
 
     public abstract Map<String, Target> getAvailableTargets();

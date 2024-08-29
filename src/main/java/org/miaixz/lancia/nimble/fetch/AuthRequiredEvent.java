@@ -27,17 +27,20 @@
 */
 package org.miaixz.lancia.nimble.fetch;
 
+import org.miaixz.lancia.nimble.network.AuthChallenge;
+import org.miaixz.lancia.nimble.network.RequestPayload;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.nimble.network.AuthChallenge;
-import org.miaixz.lancia.nimble.network.RequestPayload;
 
 /**
  * Issued when the domain is enabled with handleAuthRequests set to true. The request is paused until client responds
  * with continueWithAuth.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

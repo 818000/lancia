@@ -31,6 +31,8 @@ import org.miaixz.lancia.option.data.Viewport;
 
 /**
  * 可以模拟的手机设备枚举类
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public enum Device {
 

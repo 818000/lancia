@@ -41,7 +41,12 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.worker.enums.PageEvaluateType;
-
+/**
+ * 等待任务
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class WaitTask {
 
     private AtomicInteger runCount;

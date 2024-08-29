@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Deletes browser cookies with matching name and url or domain/path pair.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

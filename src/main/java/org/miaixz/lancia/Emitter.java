@@ -37,6 +37,9 @@ import java.util.function.Consumer;
 
 /**
  * 事件发布，事件监听，模仿nodejs的EventEmitter
+ * 
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Emitter<EventType> {
 
@@ -76,7 +79,7 @@ public class Emitter<EventType> {
     }
 
     /**
-     * 一次性事件监听，用于自定义事件监听，与{@link Emitter#on(EventType, Consumer)}的区别就是on会一直监听
+     * 一次性事件监听，用于自定义事件监听
      * 
      * @param eventType 事件名称
      * @param listener  事件处理器

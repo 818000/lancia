@@ -38,7 +38,10 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.bus.logger.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class CallbackRegistry {
 
     private final Map<Integer, Callback> callbacks = new HashMap<>();

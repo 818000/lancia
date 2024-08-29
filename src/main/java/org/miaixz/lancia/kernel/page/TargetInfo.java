@@ -27,6 +27,12 @@
 */
 package org.miaixz.lancia.kernel.page;
 
+/**
+ * 目标详细内容
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class TargetInfo {
 
     private String targetId;

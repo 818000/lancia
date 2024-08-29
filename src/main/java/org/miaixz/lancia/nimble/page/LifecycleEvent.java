@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Fired for top level page lifecycle events such as navigation, load, paint, etc.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

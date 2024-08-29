@@ -33,10 +33,13 @@ import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.lancia.nimble.page.FileChooserOpenedEvent;
 import org.miaixz.lancia.socket.CDPSession;
 
+
 /**
- * FileChooser objects are returned via the 'page.waitForFileChooser' method.
+ * FileChooser对象通过“ page.waitForFileChooser”方法返回
+ * 通过文件选择器，您可以对请求文件的页面做出反应
  *
- * File choosers let you react to the page requesting for a file.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class FileChooser {
 

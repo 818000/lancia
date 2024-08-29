@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Details of a signed certificate timestamp (SCT).
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

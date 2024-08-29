@@ -33,7 +33,12 @@ import java.util.List;
 import org.miaixz.lancia.kernel.Variables;
 import org.miaixz.lancia.option.ConnectOptions;
 import org.miaixz.lancia.option.LaunchOptions;
-
+/**
+ * 启动器(浏览器)
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public interface Launcher {
 
     Variables env = System::getenv;

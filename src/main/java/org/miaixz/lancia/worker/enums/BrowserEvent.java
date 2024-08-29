@@ -27,6 +27,10 @@
 */
 package org.miaixz.lancia.worker.enums;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum BrowserEvent {
 
     CONNECTION_DISCONNECTED("Connection.Disconnected"), CDPSESSION_DISCONNECTED("CDPSession.Disconnected"),

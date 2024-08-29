@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Emitted only when `page.interceptFileChooser` is enabled.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

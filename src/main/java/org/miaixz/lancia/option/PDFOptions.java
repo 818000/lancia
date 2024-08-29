@@ -35,7 +35,10 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 /**
- * 生成pdf时候需要的参数
+ * 生成pdf时候需要的选项
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

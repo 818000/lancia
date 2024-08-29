@@ -27,6 +27,10 @@
 */
 package org.miaixz.lancia.worker.enums;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum CDPSessionEvent {
 
     CDPSession_Disconnected("CDPSession.Disconnected"), CDPSession_Swapped("CDPSession.Swapped"),

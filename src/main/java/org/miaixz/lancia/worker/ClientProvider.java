@@ -31,7 +31,10 @@ import java.util.List;
 
 import org.miaixz.lancia.option.state.EmulatedState;
 import org.miaixz.lancia.socket.CDPSession;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public interface ClientProvider {
 
     List<CDPSession> clients();

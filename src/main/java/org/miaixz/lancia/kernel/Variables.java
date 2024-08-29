@@ -29,6 +29,9 @@ package org.miaixz.lancia.kernel;
 
 /**
  * 环境变量的接口:可以使用System:getEnv来实现
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @FunctionalInterface
 public interface Variables {

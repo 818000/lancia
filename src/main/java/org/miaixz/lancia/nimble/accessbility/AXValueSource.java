@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * A single source for a computed AX property.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

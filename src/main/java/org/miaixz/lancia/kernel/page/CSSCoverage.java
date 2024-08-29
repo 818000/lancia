@@ -44,7 +44,10 @@ import org.miaixz.lancia.worker.events.StyleSheetAddedEvent;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.reactivex.rxjava3.disposables.Disposable;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class CSSCoverage {
 
     private final CDPSession client;

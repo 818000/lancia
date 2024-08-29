@@ -32,8 +32,10 @@ import java.util.function.BiFunction;
 import org.miaixz.lancia.option.ScreenshotOptions;
 
 /**
- * 截图专用的类，
+ * 任务队列,截图专用的类
  *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class TaskQueue<R> {
 

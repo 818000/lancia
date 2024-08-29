@@ -28,9 +28,16 @@
 package org.miaixz.lancia.worker.enums;
 
 import org.miaixz.lancia.Page;
-import org.miaixz.lancia.kernel.page.*;
-
+import org.miaixz.lancia.kernel.page.Dialog;
+import org.miaixz.lancia.kernel.page.Frame;
+import org.miaixz.lancia.kernel.page.Request;
+import org.miaixz.lancia.kernel.page.Response;
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum PageEvent {
+
     /**
      * Emitted when the page closes.
      */
@@ -38,12 +45,6 @@ public enum PageEvent {
     /**
      * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`.
      * Also emitted if the page throws an error or a warning.
-     *
-     * @remarks A `console` event provides a {@link ConsoleMessage} representing the console message that was logged.
-     * @example An example of handling `console` event:
-     *          <p>
-     *          ```ts page.on('console', msg => { for (let i = 0; i < msg.args().length; ++i) console.log(`${i}:
-     *          ${msg.args()[i]}`); }); page.evaluate(() => console.log('hello', 5, {foo: 'bar'})); ```
      */
     CONSOLE("console"),
     /**
@@ -52,9 +53,7 @@ public enum PageEvent {
      */
     DIALOG("dialog"),
     /**
-     * Emitted when the JavaScript
-     * <a href="https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded">DOMContentLoaded</a> event is
-     * dispatched.
+     * Emitted when the JavaScript DOMContentLoaded event is dispatched.
      */
     DOMCONTENTLOADED("domcontentloaded"),
     /**
@@ -74,18 +73,12 @@ public enum PageEvent {
      */
     FRAMENAVIGATED("framenavigated"),
     /**
-     * Emitted when the JavaScript <a href="https://developer.mozilla.org/en-US/docs/Web/Events/load">load</a> event is
-     * dispatched.
+     * Emitted when the JavaScript load event is dispatched.
      */
     LOAD("load"),
     /**
      * Emitted when the JavaScript code makes a call to `console.timeStamp`. For the list of metrics see
      * {@link Page#metrics | page.metrics}.
-     *
-     * @remarks Contains an object with two properties:
-     *          <p>
-     *          - `title`: the title passed to `console.timeStamp` - `metrics`: object containing metrics as key/value
-     *          pairs. The values will be `number`s.
      */
     METRICS("metrics"),
     /**
@@ -93,36 +86,19 @@ public enum PageEvent {
      */
     PAGEERROR("pageerror"),
     /**
-     * Emitted when the page opens a new tab or window.
-     * <p>
-     * Contains a {@link Page} corresponding to the popup window.
-     *
-     * @example ```ts const [popup] = await Promise.all([ new Promise(resolve => page.once('popup', resolve)),
-     *          page.click('a[target=_blank]'), ]); ```
-     *          <p>
-     *          ```ts const [popup] = await Promise.all([ new Promise(resolve => page.once('popup', resolve)),
-     *          page.evaluate(() => window.open('https://example.com')), ]); ```
+     * Emitted when the page opens a new tab or window. Contains a {@link Page} corresponding to the popup window.
      */
     POPUP("popup"),
     /**
      * Emitted when a page issues a request and contains a {@link Request}.
-     *
-     * @remarks The object is readonly. See {@link Page#setRequestInterception} for intercepting and mutating requests.
      */
     REQUEST("request"),
     /**
      * Emitted when a request ended up loading from cache. Contains a {@link Request}.
-     *
-     * @remarks For certain requests, might contain undefined. {@link <a href="https://crbug.com/750469">crbug</a>}
      */
     REQUESTSERVEDFROMCACHE("requestservedfromcache"),
     /**
-     * Emitted when a request fails, for example by timing out.
-     * <p>
-     * Contains a {@link Request}.
-     *
-     * @remarks HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so
-     *          request will complete with `requestfinished` event and not with `requestfailed`.
+     * Emitted when a request fails, for example by timing out. Contains a {@link Request}.
      */
     REQUESTFAILED("requestfailed"),
     /**
@@ -134,15 +110,11 @@ public enum PageEvent {
      */
     RESPONSE("response"),
     /**
-     * Emitted when a dedicated
-     * {@link <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">WebWorker</a>} is spawned by
-     * the page.
+     * Emitted when a dedicated WebWorker is spawned by the page.
      */
     WORKERCREATED("workercreated"),
     /**
-     * Emitted when a dedicated
-     * {@link <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">WebWorker</a>} is destroyed by
-     * the page.
+     * Emitted when a dedicated WebWorker is destroyed by the page.
      */
     WORKERDESTROYED("workerdestroyed");
 
@@ -159,4 +131,5 @@ public enum PageEvent {
     public void setEventName(String eventName) {
         this.eventName = eventName;
     }
+
 }

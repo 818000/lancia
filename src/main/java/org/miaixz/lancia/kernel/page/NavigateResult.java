@@ -27,6 +27,11 @@
 */
 package org.miaixz.lancia.kernel.page;
 
+/**
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum NavigateResult {
 
     CONTENT_SUCCESS("Content-success"), SUCCESS("success"), TIMEOUT("timeout"), TERMINATION("termination");

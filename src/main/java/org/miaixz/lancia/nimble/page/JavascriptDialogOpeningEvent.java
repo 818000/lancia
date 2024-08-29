@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

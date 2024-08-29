@@ -36,7 +36,12 @@ import org.miaixz.lancia.socket.CDPSession;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-
+/**
+ * JS拦截器
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class JSHandle {
 
     private ExecutionContext context;

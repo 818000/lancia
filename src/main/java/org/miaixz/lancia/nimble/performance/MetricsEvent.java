@@ -27,16 +27,18 @@
 */
 package org.miaixz.lancia.nimble.performance;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
 /**
  * Current values of the metrics.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

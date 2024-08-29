@@ -46,7 +46,10 @@ import org.miaixz.lancia.worker.ClientProvider;
 import org.miaixz.lancia.worker.Updater;
 import org.miaixz.lancia.worker.enums.CDPSessionEvent;
 import org.miaixz.lancia.worker.enums.VisionDeficiency;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class EmulationManager implements ClientProvider {
 
     private static final Updater<ViewportState> applyViewport = (client, viewportState) -> {

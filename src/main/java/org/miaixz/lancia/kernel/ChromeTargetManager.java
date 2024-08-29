@@ -49,6 +49,10 @@ import org.miaixz.lancia.worker.events.*;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.SingleSubject;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class ChromeTargetManager extends TargetManager {
 
     private final Connection connection;

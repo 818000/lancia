@@ -38,6 +38,8 @@ import lombok.experimental.SuperBuilder;
  * 页面的js事件数量。 Nodes 页面的dom节点数量。 LayoutCount 整页面或部分页面的布局数量。 RecalcStyleCount 页面样式重新计算数量。 LayoutDuration 页面布局总时间。
  * RecalcStyleDuration 页面样式重新计算总时间。 ScriptDuration 页面js代码执行总时间。 TaskDuration 页面任务执行总时间。 JSHeapUsedSize 页面占用堆内存大小。
  * JSHeapTotalSize 总的页面堆内存大小。
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

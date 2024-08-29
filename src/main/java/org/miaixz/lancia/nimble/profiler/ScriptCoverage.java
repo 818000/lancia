@@ -37,6 +37,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Coverage data for a JavaScript script.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

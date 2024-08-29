@@ -41,7 +41,12 @@ import org.miaixz.lancia.worker.enums.PuppeteerLifeCycle;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.SingleSubject;
-
+/**
+ * 生命周期
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class LifecycleWatcher {
 
     private final List<String> expectedLifecycle = new ArrayList<>();

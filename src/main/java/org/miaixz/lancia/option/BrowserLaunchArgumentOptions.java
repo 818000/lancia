@@ -33,7 +33,10 @@ import org.miaixz.lancia.option.data.Timeoutable;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 @Getter
 @Setter
 @SuperBuilder

@@ -60,7 +60,12 @@ import org.miaixz.lancia.worker.events.FrameNavigatedEvent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-
+/**
+ * 框架管理
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class FrameManager extends Emitter<FrameManagerType> {
 
     private static final String UTILITY_WORLD_NAME = "__puppeteer_utility_world__";

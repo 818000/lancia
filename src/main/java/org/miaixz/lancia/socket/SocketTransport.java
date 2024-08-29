@@ -27,38 +27,23 @@
 */
 package org.miaixz.lancia.socket;
 
-import java.net.URI;
-import java.util.Map;
-
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
 import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.xyz.UrlKit;
 import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.socket.factory.WebSocketTransportFactory;
 
 /**
  * websocket client
- *
+ * @author Kimi Liu
+ * @since Java 17+
  */
-public class WebSocketTransport extends WebSocketClient implements ConnectionTransport {
+public class SocketTransport extends WebSocketClient implements Transport {
 
     private Connection connection = null;
 
-    public WebSocketTransport(URI serverUri, Draft draft) {
-        super(serverUri, draft);
-    }
-
-    public WebSocketTransport(URI serverURI) {
-        super(serverURI);
-    }
-
-    public WebSocketTransport(URI serverUri, Map<String, String> httpHeaders) {
-        super(serverUri, httpHeaders);
-    }
-
-    public static WebSocketTransport create(String browserWSEndpoint) throws InterruptedException {
-        return WebSocketTransportFactory.create(browserWSEndpoint);
+    public SocketTransport(String serverURI) {
+        super(UrlKit.toURI(serverURI));
     }
 
     @Override
@@ -77,8 +62,9 @@ public class WebSocketTransport extends WebSocketClient implements ConnectionTra
      * @param remote 远程
      */
     @Override
-    public void onClose(int code, String reason, boolean remote) {// 这里是WebSocketClient的实现方法,当websocket
-                                                                  // closed的时候会调用onClose
+    public void onClose(int code, String reason, boolean remote) {
+        // 这里是WebSocketClient的实现方法,当websocket
+        // closed的时候会调用onClose
         Logger.info("Connection closed by {} Code: {} Reason: {}", remote ? "remote peer" : "us", code, reason);
         if (this.connection != null) {// 浏览器以外关闭时候，connection不为空
             this.connection.dispose();
@@ -99,4 +85,5 @@ public class WebSocketTransport extends WebSocketClient implements ConnectionTra
     public void setConnection(Connection connection) {
         this.connection = connection;
     }
+
 }

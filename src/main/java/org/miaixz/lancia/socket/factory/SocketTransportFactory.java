@@ -25,16 +25,54 @@
  ~                                                                               ~
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
-package org.miaixz.lancia.socket;
+package org.miaixz.lancia.socket.factory;
 
-public interface ConnectionTransport {
+import org.miaixz.bus.core.lang.exception.InternalException;
+import org.miaixz.bus.logger.Logger;
+import org.miaixz.lancia.socket.PipeTransport;
+import org.miaixz.lancia.socket.SocketTransport;
+import org.miaixz.lancia.socket.Transport;
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
+public class SocketTransportFactory {
 
-    void send(String message);
+    /**
+     * 创建套接字传输协议
+     *
+     * @param browserWSEndpoint 连接websocket的地址
+     * @return WebSocketTransport/PipeTransport 客户端
+     */
+    public static Transport of(String browserWSEndpoint) {
+        try {
+            return socket(browserWSEndpoint);
+        } catch (InternalException | InterruptedException e) {
+            Logger.warn(e.getMessage());
+            return pipe(browserWSEndpoint);
+        }
+    }
 
-    void onMessage(String message);
+    /**
+     * create websocket client
+     *
+     * @param browserWSEndpoint 连接websocket的地址
+     * @return SocketTransport websocket客户端
+     * @throws InterruptedException 被打断异常
+     */
+    public static Transport socket(String browserWSEndpoint) throws InterruptedException {
+        SocketTransport client = new SocketTransport(browserWSEndpoint);
+        // 保持websokcet连接
+        client.setConnectionLostTimeout(0);
+        client.connectBlocking();
+        return client;
+    }
 
-    void setConnection(Connection connection);
-
-    void close();
+    /**
+     * 创建套接字传输协议
+     */
+    public static Transport pipe(String browserWSEndpoint) {
+        return new PipeTransport();
+    }
 
 }

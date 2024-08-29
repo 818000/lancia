@@ -37,6 +37,9 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * 在${@link Frame#addScriptTag(ScriptTagOptions)}用到
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

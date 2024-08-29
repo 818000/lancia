@@ -55,7 +55,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * ElementHandle represents an in-page DOM element. ElementHandles can be created with the page.$ method.
+ * ElementHandle表示页内DOM元素。可以使用page.$方法创建ElementHandles
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class ElementHandle extends JSHandle {
 

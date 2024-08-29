@@ -47,7 +47,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.reactivex.rxjava3.disposables.Disposable;
-
+/**
+ * JS覆盖范围
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class JSCoverage {
 
     private final List<Disposable> disposables = new ArrayList<>();

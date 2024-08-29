@@ -29,15 +29,18 @@ package org.miaixz.lancia.nimble.page;
 
 import java.util.List;
 
+import org.miaixz.lancia.option.data.AdFrameStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.miaixz.lancia.option.data.AdFrameStatus;
 
 /**
  * Information about the Frame on the page.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

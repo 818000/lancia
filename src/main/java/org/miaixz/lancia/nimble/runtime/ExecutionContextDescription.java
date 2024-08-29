@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Description of an isolated world.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

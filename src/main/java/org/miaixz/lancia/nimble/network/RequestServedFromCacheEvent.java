@@ -35,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * Fired if request ended up loading from cache.
+ * @author Kimi Liu
+ * @since Java 17+
  */
 @Getter
 @Setter

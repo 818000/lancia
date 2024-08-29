@@ -27,6 +27,10 @@
 */
 package org.miaixz.lancia.worker.enums;
 
+/**
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public enum BrowserContextEvent {
 
     TargetChanged("targetchanged"), TargetCreated("targetcreated"), TargetDestroyed("targetdestroyed");

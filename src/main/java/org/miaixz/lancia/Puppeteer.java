@@ -40,11 +40,15 @@ import org.miaixz.lancia.launch.ChromeLauncher;
 import org.miaixz.lancia.option.ConnectOptions;
 import org.miaixz.lancia.option.FetcherOptions;
 import org.miaixz.lancia.option.LaunchOptions;
-import org.miaixz.lancia.socket.ConnectionTransport;
+import org.miaixz.lancia.socket.Transport;
 
 /**
- * Puppeteer 也可以用来控制 Chrome 浏览器， 但它与绑定的 Chromium 版本在一起使用效果最好。不能保证它可以与任何其他版本一起使用。谨慎地使用 executablePath 选项。 如果 Google
+ * Puppeteer 也可以用来控制 Chrome 浏览器， 但它与绑定的 Chromium
+ * 版本在一起使用效果最好。不能保证它可以与任何其他版本一起使用。谨慎地使用 executablePath 选项。 如果 Google
  * Chrome（而不是Chromium）是首选，一个 Chrome Canary 或 Dev Channel 版本是建议的
+ *
+ * @author Kimi Liu
+ * @since Java 17+
  */
 public class Puppeteer {
 
@@ -133,7 +137,7 @@ public class Puppeteer {
      * @param transport websocket http transport 三选一
      * @return 浏览器实例
      */
-    public static Browser connect(ConnectionTransport transport) {
+    public static Browser connect(Transport transport) {
         ConnectOptions options = new ConnectOptions();
         options.setTransport(transport);
         return connect(options);

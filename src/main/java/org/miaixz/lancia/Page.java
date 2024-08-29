@@ -45,6 +45,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.lang.exception.InternalException;
 import org.miaixz.bus.core.lang.exception.PageException;
 import org.miaixz.bus.core.lang.exception.TimeoutException;
@@ -92,7 +93,12 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.SingleSubject;
-
+/**
+ * 页面信息
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
 public class Page extends Emitter<PageEvent> {
 
     private static final String ABOUT_BLANK = "about:blank";
@@ -231,7 +237,7 @@ public class Page extends Emitter<PageEvent> {
             this.emit(PageEvent.WORKERDESTROYED, worker);
             this.workers().remove(event.getSessionId());
         });
-    };
+    }
 
     /**
      * 这里是WebSocketConnectReadThread 线程执行的方法，不能暂停！！
@@ -280,16 +286,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * frame attach的时候触发
-     * <p>
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
-     * </p>
-     * <p>
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * </p>
-     * <p>
-     * 可以在将这些方法的调用移动到另外一个线程中
-     * </p>
+     * frame attach的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -298,16 +295,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * frame detached的时候触发
-     * <p>
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
-     * </p>
-     * <p>
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * </p>
-     * <p>
-     * 可以在将这些方法的调用移动到另外一个线程中
-     * </p>
+     * frame detached的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -316,15 +304,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * <p>
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法
-     * </p>
-     * <p>
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * </p>
-     * <p>
-     * 可以在将这些方法的调用移动到另外一个线程中
-     * </p>
+     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -365,15 +345,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * <p>
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法
-     * </p>
-     * <p>
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * </p>
-     * <p>
-     * 可以在将这些方法的调用移动到另外一个线程中
-     * </p>
+     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -382,15 +354,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * <p>
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法
-     * </p>
-     * <p>
-     * 不然的话，websocket的read线程会被阻塞，程序无法正常运行
-     * </p>
-     * <p>
-     * 可以在将这些方法的调用移动到另外一个线程中
-     * </p>
+     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
      *
      * @param handler 事件处理器
      */
@@ -442,10 +406,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * <p>
-     * 返回主 Frame
-     * </p>
-     * 保证页面一直有有一个主 frame
+     * 返回主 Frame 保证页面一直有有一个主 frame
      *
      * @return {@link Frame}
      */
@@ -509,9 +470,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 为HTTP authentication 提供认证凭据 。
-     * <p>
-     * 传 null 禁用认证。
+     * 为HTTP authentication 提供认证凭据 。 传 null 禁用认证。
      *
      * @param credentials 验证信息
      */
@@ -591,11 +550,10 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * page.close() 在 beforeunload 处理之前默认不执行
-     * <p>
-     * <strong>注意 如果 runBeforeUnload 设置为true，可能会弹出一个 beforeunload 对话框。 这个对话框需要通过页面的 'dialog' 事件手动处理</strong>
-     * </p>
+     * page.close() 在 beforeunload 处理之前默认不执行 <strong>注意 如果 runBeforeUnload 设置为true，可能会弹出一个 beforeunload 对话框。
+     * 这个对话框需要通过页面的 'dialog' 事件手动处理</strong>
      *
+     * 
      * @param runBeforeUnload 默认 false. 是否执行 before unload
      * @throws InterruptedException 异常
      */
@@ -614,10 +572,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * <p>
-     * 截图
-     * </p>
-     * 备注 在OS X上 截图需要至少1/6秒。：<a href="https://crbug.com/741689">查看讨论</a>。
+     * 截图 备注 在OS X上 截图需要至少1/6秒
      *
      * @param options 截图选项
      * @return 图片base64的字节
@@ -691,7 +646,7 @@ public class Page extends Emitter<PageEvent> {
                     this.setViewport(viewport);
                 }
             }
-            return "";
+            return Normal.EMPTY;
         }
 
     }
@@ -807,10 +762,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 设置绕过页面的安全政策
-     * <p>
-     * 注意 CSP 发生在 CSP 初始化而不是评估阶段。也就是说应该在导航到这个域名前设置
-     * </p>
+     * 设置绕过页面的安全政策 注意 CSP 发生在 CSP 初始化而不是评估阶段。也就是说应该在导航到这个域名前设置
      *
      * @param enabled 是否绕过页面的安全政策
      */
@@ -856,7 +808,7 @@ public class Page extends Emitter<PageEvent> {
      * 获取指定url的cookies
      *
      * @param urls 指定的url集合
-     * @return Cookie
+     * @return the list
      */
     public List<Cookie> cookies(List<String> urls) {
         Map<String, Object> params = new HashMap<>();
@@ -886,7 +838,7 @@ public class Page extends Emitter<PageEvent> {
     /**
      * 返回当前页面的cookies
      *
-     * @return cookies
+     * @return the list
      */
     public List<Cookie> cookies() {
         return this.cookies(null);
@@ -920,8 +872,8 @@ public class Page extends Emitter<PageEvent> {
 
     /**
      * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, GoToOptions,boolean)}
-     * ${@link Page#goBack(WaitForOptions)} ${@link Page#goForward(WaitForOptions)} ${@link Page#reload(WaitForOptions)}
-     * ${@link Page#waitForNavigation()}
+     * {@link Page#goBack(WaitForOptions)} ${@link Page#goForward(WaitForOptions)} ${@link Page#reload(WaitForOptions)}
+     * {@link Page#waitForNavigation()}
      *
      * @param timeout 超时时间
      */
@@ -994,56 +946,6 @@ public class Page extends Emitter<PageEvent> {
     public void setOfflineMode(boolean enabled) {
         this.frameManager.networkManager().setOfflineMode(enabled);
     }
-
-//    private String screenshotTask(String format, ScreenshotOptions options) throws IOException{
-//        Map<String, Object> params = new HashMap<>();
-//        params.put("targetId", this.target.getTargetId());
-//        this.client.send("Target.activateTarget", params);
-//        ScreenshotClip clip = null;
-//        if (options.getClip() != null) {
-//            clip = processClip(options.getClip());
-//        }
-//        if (options.getFullPage()) {
-//            JsonNode metrics = this.client.send("Page.getLayoutMetrics");
-//            double width = Math.ceil(metrics.get("contentSize").get("width").asDouble());
-//            double height = Math.ceil(metrics.get("contentSize").get("height").asDouble());
-//            clip = new ScreenshotClip(0, 0, width, height, 1);
-//            ScreenOrientation screenOrientation;
-//            if (this.viewport.getIsLandscape()) {
-//                screenOrientation = new ScreenOrientation(90, "landscapePrimary");
-//            } else {
-//                screenOrientation = new ScreenOrientation(0, "portraitPrimary");
-//            }
-//            params.clear();
-//            params.put("mobile", this.viewport.getIsMobile());
-//            params.put("width", width);
-//            params.put("height", height);
-//            params.put("deviceScaleFactor", this.viewport.getDeviceScaleFactor());
-//            params.put("screenOrientation", screenOrientation);
-//            this.client.send("Emulation.setDeviceMetricsOverride", params);
-//        }
-//        boolean shouldSetDefaultBackground = options.getOmitBackground() && "png".equals(format);
-//        if (shouldSetDefaultBackground) {
-//            setTransparentBackgroundColor();
-//        }
-//        params.clear();
-//        params.put("format", format);
-//        params.put("quality", options.getQuality());
-//        params.put("clip", clip);
-//        JsonNode result = this.client.send("Page.captureScreenshot", params);
-//        if (shouldSetDefaultBackground) {
-//            this.client.send("Emulation.setDefaultBackgroundColorOverride");
-//        }
-//        if (options.getFullPage() && this.viewport != null)
-//            this.setViewport(this.viewport);
-//        String data = result.get("data").asText();
-////            byte[] buffer = decoder.decodeBuffer(data);
-//        byte[] buffer = Base64.getDecoder().decode(data);
-//        if (StringKit.isNotEmpty(options.getPath())) {
-//            Files.write(Paths.get(options.getPath()), buffer, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-//        }
-//        return data;
-//    }
 
     /**
      * 启用请求拦截器，会激活 request.abort, request.continue 和 request.respond 方法。这提供了修改页面发出的网络请求的功能。
@@ -1195,10 +1097,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 如果是一个浏览器多个页面的情况，每个页面都可以有单独的viewport
-     * <p>
-     * 注意 在大部分情况下，改变 viewport 会重新加载页面以设置 isMobile 或者 hasTouch
-     * </p>
+     * 如果是一个浏览器多个页面的情况，每个页面都可以有单独的viewport 注意 在大部分情况下，改变 viewport 会重新加载页面以设置 isMobile 或者 hasTouch
      *
      * @param viewport 设置的视图
      */
@@ -1250,7 +1149,6 @@ public class Page extends Emitter<PageEvent> {
     private void handleException(ExceptionThrownEvent event) {
         String message = Builder.getExceptionMessage(event.getExceptionDetails());
         RuntimeException err = new RuntimeException(message);
-//        err.setStackTrace(null); // Don't report clientside error with a node stack attached
         this.emit(PageEvent.PAGEERROR, err);
     }
 
@@ -1264,14 +1162,11 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * <p>
-     * 导航到指定的url,可以配置是否阻塞，可以配合下面这个方法使用，但是不限于这个方法
-     * </p>
-     * {@link Page#waitForResponse(String)} 因为如果不阻塞的话，页面在加载完成时，waitForResponse等waitFor方法会接受不到结果而抛出超时异常
+     * 导航到指定的url,可以配置是否阻塞，可以配合下面这个方法使用，但是不限于这个方法 {@link Page#waitForResponse(String)}
+     * 因为如果不阻塞的话，页面在加载完成时，waitForResponse等waitFor方法会接受不到结果而抛出超时异常
      * 
      * @param url     导航的地址
      * @param isBlock true代表阻塞
-     * @throws InterruptedException 打断异常
      * @return 不阻塞的话返回null
      */
     public Response goTo(String url, boolean isBlock) {
@@ -1279,104 +1174,40 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * <p>
-     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名
+     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名 以下情况此方法将报错：发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效/超时/主页面不能加载
      *
-     * <p>
-     * 以下情况此方法将报错：
-     * <p>
-     * 发生了 SSL 错误 (比如有些自签名的https证书).
-     * <p>
-     * 目标地址无效
-     * <p>
-     * 超时
-     * <p>
-     * 主页面不能加载
+     * @param url     url
+     * @param options timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
+     *                waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
+     *                domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
+     *                只有2个网络连接时触发（至少500毫秒后）
      *
-     * @param url      url
-     * @param options:
-     *                 <p>
-     *                 timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                 <p>
-     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
-     *                 <p>
-     *                 load - 页面的load事件触发时
-     *                 <p>
-     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时
-     *                 <p>
-     *                 networkidle0 - 不再有网络连接时触发（至少500毫秒后）
-     *                 <p>
-     *                 networkidle2 - 只有2个网络连接时触发（至少500毫秒后）
-     *                 <p>
-     *                 referer Referer header value. If provided it will take preference over the referer header value
-     *                 set by page.setExtraHTTPHeaders().
-     * @return Response
-     * @throws InterruptedException 异常
+     * @return {@link Response}
      */
     public Response goTo(String url, GoToOptions options) {
         return this.goTo(url, options, true);
     }
 
     /**
-     * <p>
-     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名
+     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效/超时/主页面不能加载
      *
-     * <p>
-     * 以下情况此方法将报错：
-     * <p>
-     * 发生了 SSL 错误 (比如有些自签名的https证书).
-     * <p>
-     * 目标地址无效
-     * <p>
-     * 超时
-     * <p>
-     * 主页面不能加载
-     *
-     * @param url      url
-     * @param options:
-     *                 <p>
-     *                 timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                 <p>
-     *                 waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
-     *                 <p>
-     *                 load - 页面的load事件触发时
-     *                 <p>
-     *                 domcontentloaded - 页面的 DOMContentLoaded 事件触发时
-     *                 <p>
-     *                 networkidle0 - 不再有网络连接时触发（至少500毫秒后）
-     *                 <p>
-     *                 networkidle2 - 只有2个网络连接时触发（至少500毫秒后）
-     *                 <p>
-     *                 referer Referer header value. If provided it will take preference over the referer header value
-     *                 set by page.setExtraHTTPHeaders().
-     * @param isBlock  是否阻塞，不阻塞代表只是发导航命令出去，并不等待导航结果，同时也不会抛异常
-     * @throws InterruptedException 打断异常
-     * @return Response
+     * @param url     url
+     * @param options timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
+     *                waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
+     *                domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
+     *                只有2个网络连接时触发（至少500毫秒后）
+     * @param isBlock 是否阻塞，不阻塞代表只是发导航命令出去，并不等待导航结果，同时也不会抛异常
+     * @return {@link Response}
      */
     public Response goTo(String url, GoToOptions options, boolean isBlock) {
         return this.frameManager.getMainFrame().goTo(url, options, isBlock);
     }
 
     /**
-     * 导航到某个网站
-     * <p>
-     * 以下情况此方法将报错：
-     * </p>
-     * <p>
-     * 发生了 SSL 错误 (比如有些自签名的https证书).
-     * </p>
-     * <p>
-     * 目标地址无效
-     * </p>
-     * <p>
-     * 超时
-     * </p>
-     * <p>
-     * 主页面不能加载
-     * </p>
+     * 导航到某个网站 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效/超时/主页面不能加载
      *
      * @param url 导航到的地址. 地址应该带有http协议, 比如 https://.
-     * @return 响应
+     * @return {@link Response}
      */
     public Response goTo(String url) {
         return this.goTo(url, true);
@@ -1413,13 +1244,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 根据指定的参数和 user agent 生成模拟器。此方法是和下面两个方法效果相同
-     * <p>
-     * ${@link Page#setViewport(Viewport)}
-     * </p>
-     * <p>
-     * ${@link Page#setUserAgent(String)}
-     * </p>
+     * 根据指定的参数和 user agent 生成模拟器。此方法是和下面两个方法效果相同 {@link Page#setViewport(Viewport)} {@link Page#setUserAgent(String)}
      *
      * @param options Device 模拟器枚举类
      */
@@ -1509,13 +1334,8 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 在新dom产生之际执行给定的javascript
-     * <p>
-     * 当你的js代码为函数时，type={@link PageEvaluateType#FUNCTION}
-     * </p>
-     * <p>
+     * 在新dom产生之际执行给定的javascript 当你的js代码为函数时，type={@link PageEvaluateType#FUNCTION}
      * 当你的js代码为字符串时，type={@link PageEvaluateType#STRING}
-     * </p>
      * 
      * @param pageFunction js代码
      * @param type         一般为PageEvaluateType#FUNCTION
@@ -1551,11 +1371,8 @@ public class Page extends Emitter<PageEvent> {
      *
      * @param name              挂载到window对象的方法名
      * @param puppeteerFunction 调用name方法时实际执行的方法
-     * @throws ExecutionException   异常
-     * @throws InterruptedException 异常
      */
-    public void exposeFunction(String name, Function<List<?>, Object> puppeteerFunction)
-            throws InterruptedException, ExecutionException {
+    public void exposeFunction(String name, Function<List<?>, Object> puppeteerFunction) {
         if (this.pageBindings.containsKey(name)) {
             throw new IllegalArgumentException(MessageFormat
                     .format("Failed to add page binding with name {0}: window['{1}'] already exists!", name, name));
@@ -1614,24 +1431,10 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 导航到页面历史的前一个页面
-     * <p>
-     * options 的 referer参数不用填，填了也用不上
-     * </p>
-     * <p>
-     * options 导航配置，可选值：
-     * <p>
-     * otimeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     * <p>
-     * owaitUntil 满足什么条件认为页面跳转完成，默认是load事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
-     * <p>
-     * oload - 页面的load事件触发时
-     * <p>
-     * odomcontentloaded - 页面的DOMContentLoaded事件触发时
-     * <p>
-     * onetworkidle0 - 不再有网络连接时触发（至少500毫秒后）
-     * <p>
-     * onetworkidle2 - 只有2个网络连接时触发（至少500毫秒后）
+     * 导航到页面历史的前一个页面 options 的 referer参数不用填，填了也用不上 options 导航配置，可选值： otimeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0
+     * 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值 owaitUntil
+     * 满足什么条件认为页面跳转完成，默认是load事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： oload - 页面的load事件触发时 odomcontentloaded -
+     * 页面的DOMContentLoaded事件触发时 onetworkidle0 - 不再有网络连接时触发（至少500毫秒后） onetworkidle2 - 只有2个网络连接时触发（至少500毫秒后）
      *
      * @param options 见上面注释
      * @return 响应
@@ -1645,11 +1448,8 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 导航到页面历史的后一个页面。
-     * <p>
-     * options 的 referer参数不用填，填了也用不上
-     * </p>
-     *
+     * 导航到页面历史的后一个页面。 options 的 referer参数不用填，填了也用不上
+     * 
      * @param options 可以看{@link Page#goTo(String, GoToOptions,boolean)}方法介绍
      * @return Response 响应
      */
@@ -1704,21 +1504,18 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
-     * <p>
-     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
-     * </p>
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') 注意
+     * 目前仅支持无头模式的 Chrome
      */
     public byte[] pdf(PDFOptions options) {
         return this.pdf(options, LengthUnit.IN);
     }
 
     /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
-     * <p>
-     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
-     * </p>
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') 注意
+     * 目前仅支持无头模式的 Chrome
      *
+     * 
      * @param path pdf存放的路径
      */
     public void pdf(String path) {
@@ -1726,10 +1523,8 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen')
-     * <p>
-     * <strong>注意 目前仅支持无头模式的 Chrome</strong>
-     * </p>
+     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') 注意
+     * 目前仅支持无头模式的 Chrome
      *
      * @param options 选项
      * @return pdf文件的字节数组数据
@@ -1907,9 +1702,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
-     * <p>
-     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @return 响应
      */
@@ -1918,9 +1711,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
-     * <p>
-     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @param options PageNavigateOptions
      * @return 响应
@@ -1930,9 +1721,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用
-     * <p>
-     * 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
+     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
      *
      * @param options PageNavigateOptions
      * @param reload  reload页面，这个参数配合{@link Page#setViewport(Viewport)}中的reload方法使用
@@ -2016,20 +1805,10 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 此方法根据第一个参数的不同有不同的结果：
-     *
-     * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或
-     * page.waitForXPath的简写
-     * </p>
-     * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
-     * </p>
-     * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve
-     * </p>
-     * <p>
-     * 否则会报错
+     * 此方法根据第一个参数的不同有不同的结果： 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是
+     * page.waitForSelector 或 page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function,
+     * 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写 如果 selectorOrFunctionOrTimeout 是 number,
+     * 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
      *
      * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
      * @return 代表页面元素的一个实例
@@ -2040,20 +1819,10 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 此方法根据第一个参数的不同有不同的结果：
-     *
-     * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是 page.waitForSelector 或
-     * page.waitForXPath的简写
-     * </p>
-     * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 function, 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写
-     * </p>
-     * <p>
-     * 如果 selectorOrFunctionOrTimeout 是 number, 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve
-     * </p>
-     * <p>
-     * 否则会报错
+     * 此方法根据第一个参数的不同有不同的结果： 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是
+     * page.waitForSelector 或 page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function,
+     * 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写 如果 selectorOrFunctionOrTimeout 是 number,
+     * 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
      *
      * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
      * @param options                     可选的等待参数
@@ -2178,13 +1947,8 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空
-     * <p>
-     * 当url不为空时， type = PageEvaluateType.STRING
-     * </p>
-     * <p>
-     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
-     * </p>
+     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
+     * PageEvaluateType.FUNCTION
      *
      * @param url       等待的请求
      * @param predicate 方法
@@ -2241,38 +2005,26 @@ public class Page extends Emitter<PageEvent> {
      *
      * @param url 等待的请求
      * @return 要等到的请求
-     * @throws InterruptedException 异常
      */
-    public Response waitForResponse(String url) throws InterruptedException {
+    public Response waitForResponse(String url) {
         return this.waitForResponse(url, null);
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空,默认等待的时间是30s
-     * <p>
-     * 当url不为空时， type = PageEvaluateType.STRING
-     * </p>
-     * <p>
-     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
-     * </p>
+     * 等到某个请求，url或者predicate只有有一个不为空,默认等待的时间是30s 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
+     * PageEvaluateType.FUNCTION
      *
      * @param url       等待的请求
      * @param predicate 方法
      * @return 要等到的请求
-     * @throws InterruptedException 异常
      */
-    public Response waitForResponse(String url, Predicate<Response> predicate) throws InterruptedException {
+    public Response waitForResponse(String url, Predicate<Response> predicate) {
         return this.waitForResponse(url, predicate, this.timeoutSettings.timeout());
     }
 
     /**
-     * 等到某个请求，url或者predicate只有有一个不为空
-     * <p>
-     * 当url不为空时， type = PageEvaluateType.STRING
-     * </p>
-     * <p>
-     * 当predicate不为空时， type = PageEvaluateType.FUNCTION
-     * </p>
+     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
+     * PageEvaluateType.FUNCTION
      *
      * @param url       等待的请求
      * @param predicate 方法
@@ -2317,7 +2069,7 @@ public class Page extends Emitter<PageEvent> {
      *
      * @param selector 要等待的元素选择器
      * @throws InterruptedException 打断异常
-     * @return ElementHandle
+     * @return {@link ElementHandle}
      */
     public ElementHandle waitForSelector(String selector) throws InterruptedException {
         return this.waitForSelector(selector, new WaitForSelectorOptions());
@@ -2329,7 +2081,7 @@ public class Page extends Emitter<PageEvent> {
      * @param selector 要等待的元素选择器
      * @param options  可选参数
      * @throws InterruptedException 打断异常
-     * @return ElementHandle
+     * @return {@link ElementHandle}
      */
     public ElementHandle waitForSelector(String selector, WaitForSelectorOptions options) throws InterruptedException {
         return this.mainFrame().waitForSelector(selector, options);
@@ -2340,7 +2092,7 @@ public class Page extends Emitter<PageEvent> {
      *
      * @param xpath 要等待的元素的xpath
      * @throws InterruptedException 打断异常
-     * @return JSHandle
+     * @return {@link JSHandle}
      */
     public JSHandle waitForXPath(String xpath) throws InterruptedException {
         return this.mainFrame().waitForXPath(xpath, new WaitForSelectorOptions());
@@ -2401,10 +2153,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件
-     * <p>
-     * 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
-     * </p>
+     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
      *
      * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
      * @param text     要输入的内容
@@ -2415,10 +2164,7 @@ public class Page extends Emitter<PageEvent> {
     }
 
     /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件
-     * <p>
-     * 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
-     * </p>
+     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
      *
      * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
      * @param text     要输入的内容
