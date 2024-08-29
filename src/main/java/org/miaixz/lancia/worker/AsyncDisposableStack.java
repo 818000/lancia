@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.CompletableFuture;
 
-import org.miaixz.lancia.options.DisposableStackConsumer;
-
 public class AsyncDisposableStack implements AutoCloseable {
 
     private boolean disposed = false;

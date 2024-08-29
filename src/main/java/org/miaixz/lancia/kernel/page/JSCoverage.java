@@ -41,6 +41,7 @@ import org.miaixz.lancia.nimble.css.Range;
 import org.miaixz.lancia.nimble.debugger.ScriptParsedEvent;
 import org.miaixz.lancia.nimble.profiler.*;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -74,11 +75,10 @@ public class JSCoverage {
         this.enabled = true;
         this.scriptURLs.clear();
         this.scriptSources.clear();
-        this.disposables.add(Builder.fromEmitterEvent(this.client, CDPSession.CDPSessionEvent.Debugger_scriptparsed)
+        this.disposables.add(Builder.fromEmitterEvent(this.client, CDPSessionEvent.Debugger_scriptparsed)
                 .subscribe((event) -> this.onScriptParsed((ScriptParsedEvent) event)));
-        this.disposables
-                .add(Builder.fromEmitterEvent(this.client, CDPSession.CDPSessionEvent.Runtime_executionContextsCleared)
-                        .subscribe((ignore) -> this.onExecutionContextsCleared()));
+        this.disposables.add(Builder.fromEmitterEvent(this.client, CDPSessionEvent.Runtime_executionContextsCleared)
+                .subscribe((ignore) -> this.onExecutionContextsCleared()));
         this.client.send("Profiler.enable", null, null, false);
         Map<String, Object> params = new HashMap<>();
         params.put("callCount", false);

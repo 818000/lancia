@@ -34,7 +34,10 @@ import java.util.concurrent.TimeUnit;
 import org.miaixz.bus.core.lang.exception.InternalException;
 import org.miaixz.bus.core.xyz.CollKit;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.options.PuppeteerLifeCycle;
+import org.miaixz.lancia.worker.enums.FrameEvent;
+import org.miaixz.lancia.worker.enums.FrameManagerType;
+import org.miaixz.lancia.worker.enums.NetworkManagerType;
+import org.miaixz.lancia.worker.enums.PuppeteerLifeCycle;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.SingleSubject;
@@ -78,24 +81,23 @@ public class LifecycleWatcher {
                 throw new IllegalArgumentException("Unknown value for options.waitUntil: " + value);
             }
         });
-        this.disposables
-                .add(Builder.fromEmitterEvent(frame.getFrameManager(), FrameManager.FrameManagerEvent.LifecycleEvent)
-                        .subscribe((ignore) -> this.checkLifecycleComplete()));
-        this.disposables.add(Builder.fromEmitterEvent(frame, Frame.FrameEvent.FrameNavigatedWithinDocument)
+        this.disposables.add(Builder.fromEmitterEvent(frame.getFrameManager(), FrameManagerType.LifecycleEvent)
+                .subscribe((ignore) -> this.checkLifecycleComplete()));
+        this.disposables.add(Builder.fromEmitterEvent(frame, FrameEvent.FrameNavigatedWithinDocument)
                 .subscribe((ignore) -> this.navigatedWithinDocument()));
-        this.disposables.add(Builder.fromEmitterEvent(frame, Frame.FrameEvent.FrameNavigated)
+        this.disposables.add(Builder.fromEmitterEvent(frame, FrameEvent.FrameNavigated)
                 .subscribe((type) -> this.navigated((String) type)));
-        this.disposables.add(Builder.fromEmitterEvent(frame, Frame.FrameEvent.FrameSwapped)
+        this.disposables.add(
+                Builder.fromEmitterEvent(frame, FrameEvent.FrameSwapped).subscribe((ignore) -> this.frameSwapped()));
+        this.disposables.add(Builder.fromEmitterEvent(frame, FrameEvent.FrameSwappedByActivation)
                 .subscribe((ignore) -> this.frameSwapped()));
-        this.disposables.add(Builder.fromEmitterEvent(frame, Frame.FrameEvent.FrameSwappedByActivation)
-                .subscribe((ignore) -> this.frameSwapped()));
-        this.disposables.add(Builder.fromEmitterEvent(frame, Frame.FrameEvent.FrameDetached)
+        this.disposables.add(Builder.fromEmitterEvent(frame, FrameEvent.FrameDetached)
                 .subscribe((frameParam) -> this.frameDetached((Frame) frameParam)));
-        this.disposables.add(Builder.fromEmitterEvent(networkManager, NetworkManager.NetworkManagerEvent.Request)
+        this.disposables.add(Builder.fromEmitterEvent(networkManager, NetworkManagerType.Request)
                 .subscribe((request) -> this.onRequest((Request) request)));
-        this.disposables.add(Builder.fromEmitterEvent(networkManager, NetworkManager.NetworkManagerEvent.RequestFailed)
+        this.disposables.add(Builder.fromEmitterEvent(networkManager, NetworkManagerType.RequestFailed)
                 .subscribe((request) -> this.onRequestFailed((Request) request)));
-        this.disposables.add(Builder.fromEmitterEvent(networkManager, NetworkManager.NetworkManagerEvent.Response)
+        this.disposables.add(Builder.fromEmitterEvent(networkManager, NetworkManagerType.Response)
                 .subscribe((request) -> this.onResponse((Response) request)));
         this.checkLifecycleComplete();
     }
@@ -237,10 +239,6 @@ public class LifecycleWatcher {
         // TODO 暂时关闭
         // Optional.ofNullable(this.navigationResponseReceived).ifPresent(Single::blockingSubscribe);
         return this.navigationRequest != null ? this.navigationRequest.response() : null;
-    }
-
-    public enum NavigationType {
-        Navigation, BackForwardCacheRestore
     }
 
 }

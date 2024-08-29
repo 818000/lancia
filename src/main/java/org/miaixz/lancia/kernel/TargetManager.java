@@ -33,37 +33,15 @@ import org.miaixz.lancia.Emitter;
 import org.miaixz.lancia.kernel.page.Target;
 import org.miaixz.lancia.kernel.page.TargetInfo;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.TargetManagerType;
 
-public abstract class TargetManager extends Emitter<TargetManager.TargetManagerEvent> {
+public abstract class TargetManager extends Emitter<TargetManagerType> {
 
     public abstract Map<String, Target> getAvailableTargets();
 
     public abstract void initialize();
 
     public abstract void dispose();
-
-    public enum TargetManagerEvent {
-
-        TargetDiscovered("targetDiscovered"), TargetAvailable("targetAvailable"), TargetGone("targetGone"),
-        /**
-         * Emitted after a target has been initialized and whenever its URL changes.
-         */
-        TargetChanged("targetChanged");
-
-        private String eventName;
-
-        TargetManagerEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
-
-        public void setEventName(String eventName) {
-            this.eventName = eventName;
-        }
-    }
 
     @FunctionalInterface
     public interface TargetFactory {

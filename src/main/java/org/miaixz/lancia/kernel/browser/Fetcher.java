@@ -47,10 +47,9 @@ import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.lang.exception.InternalException;
 import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.options.FetcherOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.miaixz.lancia.option.FetcherOptions;
 
 import com.sun.jna.Platform;
 
@@ -129,7 +128,6 @@ public class Fetcher {
             });
         }
     };
-    private static final Logger LOGGER = LoggerFactory.getLogger(Fetcher.class);
 
     /**
      * 平台 win linux mac
@@ -299,7 +297,7 @@ public class Fetcher {
                 File executableFile = new File(revisionInfo.getExecutablePath());
                 executableFile.setExecutable(true, false);
             } catch (Exception e) {
-                LOGGER.error("Set executablePath:{} file executation permission fail.",
+                Logger.error("Set executablePath:{} file executation permission fail.",
                         revisionInfo.getExecutablePath());
             }
         }
@@ -414,7 +412,7 @@ public class Fetcher {
                         new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
                 String stdoutLine;
                 while ((stdoutLine = stdoutReader.readLine()) != null) {
-                    LOGGER.info(stdoutLine);
+                    Logger.info(stdoutLine);
                 }
                 // 等待进程完成
                 boolean exitCode = process.waitFor(10L, TimeUnit.MINUTES);
@@ -520,7 +518,7 @@ public class Fetcher {
         }
         String url = getDownloadURL(this.product, this.platform, this.downloadHost, revision);
         boolean local = this.existsAsync(folderPath);
-        LOGGER.info("revision:{}，executablePath:{}，folderPath:{}，local:{}，url:{}，product:{}", revision, executablePath,
+        Logger.info("revision:{}，executablePath:{}，folderPath:{}，local:{}，url:{}，product:{}", revision, executablePath,
                 folderPath, local, url, this.product);
         return new Revision(revision, executablePath, folderPath, local, url, this.product);
     }

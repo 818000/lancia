@@ -38,9 +38,10 @@ import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Page;
 import org.miaixz.lancia.kernel.TargetManager;
 import org.miaixz.lancia.kernel.browser.Context;
-import org.miaixz.lancia.options.TargetType;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.factory.SessionFactory;
+import org.miaixz.lancia.worker.enums.InitializationStatus;
+import org.miaixz.lancia.worker.enums.TargetType;
 
 import io.reactivex.rxjava3.subjects.SingleSubject;
 
@@ -213,20 +214,6 @@ public class Target {
     public void waitForTargetClose() {
         // 使用blockingFirst来阻塞直到接收到关闭信号或超时
         this.isClosedSubject.timeout(Builder.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS).blockingGet();
-    }
-
-    public enum InitializationStatus {
-        SUCCESS("success"), ABORTED("aborted");
-
-        private final String status;
-
-        InitializationStatus(String status) {
-            this.status = status;
-        }
-
-        public String getStatus() {
-            return this.status;
-        }
     }
 
 }

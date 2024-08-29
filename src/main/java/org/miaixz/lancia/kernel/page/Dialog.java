@@ -35,14 +35,11 @@ import java.util.concurrent.Future;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.nimble.logging.DialogType;
 import org.miaixz.lancia.socket.CDPSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Dialog {
-
-    private static final Logger log = LoggerFactory.getLogger(Dialog.class);
 
     private CDPSession client;
 
@@ -105,7 +102,7 @@ public class Dialog {
                 params.put("promptText", promptText);
                 this.client.send("Page.handleJavaScriptDialog", params);
             } catch (Exception e) {
-                log.error("Dialog accept error ", e);
+                Logger.error("Dialog accept error ", e);
                 return false;
             }
             return true;
@@ -126,7 +123,7 @@ public class Dialog {
                 params.put("accept", false);
                 this.client.send("Page.handleJavaScriptDialog", params);
             } catch (Exception e) {
-                log.error("Dialog dismiss error ", e);
+                Logger.error("Dialog dismiss error ", e);
                 return false;
             }
             return true;

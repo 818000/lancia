@@ -37,10 +37,10 @@ import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Charset;
 import org.miaixz.bus.core.xyz.CollKit;
 import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.ErrorCode;
 import org.miaixz.lancia.nimble.fetch.HeaderEntry;
 import org.miaixz.lancia.nimble.network.RequestWillBeSentEvent;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.ErrorCode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

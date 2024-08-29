@@ -44,8 +44,8 @@ import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.xyz.FileKit;
 import org.miaixz.bus.core.xyz.IoKit;
 import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.health.Platform;
 import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.kernel.browser.Runner;
 import org.miaixz.lancia.kernel.page.QueryHandler;
 import org.miaixz.lancia.kernel.page.QuerySelector;
 import org.miaixz.lancia.nimble.PageEvaluateType;
@@ -61,7 +61,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.jna.Platform;
+import com.sun.jna.Native;
+import com.sun.jna.win32.StdCallLibrary;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.internal.disposables.CancellableDisposable;
@@ -71,7 +72,7 @@ import io.reactivex.rxjava3.internal.disposables.CancellableDisposable;
  */
 public class Builder {
 
-    public static final Map<String, QueryHandler> customQueryHandlers = new HashMap<>();
+    public static final Map<String, QueryHandler> CUSTOM_QUERY_HANDLERS = new HashMap<>();
     /**
      * 指定版本
      */
@@ -464,7 +465,7 @@ public class Builder {
 
     /**
      * 获取进程id
-     * 
+     *
      * @param process 进程
      * @return 进程id
      */
@@ -475,7 +476,7 @@ public class Builder {
             try {
                 field = process.getClass().getDeclaredField("handle");
                 field.setAccessible(true);
-                pid = Runner.Kernel32.INSTANCE.GetProcessId((Long) field.get(process));
+                pid = Kernel32.INSTANCE.GetProcessId((Long) field.get(process));
             } catch (Exception e) {
                 Logger.error("Failed to get processId on Windows platform.", e);
             }
@@ -533,22 +534,22 @@ public class Builder {
     }
 
     public static void registerCustomQueryHandler(String name, QueryHandler handler) {
-        if (customQueryHandlers.containsKey(name))
+        if (CUSTOM_QUERY_HANDLERS.containsKey(name))
             throw new RuntimeException("A custom query handler named " + name + " already exists");
         Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
         Matcher isValidName = pattern.matcher(name);
         if (!isValidName.matches())
             throw new IllegalArgumentException("Custom query handler names may only contain [a-zA-Z]");
 
-        customQueryHandlers.put(name, handler);
+        CUSTOM_QUERY_HANDLERS.put(name, handler);
     }
 
     public static final void unregisterCustomQueryHandler(String name) {
-        customQueryHandlers.remove(name);
+        CUSTOM_QUERY_HANDLERS.remove(name);
     }
 
     public static Map<String, QueryHandler> customQueryHandlers() {
-        return customQueryHandlers;
+        return CUSTOM_QUERY_HANDLERS;
     }
 
     public static QuerySelector getQueryHandlerAndSelector(String selector, String defaultQueryHandler) {
@@ -576,7 +577,13 @@ public class Builder {
     }
 
     public void clearQueryHandlers() {
-        customQueryHandlers.clear();
+        CUSTOM_QUERY_HANDLERS.clear();
+    }
+
+    public interface Kernel32 extends StdCallLibrary {
+        Kernel32 INSTANCE = Native.load("kernel32", Kernel32.class);
+
+        long GetProcessId(Long hProcess);
     }
 
 }

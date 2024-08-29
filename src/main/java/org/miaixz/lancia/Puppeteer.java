@@ -32,14 +32,14 @@ import static org.miaixz.lancia.Builder.PRODUCT_ENV;
 import java.io.IOException;
 import java.util.List;
 
+import org.miaixz.bus.core.lang.Keys;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.kernel.Variables;
 import org.miaixz.lancia.kernel.browser.Fetcher;
 import org.miaixz.lancia.launch.ChromeLauncher;
-import org.miaixz.lancia.options.ConnectOptions;
-import org.miaixz.lancia.options.FetcherOptions;
-import org.miaixz.lancia.options.LaunchOptions;
-import org.miaixz.lancia.options.LaunchOptionsBuilder;
+import org.miaixz.lancia.option.ConnectOptions;
+import org.miaixz.lancia.option.FetcherOptions;
+import org.miaixz.lancia.option.LaunchOptions;
 import org.miaixz.lancia.socket.ConnectionTransport;
 
 /**
@@ -48,13 +48,13 @@ import org.miaixz.lancia.socket.ConnectionTransport;
  */
 public class Puppeteer {
 
-    private String productName = null;
+    private String productName;
 
     private Launcher launcher;
 
-    private Variables env = null;
+    private Variables env;
 
-    private String projectRoot = System.getProperty("user.dir");
+    private String projectRoot = Keys.get(Keys.USER_DIR);
 
     private String preferredRevision = Builder.VERSION;
 
@@ -93,7 +93,7 @@ public class Puppeteer {
     }
 
     private static Browser rawLaunch(boolean headless) {
-        return rawLaunch(new LaunchOptionsBuilder().withHeadless(headless).build(), new Puppeteer());
+        return rawLaunch(LaunchOptions.builder().headless(headless).build(), new Puppeteer());
     }
 
     /**

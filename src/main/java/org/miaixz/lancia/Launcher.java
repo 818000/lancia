@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.util.List;
 
 import org.miaixz.lancia.kernel.Variables;
-import org.miaixz.lancia.options.ConnectOptions;
-import org.miaixz.lancia.options.LaunchOptions;
+import org.miaixz.lancia.option.ConnectOptions;
+import org.miaixz.lancia.option.LaunchOptions;
 
 public interface Launcher {
 
@@ -47,4 +47,5 @@ public interface Launcher {
     Browser connect(ConnectOptions options);
 
     String executablePath() throws IOException;
+
 }

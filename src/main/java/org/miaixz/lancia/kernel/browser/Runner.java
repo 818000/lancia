@@ -46,24 +46,19 @@ import org.miaixz.bus.core.lang.exception.TimeoutException;
 import org.miaixz.bus.core.xyz.FileKit;
 import org.miaixz.bus.core.xyz.IoKit;
 import org.miaixz.bus.core.xyz.StringKit;
+import org.miaixz.bus.health.Platform;
+import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
-import org.miaixz.lancia.options.LaunchOptions;
+import org.miaixz.lancia.option.LaunchOptions;
 import org.miaixz.lancia.socket.Connection;
 import org.miaixz.lancia.socket.WebSocketTransport;
 import org.miaixz.lancia.socket.factory.WebSocketTransportFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.win32.StdCallLibrary;
+import org.miaixz.lancia.worker.enums.RunnerType;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
-public class Runner extends Emitter<Runner.BroserEvent> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
+public class Runner extends Emitter<RunnerType> {
 
     private static final Map<Process, String> pidMap = new HashMap<>();
 
@@ -93,16 +88,16 @@ public class Runner extends Emitter<Runner.BroserEvent> {
      * @throws IOException io异常
      */
     public void start(LaunchOptions options) throws IOException, InterruptedException {
-        if (process != null) {
+        if (this.process != null) {
             throw new RuntimeException("This process has previously been started.");
         }
         List<String> arguments = new ArrayList<>();
         arguments.add(executablePath);
         arguments.addAll(processArguments);
         ProcessBuilder processBuilder = new ProcessBuilder().command(arguments).redirectErrorStream(true);
-        process = processBuilder.start();
+        this.process = processBuilder.start();
         this.closed = false;
-        pidMap.putIfAbsent(process, Builder.getProcessId(process));
+        pidMap.putIfAbsent(this.process, Builder.getProcessId(this.process));
         registerHook();
         addProcessListener(options);
     }
@@ -183,17 +178,17 @@ public class Runner extends Emitter<Runner.BroserEvent> {
      * @param options 启动参数
      */
     private void addProcessListener(LaunchOptions options) {
-        this.disposables.add(Builder.fromEmitterEvent(this, BroserEvent.EXIT).subscribe((ignore -> this.kill())));
-        if (options.getHandleSIGINT()) {
-            this.disposables.add(Builder.fromEmitterEvent(this, BroserEvent.SIGINT).subscribe((ignore -> this.kill())));
+        this.disposables.add(Builder.fromEmitterEvent(this, RunnerType.EXIT).subscribe((ignore -> this.kill())));
+        if (options.isHandleSIGINT()) {
+            this.disposables.add(Builder.fromEmitterEvent(this, RunnerType.SIGINT).subscribe((ignore -> this.kill())));
         }
-        if (options.getHandleSIGTERM()) {
+        if (options.isHandleSIGTERM()) {
             this.disposables.add(
-                    Builder.fromEmitterEvent(this, BroserEvent.SIGTERM).subscribe((ignore -> this.closeAllBrowser())));
+                    Builder.fromEmitterEvent(this, RunnerType.SIGTERM).subscribe((ignore -> this.closeAllBrowser())));
         }
-        if (options.getHandleSIGHUP()) {
+        if (options.isHandleSIGHUP()) {
             this.disposables.add(
-                    Builder.fromEmitterEvent(this, BroserEvent.SIGHUP).subscribe((ignore -> this.closeAllBrowser())));
+                    Builder.fromEmitterEvent(this, RunnerType.SIGHUP).subscribe((ignore -> this.closeAllBrowser())));
         }
     }
 
@@ -207,7 +202,7 @@ public class Runner extends Emitter<Runner.BroserEvent> {
         try {
             String pid = pidMap.get(this.process);
             if ("-1".equals(pid) || StringKit.isEmpty(pid)) {
-                LOGGER.warn("invalid pid ({}) ,kill chrome process failed", pid);
+                Logger.warn("invalid pid ({}) ,kill chrome process failed", pid);
                 return false;
             }
             Process exec = null;
@@ -221,7 +216,7 @@ public class Runner extends Emitter<Runner.BroserEvent> {
             }
             try {
                 if (exec != null) {
-                    LOGGER.info("kill chrome process by pid,command:  {}", command);
+                    Logger.info("kill chrome process by pid,command:  {}", command);
                     return exec.waitFor(Builder.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 }
             } finally {
@@ -231,7 +226,7 @@ public class Runner extends Emitter<Runner.BroserEvent> {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("kill chrome process error ", e);
+            Logger.error("kill chrome process error ", e);
             return false;
         }
         return false;
@@ -251,7 +246,7 @@ public class Runner extends Emitter<Runner.BroserEvent> {
         if (process.isAlive() && !waitForResult) {
             process.destroyForcibly();
         }
-        LOGGER.trace("The current command ({}) exit result : {}.", command, waitForResult);
+        Logger.trace("The current command ({}) exit result : {}.", command, waitForResult);
     }
 
     /**
@@ -300,7 +295,7 @@ public class Runner extends Emitter<Runner.BroserEvent> {
             String waitForWSEndpoint = waitForWSEndpoint(timeout, dumpio);
             WebSocketTransport transport = WebSocketTransportFactory.create(waitForWSEndpoint);
             this.connection = new Connection(waitForWSEndpoint, transport, slowMo, timeout);
-            LOGGER.trace("Connect to browser by websocket url: {}", waitForWSEndpoint);
+            Logger.trace("Connect to browser by websocket url: {}", waitForWSEndpoint);
         }
         return this.connection;
     }
@@ -351,7 +346,7 @@ public class Runner extends Emitter<Runner.BroserEvent> {
         try {
             this.destroyProcess();
         } catch (InterruptedException e) {
-            LOGGER.error("Destroy chrome process error.", e);
+            Logger.error("Destroy chrome process error.", e);
         }
         this.closed = true;
     }
@@ -366,27 +361,6 @@ public class Runner extends Emitter<Runner.BroserEvent> {
 
     public Connection getConnection() {
         return connection;
-    }
-
-    public enum BroserEvent {
-        /**
-         * 浏览器启动
-         */
-        START("start"),
-        /**
-         * 浏览器关闭
-         */
-        EXIT("exit"), SIGINT("SIGINT"), SIGTERM("SIGTERM"), SIGHUP("SIGHUP");
-
-        private String eventName;
-
-        BroserEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
     }
 
     /**
@@ -413,13 +387,8 @@ public class Runner extends Emitter<Runner.BroserEvent> {
         }
     }
 
-    public interface Kernel32 extends StdCallLibrary {
-        Kernel32 INSTANCE = Native.load("kernel32", Kernel32.class);
-
-        long GetProcessId(Long hProcess);
-    }
-
     static class StreamReader {
+
         private final StringBuilder ws = new StringBuilder();
         private final AtomicBoolean success = new AtomicBoolean(false);
         private final AtomicReference<String> chromeOutput = new AtomicReference<>("");
@@ -463,7 +432,7 @@ public class Runner extends Emitter<Runner.BroserEvent> {
                         chromeOutput.set(chromeOutputBuilder.toString());
                     }
                 } catch (Exception e) {
-                    LOGGER.error(
+                    Logger.error(
                             "Failed to launch the browser process!please see TROUBLESHOOTING: https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md:",
                             e);
                 } finally {
@@ -492,7 +461,6 @@ public class Runner extends Emitter<Runner.BroserEvent> {
             }
             return url;
         }
-
     }
 
     /**

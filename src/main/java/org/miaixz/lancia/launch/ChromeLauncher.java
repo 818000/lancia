@@ -54,9 +54,13 @@ import org.miaixz.lancia.Launcher;
 import org.miaixz.lancia.kernel.browser.Fetcher;
 import org.miaixz.lancia.kernel.browser.Revision;
 import org.miaixz.lancia.kernel.browser.Runner;
-import org.miaixz.lancia.options.*;
+import org.miaixz.lancia.option.BrowserLaunchArgumentOptions;
+import org.miaixz.lancia.option.ConnectOptions;
+import org.miaixz.lancia.option.FetcherOptions;
+import org.miaixz.lancia.option.LaunchOptions;
 import org.miaixz.lancia.socket.Connection;
 import org.miaixz.lancia.socket.WebSocketTransport;
+import org.miaixz.lancia.worker.enums.TargetType;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -103,7 +107,7 @@ public class ChromeLauncher implements Launcher {
         String temporaryUserDataDir = options.getUserDataDir();
         List<String> chromeArguments = new ArrayList<>();
         List<String> ignoreDefaultArgs;
-        if (!options.getIgnoreAllDefaultArgs()) {
+        if (!options.isIgnoreAllDefaultArgs()) {
             chromeArguments.addAll(defaultArgs(options));
         } else if (CollKit.isNotEmpty(ignoreDefaultArgs = options.getIgnoreDefaultArgs())) {
             chromeArguments.addAll(defaultArgs(options));
@@ -123,7 +127,7 @@ public class ChromeLauncher implements Launcher {
             chromeArguments.add("--user-data-dir=" + temporaryUserDataDir);
         }
         if (!isCustomRemoteDebugger) {
-            chromeArguments.add(options.getPipe() ? "--remote-debugging-pipe"
+            chromeArguments.add(options.isPipe() ? "--remote-debugging-pipe"
                     : "--remote-debugging-port=" + options.getDebuggingPort());
         }
 
@@ -140,12 +144,12 @@ public class ChromeLauncher implements Launcher {
         try {
             runner.start(options);
             Connection connection = runner.setUpConnection(usePipe, options.getProtocolTimeout(), options.getSlowMo(),
-                    options.getDumpio());
+                    options.isDumpio());
             Runnable closeCallback = runner::closeBrowser;
-            Browser browser = Browser.create("chrome", connection, new ArrayList<>(), options.getAcceptInsecureCerts(),
+            Browser browser = Browser.create("chrome", connection, new ArrayList<>(), options.isAcceptInsecureCerts(),
                     options.getDefaultViewport(), runner.getProcess(), closeCallback, options.getTargetFilter(), null,
                     true);
-            if (options.getWaitForInitialPage()) {
+            if (options.isWaitForInitialPage()) {
                 browser.waitForTarget(t -> TargetType.PAGE.equals(t.type()), options.getTimeout());
             }
             return browser;
@@ -201,15 +205,15 @@ public class ChromeLauncher implements Launcher {
         if (StringKit.isNotEmpty(options.getUserDataDir())) {
             chromeArguments.add("--user-data-dir=" + options.getUserDataDir());
         }
-        boolean devtools = options.getDevtools();
-        boolean headless = options.getHeadless();
+        boolean devtools = options.isDevtools();
+        boolean headless = options.isHeadless();
         if (devtools) {
             chromeArguments.add("--auto-open-devtools-for-tabs");
             // 如果打开devtools，那么headless强制变为false
             headless = false;
         }
         if (headless) {
-            if (options.getHeadlessShell()) {
+            if (options.isHeadlessShell()) {
                 chromeArguments.add("--headless");
             } else {
                 chromeArguments.add("--headless=new");
@@ -344,7 +348,7 @@ public class ChromeLauncher implements Launcher {
             List<String> browserContextIds;
             Runnable closeFunction = () -> connection.send("Browser.close");
             browserContextIds = Builder.OBJECTMAPPER.readerFor(javaType).readValue(result.get("browserContextIds"));
-            return Browser.create("chrome", connection, browserContextIds, options.getAcceptInsecureCerts(),
+            return Browser.create("chrome", connection, browserContextIds, options.isAcceptInsecureCerts(),
                     options.getDefaultViewport(), null, closeFunction, options.getTargetFilter(),
                     options.getIsPageTarget(), true);
         } catch (IOException | InterruptedException e) {

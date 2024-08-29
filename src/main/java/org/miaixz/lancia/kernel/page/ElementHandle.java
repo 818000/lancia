@@ -45,10 +45,10 @@ import org.miaixz.lancia.nimble.dom.GetBoxModelReturnValue;
 import org.miaixz.lancia.nimble.input.BoxModel;
 import org.miaixz.lancia.nimble.input.ClickablePoint;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.options.ClickOptions;
-import org.miaixz.lancia.options.ClipOverwrite;
-import org.miaixz.lancia.options.ScreenshotOptions;
-import org.miaixz.lancia.options.Viewport;
+import org.miaixz.lancia.option.ClickOptions;
+import org.miaixz.lancia.option.ScreenshotOptions;
+import org.miaixz.lancia.option.data.Clip;
+import org.miaixz.lancia.option.data.Viewport;
 import org.miaixz.lancia.socket.CDPSession;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -179,15 +179,15 @@ public class ElementHandle extends JSHandle {
      */
     public String screenshot(ScreenshotOptions options, boolean scrollIntoViewIfNeeded) throws IOException {
         boolean needsViewportReset = false;
-        ClipOverwrite boundingBox = this.boundingBox();
+        Clip boundingBox = this.boundingBox();
         Assert.isTrue(boundingBox != null, "Node is either not visible or not an HTMLElement");
         Viewport viewport = this.page.viewport();
         if (viewport != null
                 && (boundingBox.getWidth() > viewport.getWidth() || boundingBox.getHeight() > viewport.getHeight())) {
             // Use the original viewport attributes to prevent from reload
             Viewport newViewport = new Viewport(viewport.getWidth(), viewport.getHeight(),
-                    viewport.getDeviceScaleFactor(), viewport.getIsMobile(), viewport.getHasTouch(),
-                    viewport.getIsLandscape());
+                    viewport.getDeviceScaleFactor(), viewport.isMobile(), viewport.isHasTouch(),
+                    viewport.isLandscape());
             newViewport.setWidth(Math.max(viewport.getWidth(), (int) Math.ceil(boundingBox.getWidth())));
             newViewport.setHeight(Math.max(viewport.getHeight(), (int) Math.ceil(boundingBox.getHeight())));
 
@@ -204,7 +204,7 @@ public class ElementHandle extends JSHandle {
         JsonNode response = this.client.send("Page.getLayoutMetrics", null);
         double pageX = response.get("layoutViewport").get("pageX").asDouble();
         double pageY = response.get("layoutViewport").get("pageY").asDouble();
-        ClipOverwrite clip = boundingBox;
+        Clip clip = boundingBox;
         clip.setX(clip.getX() + pageX);
         clip.setY(clip.getY() + pageY);
 
@@ -436,7 +436,7 @@ public class ElementHandle extends JSHandle {
         this.page.keyboard().press(key, delay, text);
     }
 
-    public ClipOverwrite boundingBox() {
+    public Clip boundingBox() {
         GetBoxModelReturnValue result = this.getBoxModel();
         if (result == null)
             return null;
@@ -446,7 +446,7 @@ public class ElementHandle extends JSHandle {
         int width = Math.max(Math.max(Math.max(quad.get(0), quad.get(2)), quad.get(4)), quad.get(6)) - x;
         int height = Math.max(Math.max(Math.max(quad.get(1), quad.get(3)), quad.get(5)), quad.get(7)) - y;
 
-        return new ClipOverwrite(x, y, width, height, 1);
+        return new Clip(x, y, width, height, 1);
     }
 
     public void uploadFile(List<String> filePaths) {

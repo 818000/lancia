@@ -29,7 +29,7 @@ package org.miaixz.lancia.kernel.page;
 
 import java.util.function.BiFunction;
 
-import org.miaixz.lancia.options.ScreenshotOptions;
+import org.miaixz.lancia.option.ScreenshotOptions;
 
 /**
  * 截图专用的类，

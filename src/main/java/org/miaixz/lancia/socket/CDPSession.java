@@ -42,6 +42,7 @@ import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
 import org.miaixz.lancia.kernel.page.Target;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -54,7 +55,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Documentation on DevTools Protocol can be found here: DevTools Protocol Viewer. Getting Started with :
  * <a href="https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md">DevTools Protocol</a>
  */
-public class CDPSession extends Emitter<CDPSession.CDPSessionEvent> {
+public class CDPSession extends Emitter<CDPSessionEvent> {
 
     private final CallbackRegistry callbacks = new CallbackRegistry();
     private final String targetType;
@@ -155,28 +156,32 @@ public class CDPSession extends Emitter<CDPSession.CDPSessionEvent> {
         } else {// 没有id,是事件
             JsonNode paramsNode = receivedNode.get(Builder.MESSAGE_PARAMS_PROPERTY);
             JsonNode methodNode = receivedNode.get(Builder.MESSAGE_METHOD_PROPERTY);
-            try {
-                if (methodNode != null) {// 发射数据，执行事件的监听方法
-                    String method = methodNode.asText();
-                    if (events == null) {
-                        events = Arrays.stream(CDPSessionEvent.values()).map(CDPSessionEvent::getEventName)
-                                .collect(Collectors.toList());
-                    }
-                    boolean match = events.contains(method);
-                    if (!match) {// 不匹配就是没有监听该事件
-                        return;
-                    }
-//                    CDPSessionEvent cdpSessionEvent = CDPSessionEvent.valueOf(method.replace(".", "_"));
-//                    System.out.println("cdpSessionEvent="+cdpSessionEvent);
-//                    if(cdpSessionEvent.equals(CDPSession.CDPSessionEvent.Target_attachedToTarget) || cdpSessionEvent.equals(CDPSession.CDPSessionEvent.Target_targetCreated) || cdpSessionEvent.equals(CDPSession.CDPSessionEvent.Target_targetInfoChanged)){
-//                        System.out.println("CDP method="+method);
-//                    }
+
+            if (methodNode != null) {// 发射数据，执行事件的监听方法
+                String method = methodNode.asText();
+                if (events == null) {
+                    events = Arrays.stream(CDPSessionEvent.values()).map(CDPSessionEvent::getEventName)
+                            .collect(Collectors.toList());
+                }
+                boolean match = events.contains(method);
+                if (!match) {// 不匹配就是没有监听该事件
+                    return;
+                }
+                /*
+                 * CDPSessionEvent cdpSessionEvent = CDPSessionEvent.valueOf(method.replace(".", "_"));
+                 * Logger.info("cdpSessionEvent=" + cdpSessionEvent); if
+                 * (cdpSessionEvent.equals(CDPSessionEvent.Target_attachedToTarget) ||
+                 * cdpSessionEvent.equals(CDPSessionEvent.Target_targetCreated) ||
+                 * cdpSessionEvent.equals(CDPSessionEvent.Target_targetInfoChanged)) { Logger.info("CDP method=" +
+                 * method); }
+                 */
+                try {
                     this.emit(CDPSessionEvent.valueOf(method.replace(".", "_")),
                             Connection.classes.get(method) == null ? null
                                     : Builder.OBJECTMAPPER.treeToValue(paramsNode, Connection.classes.get(method)));
+                } catch (Exception e) {
+                    Logger.warn("emit error out" + receivedNode);
                 }
-            } catch (Exception e) {
-                Logger.error("emit error out" + receivedNode);
             }
         }
     }
@@ -199,57 +204,6 @@ public class CDPSession extends Emitter<CDPSession.CDPSessionEvent> {
 
     public List<ProtocolException> getPendingProtocolErrors() {
         return this.callbacks.getPendingProtocolErrors();
-    }
-
-    public enum CDPSessionEvent {
-        CDPSession_Disconnected("CDPSession.Disconnected"), CDPSession_Swapped("CDPSession.Swapped"),
-        CDPSession_Ready("CDPSession.Ready"), sessionAttached("sessionattached"), sessionDetached("sessiondetached"),
-        // 暂时先放这里吧
-        Page_domContentEventFired("Page.domContentEventFired"), Page_loadEventFired("Page.loadEventFired"),
-        Page_javascriptDialogOpening("Page.javascriptDialogOpening"),
-
-        Runtime_exceptionThrown("Runtime.exceptionThrown"), Inspector_targetCrashed("Inspector.targetCrashed"),
-        Performance_metrics("Performance.metrics"), Log_entryAdde("Log.entryAdded"),
-        Page_fileChooserOpened("Page.fileChooserOpened"),
-        // 先暂时放在这里吧
-        Target_targetCreated("Target.targetCreated"), Target_targetDestroyed("Target.targetDestroyed"),
-        Target_targetInfoChanged("Target.targetInfoChanged"), Target_attachedToTarget("Target.attachedToTarget"),
-        Target_detachedFromTarget("Target.detachedFromTarget"),
-        // 先暂时放这里吧
-        Debugger_scriptparsed("Debugger.scriptParsed"),
-        Runtime_executionContextCreated("Runtime.executionContextCreated"),
-        Runtime_executionContextDestroyed("Runtime.executionContextDestroyed"),
-        Runtime_executionContextsCleared("Runtime.executionContextsCleared"),
-        CSS_styleSheetAdded("CSS.styleSheetAdded"),
-        // 先暂时放这里吧
-        DeviceAccess_deviceRequestPrompted("DeviceAccess.deviceRequestPrompted"),
-        Page_frameAttached("Page.frameAttached"), Page_frameNavigated("Page.frameNavigated"),
-        Page_navigatedWithinDocument("Page.navigatedWithinDocument"), Page_frameDetached("Page.frameDetached"),
-        Page_frameStoppedLoading("Page.frameStoppedLoading"), Page_lifecycleEvent("Page.lifecycleEvent"),
-        targetcreated("targetcreated"), targetdestroyed("targetdestroyed"), targetchanged("targetchanged"),
-        disconnected("disconnected"),
-
-        Fetch_requestPaused("Fetch.requestPaused"), Fetch_authRequired("Fetch.authRequired"),
-        Network_requestWillBeSent("Network.requestWillBeSent"),
-
-        Network_requestServedFromCache("Network.requestServedFromCache"),
-        Network_responseReceived("Network.responseReceived"), Network_loadingFinished("Network.loadingFinished"),
-        Network_loadingFailed("Network.loadingFailed"), Runtime_consoleAPICalled("Runtime.consoleAPICalled"),
-        Runtime_bindingCalled("Runtime.bindingCalled"), Tracing_tracingComplete("Tracing.tracingComplete");
-
-        private String eventName;
-
-        CDPSessionEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
-
-        public void setEventName(String eventName) {
-            this.eventName = eventName;
-        }
     }
 
 }

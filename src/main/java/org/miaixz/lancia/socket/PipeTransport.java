@@ -34,16 +34,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.miaixz.bus.core.xyz.IoKit;
-import org.miaixz.lancia.kernel.page.Worker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.miaixz.bus.logger.Logger;
 
 /**
  * 与chromuim通过pipe通信暂时没实现
  */
 public class PipeTransport implements ConnectionTransport {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(Worker.class);
 
     private InputStream pipeReader;
 
@@ -106,7 +102,7 @@ public class PipeTransport implements ConnectionTransport {
                     pipeWriter.write('\0');
                     pipeWriter.flush();
                 } catch (InterruptedException | IOException e) {
-                    LOGGER.error("pipe transport send message fail ", e);
+                    Logger.error("pipe transport send message fail ", e);
                 }
             }
         }
@@ -131,7 +127,7 @@ public class PipeTransport implements ConnectionTransport {
                         onMessage(message);
                     }
                 } catch (IOException e) {
-                    LOGGER.error("read message from chrome error ", e);
+                    Logger.error("read message from chrome error ", e);
                 }
             }
         }

@@ -44,7 +44,8 @@ import org.miaixz.bus.core.xyz.CollKit;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.nimble.PageEvaluateType;
-import org.miaixz.lancia.options.*;
+import org.miaixz.lancia.option.*;
+import org.miaixz.lancia.worker.enums.PuppeteerLifeCycle;
 
 public class DOMWorld {
 
@@ -374,8 +375,8 @@ public class DOMWorld {
         boolean waitForHidden = false;
         int timeout = this.timeoutSettings.timeout();
         if (options != null) {
-            waitForVisible = options.getVisible();
-            waitForHidden = options.getHidden();
+            waitForVisible = options.isVisible();
+            waitForHidden = options.isHidden();
             if (options.getTimeout() > 0) {
                 timeout = options.getTimeout();
             }

@@ -29,7 +29,7 @@ package org.miaixz.lancia.kernel;
 
 import org.miaixz.lancia.kernel.browser.Context;
 import org.miaixz.lancia.kernel.page.TargetInfo;
-import org.miaixz.lancia.options.Viewport;
+import org.miaixz.lancia.option.data.Viewport;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.factory.SessionFactory;
 

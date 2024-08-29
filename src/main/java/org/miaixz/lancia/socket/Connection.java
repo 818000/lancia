@@ -40,7 +40,6 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
-import org.miaixz.lancia.events.*;
 import org.miaixz.lancia.kernel.page.TargetInfo;
 import org.miaixz.lancia.nimble.debugger.ScriptParsedEvent;
 import org.miaixz.lancia.nimble.fetch.AuthRequiredEvent;
@@ -53,6 +52,8 @@ import org.miaixz.lancia.nimble.runtime.BindingCalledEvent;
 import org.miaixz.lancia.nimble.runtime.ConsoleAPICalledEvent;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextCreatedEvent;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextDestroyedEvent;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
+import org.miaixz.lancia.worker.events.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -60,11 +61,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * web socket client 浏览器级别的连接
  */
-public class Connection extends Emitter<CDPSession.CDPSessionEvent> implements Consumer<String> {
+public class Connection extends Emitter<CDPSessionEvent> implements Consumer<String> {
 
     public static final Map<String, Class<?>> classes = new HashMap<>() {
         {
-            for (CDPSession.CDPSessionEvent event : CDPSession.CDPSessionEvent.values()) {
+            for (CDPSessionEvent event : CDPSessionEvent.values()) {
                 if (event.getEventName().equals("CDPSession.Disconnected")) {
                     put(event.getEventName(), null);
                 } else if (event.getEventName().equals("CDPSession.Swapped")) {
@@ -249,20 +250,20 @@ public class Connection extends Emitter<CDPSession.CDPSessionEvent> implements C
                         .get(Builder.MESSAGE_TYPE_PROPERTY);
                 CDPSession cdpSession = new CDPSession(this, typeNode.asText(), sessionId, parentSessionId);
                 this.sessions.put(sessionId, cdpSession);
-                this.emit(CDPSession.CDPSessionEvent.sessionAttached, cdpSession);
+                this.emit(CDPSessionEvent.sessionAttached, cdpSession);
                 CDPSession parentSession = this.sessions.get(parentSessionId);
                 if (parentSession != null) {
-                    parentSession.emit(CDPSession.CDPSessionEvent.sessionAttached, cdpSession);
+                    parentSession.emit(CDPSessionEvent.sessionAttached, cdpSession);
                 }
             } else if ("Target.detachedFromTarget".equals(method)) {// 页面与浏览器脱离关系
                 CDPSession cdpSession = this.sessions.get(sessionId);
                 if (cdpSession != null) {
                     cdpSession.onClosed();
                     this.sessions.remove(sessionId);
-                    this.emit(CDPSession.CDPSessionEvent.sessionDetached, cdpSession);
+                    this.emit(CDPSessionEvent.sessionDetached, cdpSession);
                     CDPSession parentSession = this.sessions.get(parentSessionId);
                     if (parentSession != null) {
-                        parentSession.emit(CDPSession.CDPSessionEvent.sessionDetached, cdpSession);
+                        parentSession.emit(CDPSessionEvent.sessionDetached, cdpSession);
                     }
                 }
             }
@@ -281,16 +282,15 @@ public class Connection extends Emitter<CDPSession.CDPSessionEvent> implements C
                 }
             } else {// 是一个事件，那么响应监听器
                 if (events == null) {
-                    events = Arrays.stream(CDPSession.CDPSessionEvent.values())
-                            .map(CDPSession.CDPSessionEvent::getEventName).collect(Collectors.toList());
+                    events = Arrays.stream(CDPSessionEvent.values()).map(CDPSessionEvent::getEventName)
+                            .collect(Collectors.toList());
                 }
                 boolean match = events.contains(method);
                 if (!match) {// 不匹配就是没有监听该事件
                     return;
                 }
-                this.emit(CDPSession.CDPSessionEvent.valueOf(method.replace(".", "_")),
-                        classes.get(method) == null ? null
-                                : Builder.OBJECTMAPPER.treeToValue(paramsNode, classes.get(method)));
+                this.emit(CDPSessionEvent.valueOf(method.replace(".", "_")), classes.get(method) == null ? null
+                        : Builder.OBJECTMAPPER.treeToValue(paramsNode, classes.get(method)));
             }
         } catch (Exception e) {
             Logger.error("onMessage error:", e);
@@ -358,7 +358,7 @@ public class Connection extends Emitter<CDPSession.CDPSessionEvent> implements C
         for (CDPSession session : this.sessions.values())
             session.onClosed();
         this.sessions.clear();
-        this.emit(CDPSession.CDPSessionEvent.CDPSession_Disconnected, null);
+        this.emit(CDPSessionEvent.CDPSession_Disconnected, null);
     }
 
     public List<ProtocolException> getPendingProtocolErrors() {

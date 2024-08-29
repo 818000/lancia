@@ -35,14 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * 事件发布，事件监听，模仿nodejs的EventEmitter
  */
 public class Emitter<EventType> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Emitter.class);
+
     /**
      * 事件发布，事件监听，模仿nodejs的EventEmitter
      */

@@ -39,10 +39,12 @@ import org.miaixz.lancia.nimble.fetch.RequestPausedEvent;
 import org.miaixz.lancia.nimble.network.*;
 import org.miaixz.lancia.nimble.webAuthn.Credentials;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
+import org.miaixz.lancia.worker.enums.NetworkManagerType;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> {
+public class NetworkManager extends Emitter<NetworkManagerType> {
 
     /**
      * cdpsession
@@ -74,20 +76,17 @@ public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> 
         this.protocolRequestInterceptionEnabled = false;
         this.userCacheDisabled = false;
         this.requestIdToInterceptionId = new HashMap<>();
-        this.client.on(CDPSession.CDPSessionEvent.Fetch_requestPaused,
-                (Consumer<RequestPausedEvent>) this::onRequestPaused);
-        this.client.on(CDPSession.CDPSessionEvent.Fetch_authRequired,
-                (Consumer<AuthRequiredEvent>) this::onAuthRequired);
-        this.client.on(CDPSession.CDPSessionEvent.Network_requestWillBeSent,
+        this.client.on(CDPSessionEvent.Fetch_requestPaused, (Consumer<RequestPausedEvent>) this::onRequestPaused);
+        this.client.on(CDPSessionEvent.Fetch_authRequired, (Consumer<AuthRequiredEvent>) this::onAuthRequired);
+        this.client.on(CDPSessionEvent.Network_requestWillBeSent,
                 (Consumer<RequestWillBeSentEvent>) this::onRequestWillBeSent);
-        this.client.on(CDPSession.CDPSessionEvent.Network_requestServedFromCache,
+        this.client.on(CDPSessionEvent.Network_requestServedFromCache,
                 (Consumer<RequestServedFromCacheEvent>) this::onRequestServedFromCache);
-        this.client.on(CDPSession.CDPSessionEvent.Network_responseReceived,
+        this.client.on(CDPSessionEvent.Network_responseReceived,
                 (Consumer<ResponseReceivedEvent>) this::onResponseReceived);
-        this.client.on(CDPSession.CDPSessionEvent.Network_loadingFinished,
+        this.client.on(CDPSessionEvent.Network_loadingFinished,
                 (Consumer<LoadingFinishedEvent>) this::onLoadingFinished);
-        this.client.on(CDPSession.CDPSessionEvent.Network_loadingFailed,
-                (Consumer<LoadingFailedEvent>) this::onLoadingFailed);
+        this.client.on(CDPSessionEvent.Network_loadingFailed, (Consumer<LoadingFailedEvent>) this::onLoadingFailed);
     }
 
     public void setExtraHTTPHeaders(Map<String, String> extraHTTPHeaders) {
@@ -245,7 +244,7 @@ public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> 
         Request request = new Request(this.client, frame, interceptionId, this.userRequestInterceptionEnabled, event,
                 redirectChain);
         this.requestIdToRequest.put(event.getRequestId(), request);
-        this.emit(NetworkManagerEvent.Request, request);
+        this.emit(NetworkManagerType.Request, request);
     }
 
     private void handleRequestRedirect(Request request, ResponsePayload responsePayload) {
@@ -255,8 +254,8 @@ public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> 
         response.resolveBody("Response body is unavailable for redirect responses");
         this.requestIdToRequest.remove(request.requestId());
         this.attemptedAuthentications.remove(request.interceptionId());
-        this.emit(NetworkManagerEvent.Response, response);
-        this.emit(NetworkManagerEvent.RequestFinished, request);
+        this.emit(NetworkManagerType.Response, response);
+        this.emit(NetworkManagerType.RequestFinished, request);
     }
 
     public void onLoadingFinished(LoadingFinishedEvent event) {
@@ -272,7 +271,7 @@ public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> 
             request.response().bodyLoadedPromiseFulfill(null);
         this.requestIdToRequest.remove(request.requestId());
         this.attemptedAuthentications.remove(request.interceptionId());
-        this.emit(NetworkManagerEvent.RequestFailed, request);
+        this.emit(NetworkManagerType.RequestFailed, request);
     }
 
     public void onResponseReceived(ResponseReceivedEvent event) {
@@ -282,7 +281,7 @@ public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> 
             return;
         Response response = new Response(this.client, request, event.getResponse());
         request.setResponse(response);
-        this.emit(NetworkManagerEvent.Response, response);
+        this.emit(NetworkManagerType.Response, response);
     }
 
     public void onLoadingFailed(LoadingFailedEvent event) {
@@ -297,33 +296,13 @@ public class NetworkManager extends Emitter<NetworkManager.NetworkManagerEvent> 
             response.bodyLoadedPromiseFulfill(null);
         this.requestIdToRequest.remove(request.requestId());
         this.attemptedAuthentications.remove(request.interceptionId());
-        this.emit(NetworkManagerEvent.RequestFailed, request);
+        this.emit(NetworkManagerType.RequestFailed, request);
     }
 
     public void onRequestServedFromCache(RequestServedFromCacheEvent event) {
         Request request = this.requestIdToRequest.get(event.getRequestId());
         if (request != null)
             request.setFromMemoryCache(true);
-    }
-
-    public enum NetworkManagerEvent {
-        Request("NetworkManager.Request"), RequestServedFromCache("NetworkManager.RequestServedFromCache"),
-        Response("NetworkManager.Response"), RequestFailed("NetworkManager.RequestFailed"),
-        RequestFinished("NetworkManager.RequestFinished");
-
-        private String eventName;
-
-        NetworkManagerEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
-
-        public void setEventName(String eventName) {
-            this.eventName = eventName;
-        }
     }
 
 }

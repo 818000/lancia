@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.options.ClickOptions;
+import org.miaixz.lancia.option.ClickOptions;
 import org.miaixz.lancia.socket.CDPSession;
 
 public class Mouse {

@@ -35,13 +35,14 @@ import java.util.stream.Collectors;
 
 import org.miaixz.bus.core.lang.exception.TimeoutException;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.ExceptionThrownEvent;
 import org.miaixz.lancia.nimble.runtime.ConsoleAPICalledEvent;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextCreatedEvent;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextDescription;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.options.TargetType;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
+import org.miaixz.lancia.worker.enums.TargetType;
+import org.miaixz.lancia.worker.events.ExceptionThrownEvent;
 
 /**
  * The events `workercreated` and `workerdestroyed` are emitted on the page object to signal the worker lifecycle.
@@ -62,12 +63,12 @@ public class Worker {
         this.url = url;
         this.exceptionThrown = exceptionThrown;
         this.consoleAPICalled = consoleAPICalled;
-        this.client.once(CDPSession.CDPSessionEvent.Runtime_executionContextCreated,
+        this.client.once(CDPSessionEvent.Runtime_executionContextCreated,
                 (Consumer<ExecutionContextCreatedEvent>) this::onExecutionContextCreated);
         this.client.send("Runtime.enable");
-        this.client.on(CDPSession.CDPSessionEvent.Runtime_consoleAPICalled,
+        this.client.on(CDPSessionEvent.Runtime_consoleAPICalled,
                 (Consumer<ConsoleAPICalledEvent>) this::onConsoleAPICalled);
-        this.client.on(CDPSession.CDPSessionEvent.Runtime_exceptionThrown,
+        this.client.on(CDPSessionEvent.Runtime_exceptionThrown,
                 (Consumer<ExceptionThrownEvent>) this::onExceptionThrown);
     }
 

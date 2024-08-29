@@ -34,17 +34,14 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
 import org.miaixz.bus.core.lang.Assert;
+import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.socket.factory.WebSocketTransportFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * websocket client
  *
  */
 public class WebSocketTransport extends WebSocketClient implements ConnectionTransport {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketTransport.class);
 
     private Connection connection = null;
 
@@ -82,7 +79,7 @@ public class WebSocketTransport extends WebSocketClient implements ConnectionTra
     @Override
     public void onClose(int code, String reason, boolean remote) {// 这里是WebSocketClient的实现方法,当websocket
                                                                   // closed的时候会调用onClose
-        LOGGER.info("Connection closed by {} Code: {} Reason: {}", remote ? "remote peer" : "us", code, reason);
+        Logger.info("Connection closed by {} Code: {} Reason: {}", remote ? "remote peer" : "us", code, reason);
         if (this.connection != null) {// 浏览器以外关闭时候，connection不为空
             this.connection.dispose();
         }
@@ -90,12 +87,12 @@ public class WebSocketTransport extends WebSocketClient implements ConnectionTra
 
     @Override
     public void onError(Exception e) {
-        LOGGER.error("Websocket error:", e);
+        Logger.error("Websocket error:", e);
     }
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        LOGGER.info("Websocket serverHandshake status: {}", serverHandshake.getHttpStatus());
+        Logger.info("Websocket serverHandshake status: {}", serverHandshake.getHttpStatus());
     }
 
     @Override

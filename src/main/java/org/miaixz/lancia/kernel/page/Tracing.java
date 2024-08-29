@@ -37,8 +37,9 @@ import java.util.function.Consumer;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.TracingCompleteEvent;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
+import org.miaixz.lancia.worker.events.TracingCompleteEvent;
 
 /**
  * You can use [`tracing.start`](#tracingstartoptions) and [`tracing.stop`](#tracingstop) to create a trace file which
@@ -96,7 +97,7 @@ public class Tracing {
      * stop tracing
      */
     public void stop() {
-        this.client.once(CDPSession.CDPSessionEvent.Tracing_tracingComplete, (Consumer<TracingCompleteEvent>) event -> {
+        this.client.once(CDPSessionEvent.Tracing_tracingComplete, (Consumer<TracingCompleteEvent>) event -> {
             try {
                 Builder.readProtocolStream(Tracing.this.getClient(), event.getStream(), Tracing.this.getPath(), true);
             } catch (IOException e) {

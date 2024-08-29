@@ -32,10 +32,12 @@ import org.miaixz.lancia.Page;
 import org.miaixz.lancia.kernel.browser.Context;
 import org.miaixz.lancia.kernel.page.Target;
 import org.miaixz.lancia.kernel.page.TargetInfo;
-import org.miaixz.lancia.options.TargetType;
-import org.miaixz.lancia.options.Viewport;
+import org.miaixz.lancia.option.data.Viewport;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.factory.SessionFactory;
+import org.miaixz.lancia.worker.enums.InitializationStatus;
+import org.miaixz.lancia.worker.enums.PageEvent;
+import org.miaixz.lancia.worker.enums.TargetType;
 
 import io.reactivex.rxjava3.subjects.SingleSubject;
 
@@ -67,11 +69,11 @@ public class PageTarget extends Target {
                     return;
                 }
                 Page openerPage = ((PageTarget) opener).pageSubject.blockingGet();
-                if (openerPage.listenerCount(Page.PageEvent.POPUP) == 0) {
+                if (openerPage.listenerCount(PageEvent.POPUP) == 0) {
                     return;
                 }
                 Page pupopPage = this.page();
-                pupopPage.emit(Page.PageEvent.POPUP, pupopPage);
+                pupopPage.emit(PageEvent.POPUP, pupopPage);
             } catch (Exception e) {
                 Logger.error("lancia error:", e);
             }

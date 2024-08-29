@@ -29,7 +29,7 @@ package org.miaixz.lancia.nimble.page;
 
 import java.util.List;
 
-import org.miaixz.lancia.options.AdFrameStatus;
+import org.miaixz.lancia.option.data.AdFrameStatus;
 
 /**
  * Information about the Frame on the page.

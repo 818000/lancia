@@ -50,9 +50,7 @@ import org.miaixz.bus.core.lang.exception.PageException;
 import org.miaixz.bus.core.lang.exception.TimeoutException;
 import org.miaixz.bus.core.xyz.CollKit;
 import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.events.AttachedToTargetEvent;
-import org.miaixz.lancia.events.DetachedFromTargetEvent;
-import org.miaixz.lancia.events.ExceptionThrownEvent;
+import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.kernel.browser.Context;
 import org.miaixz.lancia.kernel.page.*;
 import org.miaixz.lancia.nimble.PageEvaluateType;
@@ -77,11 +75,16 @@ import org.miaixz.lancia.nimble.runtime.ConsoleAPICalledEvent;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;
 import org.miaixz.lancia.nimble.runtime.StackTrace;
 import org.miaixz.lancia.nimble.webAuthn.Credentials;
-import org.miaixz.lancia.options.*;
+import org.miaixz.lancia.option.*;
+import org.miaixz.lancia.option.data.Clip;
+import org.miaixz.lancia.option.data.PDFMargin;
+import org.miaixz.lancia.option.data.Viewport;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.Connection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.miaixz.lancia.worker.enums.*;
+import org.miaixz.lancia.worker.events.AttachedToTargetEvent;
+import org.miaixz.lancia.worker.events.DetachedFromTargetEvent;
+import org.miaixz.lancia.worker.events.ExceptionThrownEvent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -91,12 +94,11 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.SingleSubject;
 
-public class Page extends Emitter<Page.PageEvent> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Page.class);
-    private static final String ABOUT_BLANK = "about:blank";
-    private static final Map<String, Double> unitToPixels = new HashMap<String, Double>() {
-        private static final long serialVersionUID = -4861220887908575532L;
+public class Page extends Emitter<PageEvent> {
 
+    private static final String ABOUT_BLANK = "about:blank";
+    private static final Map<String, Double> UNIT_TO_PIXELS = new HashMap<>() {
+        private static final long serialVersionUID = -1L;
         {
             put("px", 1.00);
             put("in", 96.00);
@@ -141,76 +143,60 @@ public class Page extends Emitter<Page.PageEvent> {
         this.javascriptEnabled = true;
         this.viewport = null;
         this.workers = new HashMap<>();
-        Map<FrameManager.FrameManagerEvent, Consumer<?>> frameManagerHandlers = Collections
-                .unmodifiableMap(new HashMap<FrameManager.FrameManagerEvent, Consumer<?>>() {
-                    {
-                        put(FrameManager.FrameManagerEvent.FrameAttached, ((Consumer<Frame>) (frame) -> {
-                            Page.this.emit(PageEvent.FRAMEATTACHED, frame);
-                        }));
-                        put(FrameManager.FrameManagerEvent.FrameDetached, ((Consumer<Frame>) (frame) -> {
-                            Page.this.emit(PageEvent.FRAMEDETACHED, frame);
-                        }));
-                        put(FrameManager.FrameManagerEvent.FrameNavigated, ((Consumer<Frame>) (frame) -> {
-                            Page.this.emit(PageEvent.FRAMENAVIGATED, frame);
-                        }));
-                    }
-                });
+        Map<FrameManagerType, Consumer<?>> frameManagerHandlers = Collections.unmodifiableMap(new HashMap<>() {
+            {
+                put(FrameManagerType.FrameAttached,
+                        ((Consumer<Frame>) (frame) -> Page.this.emit(PageEvent.FRAMEATTACHED, frame)));
+                put(FrameManagerType.FrameDetached,
+                        ((Consumer<Frame>) (frame) -> Page.this.emit(PageEvent.FRAMEDETACHED, frame)));
+                put(FrameManagerType.FrameNavigated,
+                        ((Consumer<Frame>) (frame) -> Page.this.emit(PageEvent.FRAMENAVIGATED, frame)));
+            }
+        });
         frameManagerHandlers.forEach(this.frameManager::on);
 
-        Map<NetworkManager.NetworkManagerEvent, Consumer<?>> networkManagerHandlers = Collections
-                .unmodifiableMap(new HashMap<NetworkManager.NetworkManagerEvent, Consumer<?>>() {
-                    {
-                        put(NetworkManager.NetworkManagerEvent.Request, ((Consumer<Request>) (request) -> {
-                            Page.this.emit(PageEvent.REQUEST, request);
-                        }));
-                        put(NetworkManager.NetworkManagerEvent.RequestServedFromCache,
-                                ((Consumer<Request>) (request) -> {
-                                    Page.this.emit(PageEvent.REQUESTSERVEDFROMCACHE, request);
-                                }));
-                        put(NetworkManager.NetworkManagerEvent.Response, ((Consumer<Response>) (response) -> {
-                            Page.this.emit(PageEvent.RESPONSE, response);
-                        }));
-                        put(NetworkManager.NetworkManagerEvent.RequestFailed, ((Consumer<Request>) (request) -> {
-                            Page.this.emit(PageEvent.REQUESTFAILED, request);
-                        }));
-                        put(NetworkManager.NetworkManagerEvent.RequestFinished, ((Consumer<Request>) (request) -> {
-                            Page.this.emit(PageEvent.REQUESTFINISHED, request);
-                        }));
-                    }
-                });
+        Map<NetworkManagerType, Consumer<?>> networkManagerHandlers = Collections.unmodifiableMap(new HashMap<>() {
+            {
+                put(NetworkManagerType.Request,
+                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUEST, request)));
+                put(NetworkManagerType.RequestServedFromCache,
+                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUESTSERVEDFROMCACHE, request)));
+                put(NetworkManagerType.Response,
+                        ((Consumer<Response>) (response) -> Page.this.emit(PageEvent.RESPONSE, response)));
+                put(NetworkManagerType.RequestFailed,
+                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUESTFAILED, request)));
+                put(NetworkManagerType.RequestFinished,
+                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUESTFINISHED, request)));
+            }
+        });
         networkManagerHandlers.forEach((key, value) -> this.frameManager.networkManager().on(key, value));
-        Map<CDPSession.CDPSessionEvent, Consumer<?>> sessionHandlers = Collections
-                .unmodifiableMap(new HashMap<CDPSession.CDPSessionEvent, Consumer<?>>() {
-                    {
-                        put(CDPSession.CDPSessionEvent.CDPSession_Disconnected,
-                                ((ignore) -> sessionCloseSubject.onSuccess(new InternalException("Target closed"))));
-                        put(CDPSession.CDPSessionEvent.Page_domContentEventFired,
-                                ((ignore) -> Page.this.emit(PageEvent.DOMCONTENTLOADED, null)));
-                        put(CDPSession.CDPSessionEvent.Page_loadEventFired,
-                                ((ignore) -> Page.this.emit(PageEvent.LOAD, null)));
-                        put(CDPSession.CDPSessionEvent.Page_javascriptDialogOpening,
-                                ((Consumer<JavascriptDialogOpeningEvent>) Page.this::onDialog));
-                        put(CDPSession.CDPSessionEvent.Runtime_exceptionThrown,
-                                (Consumer<ExceptionThrownEvent>) Page.this::handleException);
-                        put(CDPSession.CDPSessionEvent.Inspector_targetCrashed, (arg) -> {
-                            Page.this.onTargetCrashed();
-                        });
-                        put(CDPSession.CDPSessionEvent.Performance_metrics,
-                                (Consumer<MetricsEvent>) Page.this::emitMetrics);
-                        put(CDPSession.CDPSessionEvent.Log_entryAdde,
-                                (Consumer<EntryAddedEvent>) Page.this::onLogEntryAdded);
-                        put(CDPSession.CDPSessionEvent.Page_fileChooserOpened,
-                                (Consumer<FileChooserOpenedEvent>) Page.this::onFileChooser);
-                        put(CDPSession.CDPSessionEvent.Target_attachedToTarget,
-                                (Consumer<AttachedToTargetEvent>) Page.this::onAttachedToTarget);
-                        put(CDPSession.CDPSessionEvent.Target_detachedFromTarget,
-                                (Consumer<DetachedFromTargetEvent>) Page.this::onDetachedFromTarget);
-                        put(CDPSession.CDPSessionEvent.Runtime_consoleAPICalled,
-                                (Consumer<ConsoleAPICalledEvent>) Page.this::onConsoleAPI);
-                        put(CDPSession.CDPSessionEvent.Runtime_bindingCalled,
-                                (Consumer<BindingCalledEvent>) Page.this::onBindingCalled);
-                    }
+        Map<CDPSessionEvent, Consumer<?>> sessionHandlers = Collections.unmodifiableMap(new HashMap<>() {
+            {
+                put(CDPSessionEvent.CDPSession_Disconnected,
+                        ((ignore) -> sessionCloseSubject.onSuccess(new InternalException("Target closed"))));
+                put(CDPSessionEvent.Page_domContentEventFired,
+                        ((ignore) -> Page.this.emit(PageEvent.DOMCONTENTLOADED, null)));
+                put(CDPSessionEvent.Page_loadEventFired, ((ignore) -> Page.this.emit(PageEvent.LOAD, null)));
+                put(CDPSessionEvent.Page_javascriptDialogOpening,
+                        ((Consumer<JavascriptDialogOpeningEvent>) Page.this::onDialog));
+                put(CDPSessionEvent.Runtime_exceptionThrown,
+                        (Consumer<ExceptionThrownEvent>) Page.this::handleException);
+                put(CDPSessionEvent.Inspector_targetCrashed, (arg) -> {
+                    Page.this.onTargetCrashed();
                 });
+                put(CDPSessionEvent.Performance_metrics, (Consumer<MetricsEvent>) Page.this::emitMetrics);
+                put(CDPSessionEvent.Log_entryAdde, (Consumer<EntryAddedEvent>) Page.this::onLogEntryAdded);
+                put(CDPSessionEvent.Page_fileChooserOpened,
+                        (Consumer<FileChooserOpenedEvent>) Page.this::onFileChooser);
+                put(CDPSessionEvent.Target_attachedToTarget,
+                        (Consumer<AttachedToTargetEvent>) Page.this::onAttachedToTarget);
+                put(CDPSessionEvent.Target_detachedFromTarget,
+                        (Consumer<DetachedFromTargetEvent>) Page.this::onDetachedFromTarget);
+                put(CDPSessionEvent.Runtime_consoleAPICalled,
+                        (Consumer<ConsoleAPICalledEvent>) Page.this::onConsoleAPI);
+                put(CDPSessionEvent.Runtime_bindingCalled, (Consumer<BindingCalledEvent>) Page.this::onBindingCalled);
+            }
+        });
         this.fileChooserInterceptors = new CopyOnWriteArraySet<>();
         sessionHandlers.forEach(this.client::on);
     }
@@ -637,7 +623,6 @@ public class Page extends Emitter<Page.PageEvent> {
      * @param options 截图选项
      * @return 图片base64的字节
      */
-    @SuppressWarnings({ "unchecked" })
     public String screenshot(ScreenshotOptions options) {
         synchronized (this.browserContext()) {// 一个上下文只能有一个截图操作
             this.bringToFront();
@@ -677,11 +662,11 @@ public class Page extends Emitter<Page.PageEvent> {
                     // If `captureBeyondViewport` is `false`, then we set the viewport to
                     // capture the full page. Note this may be affected by on-page CSS and
                     // JavaScript.
-                    Assert.isTrue(!options.getFullPage(), "'clip' and 'fullPage' are mutually exclusive");
+                    Assert.isTrue(!options.isFullPage(), "'clip' and 'fullPage' are mutually exclusive");
                     options.setClip(roundRectangle(normalizeRectangle(options.getClip())));
                 } else {
-                    if (options.getFullPage()) {
-                        if (!options.getCaptureBeyondViewport()) {
+                    if (options.isFullPage()) {
+                        if (!options.isCaptureBeyondViewport()) {
                             LinkedHashMap<String, Integer> scrollDimensions = (LinkedHashMap<String, Integer>) this
                                     .mainFrame()
                                     .evaluate("() => {\n" + "              const element = document.documentElement;\n"
@@ -701,7 +686,7 @@ public class Page extends Emitter<Page.PageEvent> {
                 }
                 return this._screenshot(options);
             } catch (Exception e) {
-                LOGGER.error("_screenshot error: ", e);
+                Logger.error("_screenshot error: ", e);
             } finally {
                 if (viewport != null) {
                     this.setViewport(viewport);
@@ -712,22 +697,21 @@ public class Page extends Emitter<Page.PageEvent> {
 
     }
 
-    @SuppressWarnings({ "unchecked" })
     private String _screenshot(ScreenshotOptions options) {
         Map<String, Object> params = new HashMap<>();
         try {
-            if (options.getOmitBackground() && ("png".equals(options.getType()) || "webp".equals(options.getType()))) {
+            if (options.isOptimizeForSpeed() && ("png".equals(options.getType()) || "webp".equals(options.getType()))) {
                 this.emulationManager.setTransparentBackgroundColor();
             }
-            if (options.getClip() != null && !options.getCaptureBeyondViewport()) {
+            if (options.getClip() != null && !options.isCaptureBeyondViewport()) {
                 LinkedHashMap<String, Integer> viewportNode = (LinkedHashMap<String, Integer>) this.mainFrame()
                         .evaluate("() => {\n" + "          const {\n" + "            height,\n"
                                 + "            pageLeft: x,\n" + "            pageTop: y,\n" + "            width,\n"
                                 + "          } = window.visualViewport;\n" + "          return {x, y, height, width};\n"
                                 + "        }", null);
-                ClipOverwrite clip = getIntersectionRect(options.getClip(), viewportNode);
+                Clip clip = getIntersectionRect(options.getClip(), viewportNode);
                 params.put("format", options.getType());
-                params.put("optimizeForSpeed", options.getOptimizeForSpeed());
+                params.put("optimizeForSpeed", options.isOmitBackground());
                 params.put("quality", Math.round(options.getQuality()));
                 params.put("clip", clip);
             }
@@ -739,7 +723,7 @@ public class Page extends Emitter<Page.PageEvent> {
             }
             return data;
         } catch (Exception var) {
-            LOGGER.error("_screenshot error: ", var);
+            Logger.error("_screenshot error: ", var);
         } finally {
             this.emulationManager.resetDefaultBackgroundColor();
         }
@@ -750,21 +734,21 @@ public class Page extends Emitter<Page.PageEvent> {
      * @see <a href=
      *      "https://w3c.github.io/webdriver-bidi/#rectangle-intersection">href="https://w3c.github.io/webdriver-bidi/#rectangle-intersection</a>
      */
-    private ClipOverwrite getIntersectionRect(ClipOverwrite clip, LinkedHashMap<String, Integer> viewport) {
+    private Clip getIntersectionRect(Clip clip, LinkedHashMap<String, Integer> viewport) {
         double x = Math.max(clip.getX(), viewport.get("x"));
         double y = Math.max(clip.getY(), viewport.get("y"));
-        return new ClipOverwrite(x, y,
+        return new Clip(x, y,
                 Math.max(Math.min(clip.getX() + clip.getWidth(), viewport.get("x") + viewport.get("width")) - x, 0),
                 Math.max(Math.min(clip.getY() + clip.getHeight(), viewport.get("y") + viewport.get("height")) - y, 0),
                 1);
     }
 
-    private ClipOverwrite roundRectangle(ClipOverwrite clip) {
+    private Clip roundRectangle(Clip clip) {
         double x = Math.round(clip.getX());
         double y = Math.round(clip.getY());
         double width = Math.round(clip.getWidth() + clip.getX() - x);
         double height = Math.round(clip.getHeight() + clip.getY() - y);
-        ClipOverwrite screenshotClip = new ClipOverwrite(x, y, width, height, 1);
+        Clip screenshotClip = new Clip(x, y, width, height, 1);
         screenshotClip.setScale(clip.getScale());
         return screenshotClip;
     }
@@ -773,8 +757,8 @@ public class Page extends Emitter<Page.PageEvent> {
      * @see <a href=
      *      "https://w3c.github.io/webdriver-bidi/#normalize-rect">href="https://w3c.github.io/webdriver-bidi/#normalize-rect</a>
      */
-    private ClipOverwrite normalizeRectangle(ClipOverwrite clip) {
-        ClipOverwrite screenshotClip = new ClipOverwrite();
+    private Clip normalizeRectangle(Clip clip) {
+        Clip screenshotClip = new Clip();
         if (clip.getWidth() < 0) {
             screenshotClip.setX(clip.getX() + clip.getWidth());
             screenshotClip.setWidth(-clip.getWidth());
@@ -800,7 +784,7 @@ public class Page extends Emitter<Page.PageEvent> {
      * @throws IOException 异常
      */
     public String screenshot(String path) throws IOException {
-        return this.screenshot(new ScreenshotOptions(path));
+        return this.screenshot(ScreenshotOptions.builder().path(path).build());
     }
 
     /**
@@ -1083,12 +1067,12 @@ public class Page extends Emitter<Page.PageEvent> {
         this.client.send("Emulation.setDefaultBackgroundColorOverride", params);
     }
 
-    private ClipOverwrite processClip(Clip clip) {
+    private Clip processClip(Clip clip) {
         long x = Math.round(clip.getX());
         long y = Math.round(clip.getY());
         long width = Math.round(clip.getWidth() + clip.getX() - x);
         long height = Math.round(clip.getHeight() + clip.getY() - y);
-        return new ClipOverwrite(x, y, width, height, 1);
+        return new Clip(x, y, width, height, 1);
     }
 
     private void onFileChooser(FileChooserOpenedEvent event) {
@@ -1738,7 +1722,7 @@ public class Page extends Emitter<Page.PageEvent> {
      * @param path pdf存放的路径
      */
     public void pdf(String path) {
-        this.pdf(new PDFOptions(path), LengthUnit.IN);
+        this.pdf(PDFOptions.builder().path(path).build(), LengthUnit.IN);
     }
 
     /**
@@ -1781,13 +1765,13 @@ public class Page extends Emitter<Page.PageEvent> {
         if ((marginRight = convertPrintParameterToInches(margin.getRight(), lengthUnit)) == null) {
             marginRight = 0;
         }
-        if (options.getOutline()) {
+        if (options.isOutline()) {
             options.setTagged(true);
         }
-        if (options.getOmitBackground()) {
+        if (options.isOmitBackground()) {
             this.emulationManager.setTransparentBackgroundColor();
         }
-        if (options.getWaitForFonts()) {
+        if (options.isWaitForFonts()) {
 //            this.bringToFront();
             Single.fromCallable(() -> this.mainFrame().evaluate("() => { return document.fonts.ready;}", null))
                     .timeout(options.getTimeout(), TimeUnit.MILLISECONDS).blockingSubscribe();
@@ -1795,11 +1779,11 @@ public class Page extends Emitter<Page.PageEvent> {
         }
         Map<String, Object> params = new HashMap<>();
         params.put("transferMode", "ReturnAsStream");
-        params.put("landscape", options.getLandscape());
-        params.put("displayHeaderFooter", options.getDisplayHeaderFooter());
+        params.put("landscape", options.isLandscape());
+        params.put("displayHeaderFooter", options.isDisplayHeaderFooter());
         params.put("headerTemplate", options.getHeaderTemplate());
         params.put("footerTemplate", options.getFooterTemplate());
-        params.put("printBackground", options.getPrintBackground());
+        params.put("printBackground", options.isPrintBackground());
         params.put("scale", options.getScale());
         params.put("paperWidth", paperWidth);
         params.put("paperHeight", paperHeight);
@@ -1808,9 +1792,9 @@ public class Page extends Emitter<Page.PageEvent> {
         params.put("marginLeft", marginLeft);
         params.put("marginRight", marginRight);
         params.put("pageRanges", options.getPageRanges());
-        params.put("preferCSSPageSize", options.getPreferCSSPageSize());
-        params.put("generateTaggedPDF", options.getTagged());
-        params.put("generateDocumentOutline", options.getOutline());
+        params.put("preferCSSPageSize", options.isPreferCSSPageSize());
+        params.put("generateTaggedPDF", options.isTagged());
+        params.put("generateDocumentOutline", options.isOutline());
 
         JsonNode result = Single.fromCallable(() -> this.client.send("Page.printToPDF", params))
                 .timeout(options.getTimeout(), TimeUnit.MILLISECONDS).blockingGet();
@@ -1860,7 +1844,7 @@ public class Page extends Emitter<Page.PageEvent> {
                 || parameter.endsWith("mm")) {
             String unit = parameter.substring(parameter.length() - 2).toLowerCase();
             String valueText;
-            if (unitToPixels.containsKey(unit)) {
+            if (UNIT_TO_PIXELS.containsKey(unit)) {
                 valueText = parameter.substring(0, parameter.length() - 2);
             } else {
                 // In case of unknown unit try to parse the whole parameter as number of pixels.
@@ -1870,11 +1854,11 @@ public class Page extends Emitter<Page.PageEvent> {
             }
             double value = Double.parseDouble(valueText);
             Assert.isTrue(!Double.isNaN(value), "Failed to parse parameter value: " + parameter);
-            pixels = value * unitToPixels.get(unit);
+            pixels = value * UNIT_TO_PIXELS.get(unit);
         } else {
             throw new IllegalArgumentException("page.pdf() Cannot handle parameter type: " + parameter);
         }
-        return pixels / unitToPixels.get(lengthUnit.getValue());
+        return pixels / UNIT_TO_PIXELS.get(lengthUnit.getValue());
     }
 
     /**
@@ -2467,139 +2451,6 @@ public class Page extends Emitter<Page.PageEvent> {
         return this.coverage;
     }
 
-    public enum PageEvent {
-        /**
-         * Emitted when the page closes.
-         */
-        CLOSE("close"),
-        /**
-         * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or
-         * `console.dir`. Also emitted if the page throws an error or a warning.
-         *
-         * @remarks A `console` event provides a {@link ConsoleMessage} representing the console message that was
-         *          logged.
-         * @example An example of handling `console` event:
-         *          <p>
-         *          ```ts page.on('console', msg => { for (let i = 0; i < msg.args().length; ++i) console.log(`${i}:
-         *          ${msg.args()[i]}`); }); page.evaluate(() => console.log('hello', 5, {foo: 'bar'})); ```
-         */
-        CONSOLE("console"),
-        /**
-         * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Puppeteer
-         * can respond to the dialog via {@link Dialog#accept} or {@link Dialog#dismiss}.
-         */
-        DIALOG("dialog"),
-        /**
-         * Emitted when the JavaScript
-         * <a href="https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded">DOMContentLoaded</a> event is
-         * dispatched.
-         */
-        DOMCONTENTLOADED("domcontentloaded"),
-        /**
-         * Emitted when the page crashes. Will contain an `Error`.
-         */
-        ERROR("error"),
-        /**
-         * Emitted when a frame is attached. Will contain a {@link Frame}.
-         */
-        FRAMEATTACHED("frameattached"),
-        /**
-         * Emitted when a frame is detached. Will contain a {@link Frame}.
-         */
-        FRAMEDETACHED("framedetached"),
-        /**
-         * Emitted when a frame is navigated to a new URL. Will contain a {@link Frame}.
-         */
-        FRAMENAVIGATED("framenavigated"),
-        /**
-         * Emitted when the JavaScript <a href="https://developer.mozilla.org/en-US/docs/Web/Events/load">load</a> event
-         * is dispatched.
-         */
-        LOAD("load"),
-        /**
-         * Emitted when the JavaScript code makes a call to `console.timeStamp`. For the list of metrics see
-         * {@link Page#metrics | page.metrics}.
-         *
-         * @remarks Contains an object with two properties:
-         *          <p>
-         *          - `title`: the title passed to `console.timeStamp` - `metrics`: object containing metrics as
-         *          key/value pairs. The values will be `number`s.
-         */
-        METRICS("metrics"),
-        /**
-         * Emitted when an uncaught exception happens within the page. Contains an `Error`.
-         */
-        PAGEERROR("pageerror"),
-        /**
-         * Emitted when the page opens a new tab or window.
-         * <p>
-         * Contains a {@link Page} corresponding to the popup window.
-         *
-         * @example ```ts const [popup] = await Promise.all([ new Promise(resolve => page.once('popup', resolve)),
-         *          page.click('a[target=_blank]'), ]); ```
-         *          <p>
-         *          ```ts const [popup] = await Promise.all([ new Promise(resolve => page.once('popup', resolve)),
-         *          page.evaluate(() => window.open('https://example.com')), ]); ```
-         */
-        POPUP("popup"),
-        /**
-         * Emitted when a page issues a request and contains a {@link Request}.
-         *
-         * @remarks The object is readonly. See {@link Page#setRequestInterception} for intercepting and mutating
-         *          requests.
-         */
-        REQUEST("request"),
-        /**
-         * Emitted when a request ended up loading from cache. Contains a {@link Request}.
-         *
-         * @remarks For certain requests, might contain undefined. {@link <a href="https://crbug.com/750469">crbug</a>}
-         */
-        REQUESTSERVEDFROMCACHE("requestservedfromcache"),
-        /**
-         * Emitted when a request fails, for example by timing out.
-         * <p>
-         * Contains a {@link Request}.
-         *
-         * @remarks HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so
-         *          request will complete with `requestfinished` event and not with `requestfailed`.
-         */
-        REQUESTFAILED("requestfailed"),
-        /**
-         * Emitted when a request finishes successfully. Contains a {@link Request}.
-         */
-        REQUESTFINISHED("requestfinished"),
-        /**
-         * Emitted when a response is received. Contains a {@link Response}.
-         */
-        RESPONSE("response"),
-        /**
-         * Emitted when a dedicated
-         * {@link <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">WebWorker</a>} is spawned
-         * by the page.
-         */
-        WORKERCREATED("workercreated"),
-        /**
-         * Emitted when a dedicated
-         * {@link <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">WebWorker</a>} is destroyed
-         * by the page.
-         */
-        WORKERDESTROYED("workerdestroyed");
-
-        private String eventName;
-
-        PageEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
-
-        public void setEventName(String eventName) {
-            this.eventName = eventName;
-        }
-    }
-
     static class FileChooserCallBack {
 
         private CountDownLatch latch;
@@ -2643,4 +2494,5 @@ public class Page extends Emitter<Page.PageEvent> {
             }
         }
     }
+
 }

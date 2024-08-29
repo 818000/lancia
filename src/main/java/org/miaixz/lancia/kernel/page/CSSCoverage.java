@@ -33,12 +33,13 @@ import java.util.concurrent.ForkJoinPool;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.StyleSheetAddedEvent;
 import org.miaixz.lancia.nimble.css.CSSStyleSheetHeader;
 import org.miaixz.lancia.nimble.css.Range;
 import org.miaixz.lancia.nimble.profiler.CoverageEntry;
 import org.miaixz.lancia.nimble.profiler.CoverageRange;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
+import org.miaixz.lancia.worker.events.StyleSheetAddedEvent;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -68,11 +69,10 @@ public class CSSCoverage {
         this.enabled = true;
         this.stylesheetURLs.clear();
         this.stylesheetSources.clear();
-        this.disposables.add(Builder.fromEmitterEvent(this.client, CDPSession.CDPSessionEvent.CSS_styleSheetAdded)
+        this.disposables.add(Builder.fromEmitterEvent(this.client, CDPSessionEvent.CSS_styleSheetAdded)
                 .subscribe((event) -> this.onStyleSheet((StyleSheetAddedEvent) event)));
-        this.disposables
-                .add(Builder.fromEmitterEvent(this.client, CDPSession.CDPSessionEvent.Runtime_executionContextsCleared)
-                        .subscribe((ignore) -> this.onExecutionContextsCleared()));
+        this.disposables.add(Builder.fromEmitterEvent(this.client, CDPSessionEvent.Runtime_executionContextsCleared)
+                .subscribe((ignore) -> this.onExecutionContextsCleared()));
         this.client.send("DOM.enable");
         this.client.send("CSS.enable");
         this.client.send("CSS.startRuleUsageTracking");

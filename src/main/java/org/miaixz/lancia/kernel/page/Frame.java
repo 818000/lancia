@@ -37,10 +37,11 @@ import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
 import org.miaixz.lancia.nimble.PageEvaluateType;
 import org.miaixz.lancia.nimble.page.FramePayload;
-import org.miaixz.lancia.options.*;
+import org.miaixz.lancia.option.*;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.FrameEvent;
 
-public class Frame extends Emitter<Frame.FrameEvent> {
+public class Frame extends Emitter<FrameEvent> {
 
     private String id;
 
@@ -376,22 +377,6 @@ public class Frame extends Emitter<Frame.FrameEvent> {
 
     public Set<Frame> childFrames() {
         return this.getChildFrames();
-    }
-
-    public enum FrameEvent {
-        FrameNavigated("Frame.FrameNavigated"), FrameSwapped("Frame.FrameSwapped"),
-        LifecycleEvent("Frame.LifecycleEvent"), FrameNavigatedWithinDocument("Frame.FrameNavigatedWithinDocument"),
-        FrameDetached("Frame.FrameDetached"), FrameSwappedByActivation("Frame.FrameSwappedByActivation");
-
-        private final String eventType;
-
-        FrameEvent(String eventType) {
-            this.eventType = eventType;
-        }
-
-        public String getEventType() {
-            return eventType;
-        }
     }
 
 }

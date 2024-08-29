@@ -42,8 +42,9 @@ import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
 import org.miaixz.lancia.Page;
 import org.miaixz.lancia.kernel.page.Target;
-import org.miaixz.lancia.options.TargetType;
 import org.miaixz.lancia.socket.Connection;
+import org.miaixz.lancia.worker.enums.BrowserContextEvent;
+import org.miaixz.lancia.worker.enums.TargetType;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
@@ -54,7 +55,7 @@ import io.reactivex.rxjava3.core.Observable;
  * @author Kimi Liu
  * @since Java 17+
  */
-public class Context extends Emitter<Context.BrowserContextEvent> {
+public class Context extends Emitter<BrowserContextEvent> {
 
     private static final Map<String, String> WEB_PERMISSION_TO_PROTOCOL_PERMISSION = new HashMap<>(32);
 
@@ -175,20 +176,6 @@ public class Context extends Emitter<Context.BrowserContextEvent> {
 
     public String getId() {
         return this.id;
-    }
-
-    public enum BrowserContextEvent {
-        TargetChanged("targetchanged"), TargetCreated("targetcreated"), TargetDestroyed("targetdestroyed");
-
-        private String eventName;
-
-        BrowserContextEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
     }
 
 }

@@ -31,8 +31,8 @@ import java.util.List;
 
 import org.miaixz.lancia.Browser;
 import org.miaixz.lancia.Launcher;
-import org.miaixz.lancia.options.ConnectOptions;
-import org.miaixz.lancia.options.LaunchOptions;
+import org.miaixz.lancia.option.ConnectOptions;
+import org.miaixz.lancia.option.LaunchOptions;
 
 /**
  * Firefox启动支持

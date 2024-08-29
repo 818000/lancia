@@ -40,9 +40,6 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
 import org.miaixz.lancia.Page;
-import org.miaixz.lancia.events.FrameAttachedEvent;
-import org.miaixz.lancia.events.FrameDetachedEvent;
-import org.miaixz.lancia.events.FrameNavigatedEvent;
 import org.miaixz.lancia.nimble.page.FramePayload;
 import org.miaixz.lancia.nimble.page.FrameStoppedLoadingEvent;
 import org.miaixz.lancia.nimble.page.LifecycleEvent;
@@ -50,15 +47,21 @@ import org.miaixz.lancia.nimble.page.NavigatedWithinDocumentEvent;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextCreatedEvent;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextDescription;
 import org.miaixz.lancia.nimble.runtime.ExecutionContextDestroyedEvent;
-import org.miaixz.lancia.options.GoToOptions;
-import org.miaixz.lancia.options.PuppeteerLifeCycle;
-import org.miaixz.lancia.options.WaitForOptions;
+import org.miaixz.lancia.option.GoToOptions;
+import org.miaixz.lancia.option.WaitForOptions;
 import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
+import org.miaixz.lancia.worker.enums.FrameEvent;
+import org.miaixz.lancia.worker.enums.FrameManagerType;
+import org.miaixz.lancia.worker.enums.PuppeteerLifeCycle;
+import org.miaixz.lancia.worker.events.FrameAttachedEvent;
+import org.miaixz.lancia.worker.events.FrameDetachedEvent;
+import org.miaixz.lancia.worker.events.FrameNavigatedEvent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
+public class FrameManager extends Emitter<FrameManagerType> {
 
     private static final String UTILITY_WORLD_NAME = "__puppeteer_utility_world__";
     private final TimeoutSettings timeoutSettings;
@@ -79,26 +82,24 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
         this.frames = new HashMap<>();
         this.contextIdToContext = new HashMap<>();
         this.isolatedWorlds = new HashSet<>();
-        this.client.on(CDPSession.CDPSessionEvent.Page_frameAttached, (Consumer<FrameAttachedEvent>) event -> this
+        this.client.on(CDPSessionEvent.Page_frameAttached, (Consumer<FrameAttachedEvent>) event -> this
                 .onFrameAttached(event.getFrameId(), event.getParentFrameId()));
-        this.client.on(CDPSession.CDPSessionEvent.Page_frameNavigated,
+        this.client.on(CDPSessionEvent.Page_frameNavigated,
                 (Consumer<FrameNavigatedEvent>) event -> this.onFrameNavigated(event.getFrame(), event.getType()));
-        this.client.on(CDPSession.CDPSessionEvent.Page_navigatedWithinDocument,
+        this.client.on(CDPSessionEvent.Page_navigatedWithinDocument,
                 (Consumer<NavigatedWithinDocumentEvent>) event -> this
                         .onFrameNavigatedWithinDocument(event.getFrameId(), event.getUrl()));
-        this.client.on(CDPSession.CDPSessionEvent.Page_frameDetached,
+        this.client.on(CDPSessionEvent.Page_frameDetached,
                 (Consumer<FrameDetachedEvent>) event -> this.onFrameDetached(event.getFrameId(), event.getReason()));
-        this.client.on(CDPSession.CDPSessionEvent.Page_frameStoppedLoading,
+        this.client.on(CDPSessionEvent.Page_frameStoppedLoading,
                 (Consumer<FrameStoppedLoadingEvent>) event -> this.onFrameStoppedLoading(event.getFrameId()));
-        this.client.on(CDPSession.CDPSessionEvent.Runtime_executionContextCreated,
+        this.client.on(CDPSessionEvent.Runtime_executionContextCreated,
                 (Consumer<ExecutionContextCreatedEvent>) event -> this.onExecutionContextCreated(event.getContext()));
-        this.client.on(CDPSession.CDPSessionEvent.Runtime_executionContextDestroyed,
+        this.client.on(CDPSessionEvent.Runtime_executionContextDestroyed,
                 (Consumer<ExecutionContextDestroyedEvent>) event -> this
                         .onExecutionContextDestroyed(event.getExecutionContextId()));
-        this.client.on(CDPSession.CDPSessionEvent.Runtime_executionContextsCleared,
-                ignore -> this.onExecutionContextsCleared());
-        this.client.on(CDPSession.CDPSessionEvent.Page_lifecycleEvent,
-                (Consumer<LifecycleEvent>) this::onLifecycleEvent);
+        this.client.on(CDPSessionEvent.Runtime_executionContextsCleared, ignore -> this.onExecutionContextsCleared());
+        this.client.on(CDPSessionEvent.Page_lifecycleEvent, (Consumer<LifecycleEvent>) this::onLifecycleEvent);
     }
 
     private void onLifecycleEvent(LifecycleEvent event) {
@@ -106,8 +107,8 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
         if (frame == null)
             return;
         frame.onLifecycleEvent(event.getLoaderId(), event.getName());
-        this.emit(FrameManagerEvent.LifecycleEvent, frame);
-        frame.emit(Frame.FrameEvent.LifecycleEvent, null);
+        this.emit(FrameManagerType.LifecycleEvent, frame);
+        frame.emit(FrameEvent.LifecycleEvent, null);
     }
 
     private void onExecutionContextsCleared() {
@@ -167,8 +168,8 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
         if (frame == null)
             return;
         frame.onLoadingStopped();
-        this.emit(FrameManagerEvent.LifecycleEvent, frame);
-        frame.emit(Frame.FrameEvent.LifecycleEvent, null);
+        this.emit(FrameManagerType.LifecycleEvent, frame);
+        frame.emit(FrameEvent.LifecycleEvent, null);
     }
 
     /**
@@ -186,8 +187,8 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
             this.removeFramesRecursively(frame);
             break;
         case "swap":
-            this.emit(FrameManagerEvent.FrameSwapped, frame);
-            frame.emit(Frame.FrameEvent.FrameSwapped, null);
+            this.emit(FrameManagerType.FrameSwapped, frame);
+            frame.emit(FrameEvent.FrameSwapped, null);
             break;
         }
     }
@@ -202,10 +203,10 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
             return;
         }
         frame.navigatedWithinDocument(url);
-        this.emit(FrameManagerEvent.FrameNavigatedWithinDocument, frame);
-        frame.emit(Frame.FrameEvent.FrameNavigatedWithinDocument, null);
-        this.emit(FrameManagerEvent.FrameNavigated, frame);
-        frame.emit(Frame.FrameEvent.FrameNavigated, "Navigation");
+        this.emit(FrameManagerType.FrameNavigatedWithinDocument, frame);
+        frame.emit(FrameEvent.FrameNavigatedWithinDocument, null);
+        this.emit(FrameManagerType.FrameNavigated, frame);
+        frame.emit(FrameEvent.FrameNavigated, "Navigation");
     }
 
     public void initialize() {
@@ -270,7 +271,7 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
         Frame parentFrame = this.frames.get(parentFrameId);
         Frame frame = new Frame(this, this.client, parentFrame, frameId);
         this.frames.put(frame.getId(), frame);
-        this.emit(FrameManagerEvent.FrameAttached, frame);
+        this.emit(FrameManagerType.FrameAttached, frame);
     }
 
     /**
@@ -307,8 +308,8 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
 
         // Update frame payload.
         frame.navigated(framePayload);
-        this.emit(FrameManagerEvent.FrameNavigated, frame);
-        frame.emit(Frame.FrameEvent.FrameNavigated, navigationType);
+        this.emit(FrameManagerType.FrameNavigated, frame);
+        frame.emit(FrameEvent.FrameNavigated, navigationType);
     }
 
     public List<Frame> frames() {
@@ -329,8 +330,8 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
         }
         childFrame.detach();
         this.frames.remove(childFrame.getId());
-        this.emit(FrameManagerEvent.FrameDetached, childFrame);
-        childFrame.emit(Frame.FrameEvent.FrameDetached, childFrame);
+        this.emit(FrameManagerType.FrameDetached, childFrame);
+        childFrame.emit(FrameEvent.FrameDetached, childFrame);
     }
 
     public CDPSession getClient() {
@@ -493,7 +494,7 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
             if ((timeout = options.getTimeout()) == null) {
                 timeout = this.timeoutSettings.navigationTimeout();
             }
-            ignoreSameDocumentNavigation = options.getIgnoreSameDocumentNavigation();
+            ignoreSameDocumentNavigation = options.isIgnoreSameDocumentNavigation();
         }
         LifecycleWatcher watcher = new LifecycleWatcher(frame.getFrameManager().getNetworkManager(), frame, waitUntil,
                 timeout);
@@ -548,28 +549,6 @@ public class FrameManager extends Emitter<FrameManager.FrameManagerEvent> {
 
     public NetworkManager networkManager() {
         return this.networkManager;
-    }
-
-    public enum FrameManagerEvent {
-        FrameAttached("FrameManager.FrameAttached"), FrameNavigated("FrameManager.FrameNavigated"),
-        FrameDetached("FrameManager.FrameDetached"), FrameSwapped("FrameManager.FrameSwapped"),
-        LifecycleEvent("FrameManager.LifecycleEvent"),
-        FrameNavigatedWithinDocument("FrameManager.FrameNavigatedWithinDocument"),
-        ConsoleApiCalled("FrameManager.ConsoleApiCalled"), BindingCalled("FrameManager.BindingCalled");
-
-        private String eventName;
-
-        FrameManagerEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
-
-        public void setEventName(String eventName) {
-            this.eventName = eventName;
-        }
     }
 
 }

@@ -36,12 +36,15 @@ import org.miaixz.bus.core.lang.exception.InternalException;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.events.*;
 import org.miaixz.lancia.kernel.page.Target;
 import org.miaixz.lancia.kernel.page.TargetInfo;
-import org.miaixz.lancia.options.FilterEntry;
+import org.miaixz.lancia.option.data.FilterEntry;
 import org.miaixz.lancia.socket.CDPSession;
 import org.miaixz.lancia.socket.Connection;
+import org.miaixz.lancia.worker.enums.CDPSessionEvent;
+import org.miaixz.lancia.worker.enums.InitializationStatus;
+import org.miaixz.lancia.worker.enums.TargetManagerType;
+import org.miaixz.lancia.worker.events.*;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.SingleSubject;
@@ -76,14 +79,15 @@ public class ChromeTargetManager extends TargetManager {
         this.targetFilterCallback = targetFilterCallback;
         this.targetFactory = targetFactory;
         this.waitForInitiallyDiscoveredTargets = waitForInitiallyDiscoveredTargets;
-        disposables.add(Builder.<TargetCreatedEvent, CDPSession.CDPSessionEvent>fromEmitterEvent(this.connection,
-                CDPSession.CDPSessionEvent.Target_targetCreated).subscribe(this::onTargetCreated));
-        disposables.add(Builder.<TargetDestroyedEvent, CDPSession.CDPSessionEvent>fromEmitterEvent(this.connection,
-                CDPSession.CDPSessionEvent.Target_targetDestroyed).subscribe(this::onTargetDestroyed));
-        disposables.add(Builder.<TargetInfoChangedEvent, CDPSession.CDPSessionEvent>fromEmitterEvent(this.connection,
-                CDPSession.CDPSessionEvent.Target_targetInfoChanged).subscribe(this::onTargetInfoChanged));
-        disposables.add(Builder.<CDPSession, CDPSession.CDPSessionEvent>fromEmitterEvent(this.connection,
-                CDPSession.CDPSessionEvent.sessionDetached).subscribe(this::onSessionDetached));
+        disposables.add(Builder.<TargetCreatedEvent, CDPSessionEvent>fromEmitterEvent(this.connection,
+                CDPSessionEvent.Target_targetCreated).subscribe(this::onTargetCreated));
+        disposables.add(Builder.<TargetDestroyedEvent, CDPSessionEvent>fromEmitterEvent(this.connection,
+                CDPSessionEvent.Target_targetDestroyed).subscribe(this::onTargetDestroyed));
+        disposables.add(Builder.<TargetInfoChangedEvent, CDPSessionEvent>fromEmitterEvent(this.connection,
+                CDPSessionEvent.Target_targetInfoChanged).subscribe(this::onTargetInfoChanged));
+        disposables.add(
+                Builder.<CDPSession, CDPSessionEvent>fromEmitterEvent(this.connection, CDPSessionEvent.sessionDetached)
+                        .subscribe(this::onSessionDetached));
         this.setupAttachmentListeners(this.connection);
     }
 
@@ -139,12 +143,12 @@ public class ChromeTargetManager extends TargetManager {
         Assert.isTrue(!this.attachedToTargetListenersByConnection.containsKey(connection),
                 "Already attached to connection");
         this.attachedToTargetListenersByConnection.put(connection, listener);
-        connection.on(CDPSession.CDPSessionEvent.Target_attachedToTarget, listener);
+        connection.on(CDPSessionEvent.Target_attachedToTarget, listener);
         Consumer<DetachedFromTargetEvent> detachedListener = this::onDetachedFromTarget;
         Assert.isTrue(!this.detachedFromTargetListenersByConnection.containsKey(connection),
                 "Already attached to connection");
         this.detachedFromTargetListenersByConnection.put(connection, detachedListener);
-        connection.on(CDPSession.CDPSessionEvent.Target_detachedFromTarget, detachedListener);
+        connection.on(CDPSessionEvent.Target_detachedFromTarget, detachedListener);
     }
 
     private void onDetachedFromTarget(DetachedFromTargetEvent event) {
@@ -154,7 +158,7 @@ public class ChromeTargetManager extends TargetManager {
             return;
         }
         this.attachedTargetsByTargetId.remove(target.getTargetId());
-        this.emit(TargetManagerEvent.TargetGone, target);
+        this.emit(TargetManagerType.TargetGone, target);
     }
 
     private void onDetachedFromTarget(CDPSession parentSession, DetachedFromTargetEvent event) {
@@ -165,7 +169,7 @@ public class ChromeTargetManager extends TargetManager {
         }
         parentSession.getTarget().removeChildTarget(target);
         this.attachedTargetsByTargetId.remove(target.getTargetId());
-        this.emit(TargetManagerEvent.TargetGone, target);
+        this.emit(TargetManagerType.TargetGone, target);
     }
 
     private void onAttachedToTarget(Connection parentConnection, AttachedToTargetEvent event) {
@@ -186,7 +190,7 @@ public class ChromeTargetManager extends TargetManager {
             Target target = this.targetFactory.create(targetInfo, null, null);
             target.initialize();
             this.attachedTargetsByTargetId.put(targetInfo.getTargetId(), target);
-            this.emit(TargetManagerEvent.TargetAvailable, target);
+            this.emit(TargetManagerType.TargetAvailable, target);
             return;
         }
         boolean isExistingTarget = this.attachedTargetsByTargetId.containsKey(targetInfo.getTargetId());
@@ -208,10 +212,10 @@ public class ChromeTargetManager extends TargetManager {
             this.attachedTargetsByTargetId.put(targetInfo.getTargetId(), target);
             this.attachedTargetsBySessionId.put(session.id(), target);
         }
-        parentConnection.emit(CDPSession.CDPSessionEvent.CDPSession_Ready, session);
+        parentConnection.emit(CDPSessionEvent.CDPSession_Ready, session);
         this.targetsIdsForInit.remove(target.getTargetId());
         if (!isExistingTarget) {
-            this.emit(TargetManagerEvent.TargetAvailable, target);
+            this.emit(TargetManagerType.TargetAvailable, target);
         }
         this.finishInitializationIfReady(null);
         Map<String, Object> params = new HashMap<>();
@@ -246,7 +250,7 @@ public class ChromeTargetManager extends TargetManager {
             Target target = this.targetFactory.create(targetInfo, null, null);
             target.initialize();
             this.attachedTargetsByTargetId.put(targetInfo.getTargetId(), target);
-            this.emit(TargetManagerEvent.TargetAvailable, target);
+            this.emit(TargetManagerType.TargetAvailable, target);
             return;
         }
         boolean isExistingTarget = this.attachedTargetsByTargetId.containsKey(targetInfo.getTargetId());
@@ -270,10 +274,10 @@ public class ChromeTargetManager extends TargetManager {
         }
         Target parentTarget = parentSession.getTarget();
         parentTarget.addChildTarget(target);
-        parentSession.emit(CDPSession.CDPSessionEvent.CDPSession_Ready, session);
+        parentSession.emit(CDPSessionEvent.CDPSession_Ready, session);
         this.targetsIdsForInit.remove(target.getTargetId());
         if (!isExistingTarget) {
-            this.emit(TargetManagerEvent.TargetAvailable, target);
+            this.emit(TargetManagerType.TargetAvailable, target);
         }
         this.finishInitializationIfReady(null);
         Map<String, Object> params = new HashMap<>();
@@ -319,19 +323,19 @@ public class ChromeTargetManager extends TargetManager {
         };
         Assert.isTrue(!this.attachedToTargetListenersBySession.containsKey(session), "Already attached to connection");
         this.attachedToTargetListenersBySession.put(session, listener);
-        session.on(CDPSession.CDPSessionEvent.Target_attachedToTarget, listener);
+        session.on(CDPSessionEvent.Target_attachedToTarget, listener);
         Consumer<DetachedFromTargetEvent> detachedListener = (event) -> {
             this.onDetachedFromTarget(session, event);
         };
         Assert.isTrue(!this.detachedFromTargetListenersBySession.containsKey(session),
                 "Already attached to connection");
         this.detachedFromTargetListenersBySession.put(session, detachedListener);
-        session.on(CDPSession.CDPSessionEvent.Target_detachedFromTarget, detachedListener);
+        session.on(CDPSessionEvent.Target_detachedFromTarget, detachedListener);
     }
 
     private void onTargetCreated(TargetCreatedEvent event) {
         this.discoveredTargetsByTargetId.put(event.getTargetInfo().getTargetId(), event.getTargetInfo());
-        this.emit(TargetManagerEvent.TargetDiscovered, event.getTargetInfo());
+        this.emit(TargetManagerType.TargetDiscovered, event.getTargetInfo());
         if ("browser".equals(event.getTargetInfo().getType()) && event.getTargetInfo().getAttached()) {
             if (this.attachedTargetsByTargetId.containsKey(event.getTargetInfo().getTargetId())) {
                 return;
@@ -351,7 +355,7 @@ public class ChromeTargetManager extends TargetManager {
                     && this.attachedTargetsByTargetId.containsKey(event.getTargetId())) {
                 Target target = this.attachedTargetsByTargetId.get(event.getTargetId());
                 if (target != null) {
-                    this.emit(TargetManagerEvent.TargetGone, target);
+                    this.emit(TargetManagerType.TargetGone, target);
                     this.attachedTargetsByTargetId.remove(event.getTargetId());
                 }
             }
@@ -371,17 +375,17 @@ public class ChromeTargetManager extends TargetManager {
         }
         String previousURL = target.url();
         boolean wasInitialized = target.initializedSubject.hasValue()
-                && Target.InitializationStatus.SUCCESS.equals(target.initializedSubject.getValue());
+                && InitializationStatus.SUCCESS.equals(target.initializedSubject.getValue());
         if (isPageTargetBecomingPrimary(target, event.getTargetInfo())) {
             CDPSession session = target.session();
             Assert.notNull(session, "Target that is being activated is missing a CDPSession.");
             if (session.parentSession() != null) {
-                session.parentSession().emit(CDPSession.CDPSessionEvent.CDPSession_Swapped, session);
+                session.parentSession().emit(CDPSessionEvent.CDPSession_Swapped, session);
             }
         }
         target.targetInfoChanged(event.getTargetInfo());
         if (wasInitialized && !previousURL.equals(target.url())) {
-            this.emit(TargetManagerEvent.TargetChanged, target);
+            this.emit(TargetManagerType.TargetChanged, target);
         }
     }
 
@@ -396,11 +400,11 @@ public class ChromeTargetManager extends TargetManager {
     private void removeAttachmentListeners(CDPSession session) {
         Consumer<AttachedToTargetEvent> listener = this.attachedToTargetListenersBySession.get(session);
         if (listener != null) {
-            session.off(CDPSession.CDPSessionEvent.Target_attachedToTarget, listener);
+            session.off(CDPSessionEvent.Target_attachedToTarget, listener);
             this.attachedToTargetListenersBySession.remove(session);
         }
         if (this.detachedFromTargetListenersBySession.containsKey(session)) {
-            session.off(CDPSession.CDPSessionEvent.Target_detachedFromTarget,
+            session.off(CDPSessionEvent.Target_detachedFromTarget,
                     this.detachedFromTargetListenersBySession.get(session));
             this.detachedFromTargetListenersBySession.remove(session);
         }
@@ -409,11 +413,11 @@ public class ChromeTargetManager extends TargetManager {
     private void removeAttachmentListeners(Connection connection) {
         Consumer<AttachedToTargetEvent> listener = this.attachedToTargetListenersByConnection.get(connection);
         if (listener != null) {
-            connection.off(CDPSession.CDPSessionEvent.Target_attachedToTarget, listener);
+            connection.off(CDPSessionEvent.Target_attachedToTarget, listener);
             this.attachedToTargetListenersByConnection.remove(connection);
         }
         if (this.detachedFromTargetListenersByConnection.containsKey(connection)) {
-            connection.off(CDPSession.CDPSessionEvent.Target_detachedFromTarget,
+            connection.off(CDPSessionEvent.Target_detachedFromTarget,
                     this.detachedFromTargetListenersByConnection.get(connection));
             this.detachedFromTargetListenersByConnection.remove(connection);
         }

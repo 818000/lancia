@@ -44,10 +44,13 @@ import org.miaixz.lancia.kernel.*;
 import org.miaixz.lancia.kernel.browser.Context;
 import org.miaixz.lancia.kernel.page.Target;
 import org.miaixz.lancia.kernel.page.TargetInfo;
-import org.miaixz.lancia.options.*;
-import org.miaixz.lancia.socket.CDPSession;
+import org.miaixz.lancia.option.BrowserContextOptions;
+import org.miaixz.lancia.option.data.Debug;
+import org.miaixz.lancia.option.data.GetVersionResponse;
+import org.miaixz.lancia.option.data.Viewport;
 import org.miaixz.lancia.socket.Connection;
 import org.miaixz.lancia.socket.factory.SessionFactory;
+import org.miaixz.lancia.worker.enums.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -58,7 +61,8 @@ import io.reactivex.rxjava3.core.Observable;
 /**
  * 浏览器实例
  */
-public class Browser extends Emitter<Browser.BrowserEvent> {
+public class Browser extends Emitter<BrowserEvent> {
+
     private final Viewport defaultViewport;
     private final Process process;
     private final Connection connection;
@@ -67,27 +71,23 @@ public class Browser extends Emitter<Browser.BrowserEvent> {
     private final Map<String, Context> contexts = new HashMap<>();
     private final TargetManager targetManager;
     private final Consumer<Target> onAttachedToTarget = (target) -> {
-        if (target.isTargetExposed()
-                && target.initializedSubject.blockingGet().equals(Target.InitializationStatus.SUCCESS)) {
+        if (target.isTargetExposed() && target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS)) {
             this.emit(BrowserEvent.TargetCreated, target);
-            target.browserContext().emit(Context.BrowserContextEvent.TargetCreated, target);
+            target.browserContext().emit(BrowserContextEvent.TargetCreated, target);
         }
     };
-    private final Consumer<Object> emitDisconnected = (ignore) -> {
-        this.emit(BrowserEvent.Disconnected, null);
-    };
+    private final Consumer<Object> emitDisconnected = (ignore) -> this.emit(BrowserEvent.Disconnected, null);
     private final Consumer<Target> onDetachedFromTarget = (target) -> {
-        target.initializedSubject.onSuccess(Target.InitializationStatus.ABORTED);
+        target.initializedSubject.onSuccess(InitializationStatus.ABORTED);
         target.isClosedSubject.onSuccess(true);
-        if (target.isTargetExposed()
-                && target.initializedSubject.blockingGet().equals(Target.InitializationStatus.SUCCESS)) {
+        if (target.isTargetExposed() && target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS)) {
             this.emit(BrowserEvent.TargetDestroyed, target);
-            target.browserContext().emit(Context.BrowserContextEvent.TargetDestroyed, target);
+            target.browserContext().emit(BrowserContextEvent.TargetDestroyed, target);
         }
     };
     private final Consumer<Target> onTargetChanged = (target) -> {
         this.emit(BrowserEvent.TargetChanged, target);
-        target.browserContext().emit(Context.BrowserContextEvent.TargetChanged, target);
+        target.browserContext().emit(BrowserContextEvent.TargetChanged, target);
     };
     private final Consumer<TargetInfo> onTargetDiscovered = (target) -> {
         this.emit(BrowserEvent.TargetDiscovered, target);
@@ -143,20 +143,20 @@ public class Browser extends Emitter<Browser.BrowserEvent> {
     }
 
     private void attach() {
-        this.connection.on(CDPSession.CDPSessionEvent.CDPSession_Disconnected, this.emitDisconnected);
-        this.targetManager.on(TargetManager.TargetManagerEvent.TargetAvailable, this.onAttachedToTarget);
-        this.targetManager.on(TargetManager.TargetManagerEvent.TargetGone, this.onDetachedFromTarget);
-        this.targetManager.on(TargetManager.TargetManagerEvent.TargetChanged, this.onTargetChanged);
-        this.targetManager.on(TargetManager.TargetManagerEvent.TargetDiscovered, this.onTargetDiscovered);
+        this.connection.on(CDPSessionEvent.CDPSession_Disconnected, this.emitDisconnected);
+        this.targetManager.on(TargetManagerType.TargetAvailable, this.onAttachedToTarget);
+        this.targetManager.on(TargetManagerType.TargetGone, this.onDetachedFromTarget);
+        this.targetManager.on(TargetManagerType.TargetChanged, this.onTargetChanged);
+        this.targetManager.on(TargetManagerType.TargetDiscovered, this.onTargetDiscovered);
         this.targetManager.initialize();
     }
 
     private void detach() {
-        this.connection.off(CDPSession.CDPSessionEvent.CDPSession_Disconnected, this.emitDisconnected);
-        this.targetManager.off(TargetManager.TargetManagerEvent.TargetAvailable, this.onAttachedToTarget);
-        this.targetManager.off(TargetManager.TargetManagerEvent.TargetGone, this.onDetachedFromTarget);
-        this.targetManager.off(TargetManager.TargetManagerEvent.TargetChanged, this.onTargetChanged);
-        this.targetManager.off(TargetManager.TargetManagerEvent.TargetDiscovered, this.onTargetDiscovered);
+        this.connection.off(CDPSessionEvent.CDPSession_Disconnected, this.emitDisconnected);
+        this.targetManager.off(TargetManagerType.TargetAvailable, this.onAttachedToTarget);
+        this.targetManager.off(TargetManagerType.TargetGone, this.onDetachedFromTarget);
+        this.targetManager.off(TargetManagerType.TargetChanged, this.onTargetChanged);
+        this.targetManager.off(TargetManagerType.TargetDiscovered, this.onTargetDiscovered);
     }
 
     public Process process() {
@@ -177,7 +177,7 @@ public class Browser extends Emitter<Browser.BrowserEvent> {
                     || TargetType.BACKGROUND_PAGE.equals(target.type()) || TargetType.WEBVIEW.equals(target.type()));
         }
         this.isPageTargetCallback = isPageTargetCallback;
-    };
+    }
 
     public void disposeContext(String contextId) {
         if (StringKit.isEmpty(contextId)) {
@@ -263,7 +263,7 @@ public class Browser extends Emitter<Browser.BrowserEvent> {
             if (target == null) {
                 throw new InternalException("Missing target for page (id = " + targetId + ")");
             }
-            if (!target.initializedSubject.blockingGet().equals(Target.InitializationStatus.SUCCESS)) {
+            if (!target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS)) {
                 throw new InternalException("Failed to create target for page (id =" + targetId + ")");
             }
             Page page = target.page();
@@ -288,7 +288,7 @@ public class Browser extends Emitter<Browser.BrowserEvent> {
     public List<Target> targets() {
         return this.targetManager.getAvailableTargets().values().stream()
                 .filter(target -> target.isTargetExposed()
-                        && target.initializedSubject.blockingGet().equals(Target.InitializationStatus.SUCCESS))
+                        && target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS))
                 .collect(Collectors.toList());
     }
 
@@ -326,8 +326,8 @@ public class Browser extends Emitter<Browser.BrowserEvent> {
         }
     }
 
-    public DebugInfo debugInfo() {
-        return new DebugInfo(this.connection.getPendingProtocolErrors());
+    public Debug debug() {
+        return Debug.builder().pendingProtocolErrors(this.connection.getPendingProtocolErrors()).build();
     }
 
     public Target waitForTarget(Predicate<Target> predicate, int timeout) {
@@ -337,22 +337,6 @@ public class Browser extends Emitter<Browser.BrowserEvent> {
         Observable<@NonNull Target> targetsObservable = Observable.fromIterable(this.targets());
         return Observable.mergeArray(targetCreateObservable, TargetChangeObservable, targetsObservable)
                 .filter(predicate::test).timeout(timeout, TimeUnit.MILLISECONDS).blockingFirst();
-    }
-
-    public enum BrowserEvent {
-        CONNECTION_DISCONNECTED("Connection.Disconnected"), CDPSESSION_DISCONNECTED("CDPSession.Disconnected"),
-        TargetCreated("targetcreated"), TargetDestroyed("targetdestroyed"), TargetChanged("targetchanged"),
-        TargetDiscovered("targetdiscovered"), Disconnected("disconnected");
-
-        private String eventName;
-
-        BrowserEvent(String eventName) {
-            this.eventName = eventName;
-        }
-
-        public String getEventName() {
-            return eventName;
-        }
     }
 
 }

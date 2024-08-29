@@ -27,10 +27,11 @@
 */
 package org.miaixz.lancia.kernel.browser;
 
-import com.sun.jna.Platform;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
+
+import com.sun.jna.Platform;
 
 /**
  * @author Kimi Liu
