@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.page;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Fired when same-document navigation happens, e.g. due to history API usage or anchor navigation.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class NavigatedWithinDocumentEvent {
 
     /**
@@ -40,21 +51,5 @@ public class NavigatedWithinDocumentEvent {
      * Frame's new url.
      */
     private String url;
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
 
 }

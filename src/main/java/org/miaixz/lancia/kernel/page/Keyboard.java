@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.nimble.input.KeyDefinition;
 import org.miaixz.lancia.nimble.input.KeyDescription;
@@ -60,9 +61,9 @@ public class Keyboard {
         keyDefinitions.put("Tab", new KeyDefinition(9, "Tab", "Tab"));
         keyDefinitions.put("Numpad5", new KeyDefinition(12, 101, "Clear", "Numpad5", "5", 3));
         keyDefinitions.put("NumpadEnter", new KeyDefinition(13, "NumpadEnter", "Enter", "\r", 3));
-        keyDefinitions.put("Enter", new KeyDefinition(13, "Enter", "Enter", "\r"));
-        keyDefinitions.put("\r", new KeyDefinition(13, "Enter", "Enter", "\r"));
-        keyDefinitions.put("\n", new KeyDefinition(13, "Enter", "Enter", "\r"));
+        keyDefinitions.put("Enter", new KeyDefinition(13, "\r", "Enter", "Enter"));
+        keyDefinitions.put("\r", new KeyDefinition(13, "\r", "Enter", "Enter"));
+        keyDefinitions.put("\n", new KeyDefinition(13, "\r", "Enter", "Enter"));
         keyDefinitions.put("ShiftLeft", new KeyDefinition(16, "Shift", "ShiftLeft", 1));
         keyDefinitions.put("ShiftRight", new KeyDefinition(16, "Shift", "ShiftRight", 2));
         keyDefinitions.put("ControlLeft", new KeyDefinition(17, "Control", "ControlLeft", 1));
@@ -391,7 +392,8 @@ public class Keyboard {
     private KeyDescription keyDescriptionForString(String keyString) {
 
         int shift = this.modifiers & 8;
-        KeyDescription description = new KeyDescription("", 0, "", "", 0);
+        KeyDescription description = KeyDescription.builder().key(Normal.EMPTY).keyCode(0).code(Normal.EMPTY)
+                .text(Normal.EMPTY).location(0).build();
         KeyDefinition definition = keyDefinitions.get(keyString);
         if (definition == null)
             throw new IllegalArgumentException("Unknown key: " + keyString);

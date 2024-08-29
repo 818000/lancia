@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Fired when HTTP request has finished loading.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoadingFinishedEvent {
 
     /**
@@ -49,37 +60,5 @@ public class LoadingFinishedEvent {
      * DevTools console.
      */
     private boolean shouldReportCorbBlocking;
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public int getEncodedDataLength() {
-        return encodedDataLength;
-    }
-
-    public void setEncodedDataLength(int encodedDataLength) {
-        this.encodedDataLength = encodedDataLength;
-    }
-
-    public boolean getIsShouldReportCorbBlocking() {
-        return shouldReportCorbBlocking;
-    }
-
-    public void setShouldReportCorbBlocking(boolean shouldReportCorbBlocking) {
-        this.shouldReportCorbBlocking = shouldReportCorbBlocking;
-    }
 
 }

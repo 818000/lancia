@@ -27,11 +27,21 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.miaixz.lancia.kernel.page.Request;
 
 /**
  * Fired when page is about to send HTTP request.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RequestWillBeSentEvent {
 
     /**
@@ -79,93 +89,5 @@ public class RequestWillBeSentEvent {
      * Whether the request is initiated by a user gesture. Defaults to false.
      */
     private boolean hasUserGesture;
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public String getLoaderId() {
-        return loaderId;
-    }
-
-    public void setLoaderId(String loaderId) {
-        this.loaderId = loaderId;
-    }
-
-    public String getDocumentURL() {
-        return documentURL;
-    }
-
-    public void setDocumentURL(String documentURL) {
-        this.documentURL = documentURL;
-    }
-
-    public Request getRequest() {
-        return request;
-    }
-
-    public void setRequest(Request request) {
-        this.request = request;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public long getWallTime() {
-        return wallTime;
-    }
-
-    public void setWallTime(long wallTime) {
-        this.wallTime = wallTime;
-    }
-
-    public Initiator getInitiator() {
-        return initiator;
-    }
-
-    public void setInitiator(Initiator initiator) {
-        this.initiator = initiator;
-    }
-
-    public ResponsePayload getRedirectResponse() {
-        return redirectResponse;
-    }
-
-    public void setRedirectResponse(ResponsePayload redirectResponse) {
-        this.redirectResponse = redirectResponse;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
-
-    public boolean getHasUserGesture() {
-        return hasUserGesture;
-    }
-
-    public void setHasUserGesture(boolean hasUserGesture) {
-        this.hasUserGesture = hasUserGesture;
-    }
 
 }

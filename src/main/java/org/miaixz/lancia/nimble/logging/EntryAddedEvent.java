@@ -27,30 +27,28 @@
 */
 package org.miaixz.lancia.nimble.logging;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Issued when new message was logged.
  *
  * @author Kimi Liu
  * @since Java 17+
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EntryAddedEvent {
 
     /**
      * The entry.
      */
     private LogEntry entry;
-
-    public LogEntry getEntry() {
-        return entry;
-    }
-
-    public void setEntry(LogEntry entry) {
-        this.entry = entry;
-    }
-
-    @Override
-    public String toString() {
-        return "EntryAddedPayload{" + "entry=" + entry + '}';
-    }
 
 }

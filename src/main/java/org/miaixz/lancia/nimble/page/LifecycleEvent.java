@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.page;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Fired for top level page lifecycle events such as navigation, load, paint, etc.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LifecycleEvent {
 
     /**
@@ -44,37 +55,5 @@ public class LifecycleEvent {
     private String name;
 
     private long timestamp;
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
-
-    public String getLoaderId() {
-        return loaderId;
-    }
-
-    public void setLoaderId(String loaderId) {
-        this.loaderId = loaderId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
 
 }

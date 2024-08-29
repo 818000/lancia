@@ -27,8 +27,19 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class StackTrace {
 
     /**
@@ -49,37 +60,5 @@ public class StackTrace {
      * Asynchronous JavaScript stack trace that preceded this stack, if available.
      */
     private StackTraceId parentId;
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public List<CallFrame> getCallFrames() {
-        return callFrames;
-    }
-
-    public void setCallFrames(List<CallFrame> callFrames) {
-        this.callFrames = callFrames;
-    }
-
-    public StackTrace getParent() {
-        return parent;
-    }
-
-    public void setParent(StackTrace parent) {
-        this.parent = parent;
-    }
-
-    public StackTraceId getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(StackTraceId parentId) {
-        this.parentId = parentId;
-    }
 
 }

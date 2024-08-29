@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Timing information for the request.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResourceTiming {
 
     /**
@@ -97,133 +108,5 @@ public class ResourceTiming {
      * Finished receiving response headers.
      */
     private int receiveHeadersEnd;
-
-    public int getRequestTime() {
-        return requestTime;
-    }
-
-    public void setRequestTime(int requestTime) {
-        this.requestTime = requestTime;
-    }
-
-    public int getProxyStart() {
-        return proxyStart;
-    }
-
-    public void setProxyStart(int proxyStart) {
-        this.proxyStart = proxyStart;
-    }
-
-    public int getProxyEnd() {
-        return proxyEnd;
-    }
-
-    public void setProxyEnd(int proxyEnd) {
-        this.proxyEnd = proxyEnd;
-    }
-
-    public int getDnsStart() {
-        return dnsStart;
-    }
-
-    public void setDnsStart(int dnsStart) {
-        this.dnsStart = dnsStart;
-    }
-
-    public int getDnsEnd() {
-        return dnsEnd;
-    }
-
-    public void setDnsEnd(int dnsEnd) {
-        this.dnsEnd = dnsEnd;
-    }
-
-    public int getConnectStart() {
-        return connectStart;
-    }
-
-    public void setConnectStart(int connectStart) {
-        this.connectStart = connectStart;
-    }
-
-    public int getConnectEnd() {
-        return connectEnd;
-    }
-
-    public void setConnectEnd(int connectEnd) {
-        this.connectEnd = connectEnd;
-    }
-
-    public int getSslStart() {
-        return sslStart;
-    }
-
-    public void setSslStart(int sslStart) {
-        this.sslStart = sslStart;
-    }
-
-    public int getSslEnd() {
-        return sslEnd;
-    }
-
-    public void setSslEnd(int sslEnd) {
-        this.sslEnd = sslEnd;
-    }
-
-    public int getWorkerStart() {
-        return workerStart;
-    }
-
-    public void setWorkerStart(int workerStart) {
-        this.workerStart = workerStart;
-    }
-
-    public int getWorkerReady() {
-        return workerReady;
-    }
-
-    public void setWorkerReady(int workerReady) {
-        this.workerReady = workerReady;
-    }
-
-    public int getSendStart() {
-        return sendStart;
-    }
-
-    public void setSendStart(int sendStart) {
-        this.sendStart = sendStart;
-    }
-
-    public int getSendEnd() {
-        return sendEnd;
-    }
-
-    public void setSendEnd(int sendEnd) {
-        this.sendEnd = sendEnd;
-    }
-
-    public int getPushStart() {
-        return pushStart;
-    }
-
-    public void setPushStart(int pushStart) {
-        this.pushStart = pushStart;
-    }
-
-    public int getPushEnd() {
-        return pushEnd;
-    }
-
-    public void setPushEnd(int pushEnd) {
-        this.pushEnd = pushEnd;
-    }
-
-    public int getReceiveHeadersEnd() {
-        return receiveHeadersEnd;
-    }
-
-    public void setReceiveHeadersEnd(int receiveHeadersEnd) {
-        this.receiveHeadersEnd = receiveHeadersEnd;
-    }
 
 }

@@ -27,22 +27,25 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Issued when new execution context is created.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExecutionContextCreatedEvent {
 
     /**
      * A newly created execution context.
      */
     private ExecutionContextDescription context;
-
-    public ExecutionContextDescription getContext() {
-        return context;
-    }
-
-    public void setContext(ExecutionContextDescription context) {
-        this.context = context;
-    }
 
 }

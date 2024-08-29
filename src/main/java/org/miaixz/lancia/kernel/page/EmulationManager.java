@@ -67,9 +67,9 @@ public class EmulationManager implements ClientProvider {
                 : 1;
         ScreenOrientation screenOrientation;
         if (viewport.isLandscape()) {
-            screenOrientation = new ScreenOrientation(90, "landscapePrimary");
+            screenOrientation = ScreenOrientation.builder().angle(90).type("landscapePrimary").build();
         } else {
-            screenOrientation = new ScreenOrientation(0, "portraitPrimary");
+            screenOrientation = ScreenOrientation.builder().angle(0).type("portraitPrimary").build();
         }
         boolean hasTouch = viewport.isHasTouch();
         try {

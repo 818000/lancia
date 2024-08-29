@@ -41,8 +41,11 @@ import lombok.experimental.SuperBuilder;
 public class GetVersionResponse {
 
     private String product;
+
     private String revision;
+
     private String userAgent;
+
     private String jsVersion;
 
 }

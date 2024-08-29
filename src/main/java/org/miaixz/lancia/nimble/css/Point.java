@@ -27,8 +27,18 @@
 */
 package org.miaixz.lancia.nimble.css;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.miaixz.lancia.nimble.profiler.CoverageRange;
 
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Point {
 
     private int offset;
@@ -36,40 +46,5 @@ public class Point {
     private int type;
 
     private CoverageRange range;
-
-    public Point() {
-        super();
-    }
-
-    public Point(int offset, int type, CoverageRange range) {
-        super();
-        this.offset = offset;
-        this.type = type;
-        this.range = range;
-    }
-
-    public int getOffset() {
-        return offset;
-    }
-
-    public void setOffset(int offset) {
-        this.offset = offset;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    public CoverageRange getRange() {
-        return range;
-    }
-
-    public void setRange(CoverageRange range) {
-        this.range = range;
-    }
 
 }

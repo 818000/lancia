@@ -27,8 +27,19 @@
 */
 package org.miaixz.lancia.nimble.console;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Payload {
 
     private List<Object> args;
@@ -36,29 +47,5 @@ public class Payload {
     private String name;
 
     private int seq;
-
-    public List<Object> getArgs() {
-        return args;
-    }
-
-    public void setArgs(List<Object> args) {
-        this.args = args;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getSeq() {
-        return seq;
-    }
-
-    public void setSeq(int seq) {
-        this.seq = seq;
-    }
 
 }

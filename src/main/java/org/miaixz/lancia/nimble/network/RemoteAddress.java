@@ -27,35 +27,21 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RemoteAddress {
 
     private String ip;
 
     private int port;
-
-    public RemoteAddress() {
-
-    }
-
-    public RemoteAddress(String ip, int port) {
-        this.ip = ip;
-        this.port = port;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
 
 }

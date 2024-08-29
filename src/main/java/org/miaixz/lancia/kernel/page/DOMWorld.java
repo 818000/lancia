@@ -43,7 +43,7 @@ import org.miaixz.bus.core.lang.exception.TimeoutException;
 import org.miaixz.bus.core.xyz.CollKit;
 import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.lancia.Builder;
-import org.miaixz.lancia.nimble.PageEvaluateType;
+import org.miaixz.lancia.worker.enums.PageEvaluateType;
 import org.miaixz.lancia.option.*;
 import org.miaixz.lancia.worker.enums.PuppeteerLifeCycle;
 

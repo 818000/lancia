@@ -27,22 +27,25 @@
 */
 package org.miaixz.lancia.nimble.page;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Fired when frame has stopped loading.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FrameStoppedLoadingEvent {
 
     /**
      * Id of the frame that has stopped loading.
      */
     private String frameId;
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
 
 }

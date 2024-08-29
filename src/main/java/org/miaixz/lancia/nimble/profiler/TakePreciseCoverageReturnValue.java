@@ -27,21 +27,24 @@
 */
 package org.miaixz.lancia.nimble.profiler;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TakePreciseCoverageReturnValue {
 
     /**
      * Coverage data for the current isolate.
      */
     private List<ScriptCoverage> result;
-
-    public List<ScriptCoverage> getResult() {
-        return result;
-    }
-
-    public void setResult(List<ScriptCoverage> result) {
-        this.result = result;
-    }
 
 }

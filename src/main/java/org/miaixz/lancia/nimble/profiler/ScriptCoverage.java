@@ -29,9 +29,20 @@ package org.miaixz.lancia.nimble.profiler;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Coverage data for a JavaScript script.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ScriptCoverage {
 
     /**
@@ -46,29 +57,5 @@ public class ScriptCoverage {
      * Functions contained in the script that has coverage data.
      */
     private List<FunctionCoverage> functions;
-
-    public String getScriptId() {
-        return scriptId;
-    }
-
-    public void setScriptId(String scriptId) {
-        this.scriptId = scriptId;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public List<FunctionCoverage> getFunctions() {
-        return functions;
-    }
-
-    public void setFunctions(List<FunctionCoverage> functions) {
-        this.functions = functions;
-    }
 
 }

@@ -25,8 +25,14 @@
  ~                                                                               ~
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
-package org.miaixz.lancia.nimble.network;
+package org.miaixz.lancia.worker.enums;
 
-public class ErrorReason {
+public enum PageEvaluateType {
+
+    STRING("string"), NUMBER("number"), FUNCTION("function");
+
+    PageEvaluateType(String string) {
+
+    }
 
 }

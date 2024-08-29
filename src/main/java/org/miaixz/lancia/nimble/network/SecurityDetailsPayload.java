@@ -27,11 +27,22 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
 /**
  * Security details about a request.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SecurityDetailsPayload {
 
     /**
@@ -86,109 +97,5 @@ public class SecurityDetailsPayload {
      * Whether the request complied with Certificate Transparency policy
      */
     private String certificateTransparencyCompliance;
-
-    public String getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(String protocol) {
-        this.protocol = protocol;
-    }
-
-    public String getKeyExchange() {
-        return keyExchange;
-    }
-
-    public void setKeyExchange(String keyExchange) {
-        this.keyExchange = keyExchange;
-    }
-
-    public String getKeyExchangeGroup() {
-        return keyExchangeGroup;
-    }
-
-    public void setKeyExchangeGroup(String keyExchangeGroup) {
-        this.keyExchangeGroup = keyExchangeGroup;
-    }
-
-    public String getCipher() {
-        return cipher;
-    }
-
-    public void setCipher(String cipher) {
-        this.cipher = cipher;
-    }
-
-    public String getMac() {
-        return mac;
-    }
-
-    public void setMac(String mac) {
-        this.mac = mac;
-    }
-
-    public int getCertificateId() {
-        return certificateId;
-    }
-
-    public void setCertificateId(int certificateId) {
-        this.certificateId = certificateId;
-    }
-
-    public String getSubjectName() {
-        return subjectName;
-    }
-
-    public void setSubjectName(String subjectName) {
-        this.subjectName = subjectName;
-    }
-
-    public List<String> getSanList() {
-        return sanList;
-    }
-
-    public void setSanList(List<String> sanList) {
-        this.sanList = sanList;
-    }
-
-    public String getIssuer() {
-        return issuer;
-    }
-
-    public void setIssuer(String issuer) {
-        this.issuer = issuer;
-    }
-
-    public Double getValidFrom() {
-        return validFrom;
-    }
-
-    public void setValidFrom(Double validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    public Double getValidTo() {
-        return validTo;
-    }
-
-    public void setValidTo(Double validTo) {
-        this.validTo = validTo;
-    }
-
-    public List<SignedCertificateTimestamp> getSignedCertificateTimestampList() {
-        return signedCertificateTimestampList;
-    }
-
-    public void setSignedCertificateTimestampList(List<SignedCertificateTimestamp> signedCertificateTimestampList) {
-        this.signedCertificateTimestampList = signedCertificateTimestampList;
-    }
-
-    public String getCertificateTransparencyCompliance() {
-        return certificateTransparencyCompliance;
-    }
-
-    public void setCertificateTransparencyCompliance(String certificateTransparencyCompliance) {
-        this.certificateTransparencyCompliance = certificateTransparencyCompliance;
-    }
 
 }

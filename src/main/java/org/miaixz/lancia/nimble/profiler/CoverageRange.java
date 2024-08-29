@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.profiler;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Coverage data for a source range.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CoverageRange {
 
     /**
@@ -44,38 +55,5 @@ public class CoverageRange {
      * Collected execution count of the source range.
      */
     private int count;
-
-    public CoverageRange() {
-    }
-
-    public CoverageRange(int startOffset, int endOffset, int count) {
-        this.startOffset = startOffset;
-        this.endOffset = endOffset;
-        this.count = count;
-    }
-
-    public int getStartOffset() {
-        return startOffset;
-    }
-
-    public void setStartOffset(int startOffset) {
-        this.startOffset = startOffset;
-    }
-
-    public int getEndOffset() {
-        return endOffset;
-    }
-
-    public void setEndOffset(int endOffset) {
-        this.endOffset = endOffset;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public void setCount(int count) {
-        this.count = count;
-    }
 
 }

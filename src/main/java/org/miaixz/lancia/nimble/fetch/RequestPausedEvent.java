@@ -29,6 +29,11 @@ package org.miaixz.lancia.nimble.fetch;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.miaixz.lancia.nimble.network.RequestPayload;
 
 /**
@@ -37,6 +42,11 @@ import org.miaixz.lancia.nimble.network.RequestPayload;
  * determined by presence of responseErrorReason and responseStatusCode -- the request is at the response stage if
  * either of these fields is present and in the request stage otherwise.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RequestPausedEvent {
 
     /**
@@ -73,69 +83,5 @@ public class RequestPausedEvent {
      * will be the same as the requestId present in the requestWillBeSent event.
      */
     private String networkId;
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public RequestPayload getRequest() {
-        return request;
-    }
-
-    public void setRequest(RequestPayload request) {
-        this.request = request;
-    }
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
-
-    public String getResourceType() {
-        return resourceType;
-    }
-
-    public void setResourceType(String resourceType) {
-        this.resourceType = resourceType;
-    }
-
-    public String getResponseErrorReason() {
-        return responseErrorReason;
-    }
-
-    public void setResponseErrorReason(String responseErrorReason) {
-        this.responseErrorReason = responseErrorReason;
-    }
-
-    public int getResponseStatusCode() {
-        return responseStatusCode;
-    }
-
-    public void setResponseStatusCode(int responseStatusCode) {
-        this.responseStatusCode = responseStatusCode;
-    }
-
-    public List<HeaderEntry> getResponseHeaders() {
-        return responseHeaders;
-    }
-
-    public void setResponseHeaders(List<HeaderEntry> responseHeaders) {
-        this.responseHeaders = responseHeaders;
-    }
-
-    public String getNetworkId() {
-        return networkId;
-    }
-
-    public void setNetworkId(String networkId) {
-        this.networkId = networkId;
-    }
 
 }

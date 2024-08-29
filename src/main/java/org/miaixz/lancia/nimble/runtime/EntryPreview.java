@@ -27,6 +27,17 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EntryPreview {
 
     /**
@@ -37,21 +48,5 @@ public class EntryPreview {
      * Preview of the value.
      */
     private ObjectPreview value;
-
-    public ObjectPreview getKey() {
-        return key;
-    }
-
-    public void setKey(ObjectPreview key) {
-        this.key = key;
-    }
-
-    public ObjectPreview getValue() {
-        return value;
-    }
-
-    public void setValue(ObjectPreview value) {
-        this.value = value;
-    }
 
 }

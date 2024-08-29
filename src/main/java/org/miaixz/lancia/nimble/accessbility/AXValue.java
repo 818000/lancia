@@ -27,11 +27,22 @@
 */
 package org.miaixz.lancia.nimble.accessbility;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
 /**
  * A single computed AX property.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AXValue {
 
     /**
@@ -52,37 +63,5 @@ public class AXValue {
      * The sources which contributed to the computation of this property.
      */
     private List<AXValueSource> sources;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Object getValue() {
-        return value;
-    }
-
-    public void setValue(Object value) {
-        this.value = value;
-    }
-
-    public List<AXRelatedNode> getRelatedNodes() {
-        return relatedNodes;
-    }
-
-    public void setRelatedNodes(List<AXRelatedNode> relatedNodes) {
-        this.relatedNodes = relatedNodes;
-    }
-
-    public List<AXValueSource> getSources() {
-        return sources;
-    }
-
-    public void setSources(List<AXValueSource> sources) {
-        this.sources = sources;
-    }
 
 }

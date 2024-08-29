@@ -27,11 +27,22 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.Map;
 
 /**
  * HTTP request data.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RequestPayload {
 
     /**
@@ -76,85 +87,5 @@ public class RequestPayload {
      * Whether is loaded via link preload.
      */
     private boolean isLinkPreload;
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getUrlFragment() {
-        return urlFragment;
-    }
-
-    public void setUrlFragment(String urlFragment) {
-        this.urlFragment = urlFragment;
-    }
-
-    public String getMethod() {
-        return method;
-    }
-
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    public Map<String, String> getHeaders() {
-        return headers;
-    }
-
-    public void setHeaders(Map<String, String> headers) {
-        this.headers = headers;
-    }
-
-    public String getPostData() {
-        return postData;
-    }
-
-    public void setPostData(String postData) {
-        this.postData = postData;
-    }
-
-    public boolean getIsHasPostData() {
-        return hasPostData;
-    }
-
-    public void setHasPostData(boolean hasPostData) {
-        this.hasPostData = hasPostData;
-    }
-
-    public String getMixedContentType() {
-        return mixedContentType;
-    }
-
-    public void setMixedContentType(String mixedContentType) {
-        this.mixedContentType = mixedContentType;
-    }
-
-    public String getInitialPriority() {
-        return initialPriority;
-    }
-
-    public void setInitialPriority(String initialPriority) {
-        this.initialPriority = initialPriority;
-    }
-
-    public String getReferrerPolicy() {
-        return referrerPolicy;
-    }
-
-    public void setReferrerPolicy(String referrerPolicy) {
-        this.referrerPolicy = referrerPolicy;
-    }
-
-    public boolean getIsLinkPreload() {
-        return isLinkPreload;
-    }
-
-    public void setLinkPreload(boolean linkPreload) {
-        isLinkPreload = linkPreload;
-    }
 
 }

@@ -27,26 +27,21 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CallFunctionOnResponse {
 
     private RemoteObject result;
 
     private ExceptionDetails exceptionDetails;
-
-    public RemoteObject getResult() {
-        return result;
-    }
-
-    public void setResult(RemoteObject result) {
-        this.result = result;
-    }
-
-    public ExceptionDetails getExceptionDetails() {
-        return exceptionDetails;
-    }
-
-    public void setExceptionDetails(ExceptionDetails exceptionDetails) {
-        this.exceptionDetails = exceptionDetails;
-    }
 
 }

@@ -29,9 +29,20 @@ package org.miaixz.lancia.nimble.runtime;
 
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Detailed information about exception (or error) that was thrown during script compilation or execution.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExceptionDetails {
 
     /**
@@ -75,85 +86,5 @@ public class ExceptionDetails {
      * 包含客户端关联的元数据条目的字典 但此例外，例如有关关联网络的信息 请求等
      */
     private Map<String, Object> exceptionMetaData;
-
-    public Map<String, Object> getExceptionMetaData() {
-        return exceptionMetaData;
-    }
-
-    public void setExceptionMetaData(Map<String, Object> exceptionMetaData) {
-        this.exceptionMetaData = exceptionMetaData;
-    }
-
-    public int getExceptionId() {
-        return exceptionId;
-    }
-
-    public void setExceptionId(int exceptionId) {
-        this.exceptionId = exceptionId;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public int getLineNumber() {
-        return lineNumber;
-    }
-
-    public void setLineNumber(int lineNumber) {
-        this.lineNumber = lineNumber;
-    }
-
-    public int getColumnNumber() {
-        return columnNumber;
-    }
-
-    public void setColumnNumber(int columnNumber) {
-        this.columnNumber = columnNumber;
-    }
-
-    public String getScriptId() {
-        return scriptId;
-    }
-
-    public void setScriptId(String scriptId) {
-        this.scriptId = scriptId;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public StackTrace getStackTrace() {
-        return stackTrace;
-    }
-
-    public void setStackTrace(StackTrace stackTrace) {
-        this.stackTrace = stackTrace;
-    }
-
-    public RemoteObject getException() {
-        return exception;
-    }
-
-    public void setException(RemoteObject exception) {
-        this.exception = exception;
-    }
-
-    public int getExecutionContextId() {
-        return executionContextId;
-    }
-
-    public void setExecutionContextId(int executionContextId) {
-        this.executionContextId = executionContextId;
-    }
 
 }

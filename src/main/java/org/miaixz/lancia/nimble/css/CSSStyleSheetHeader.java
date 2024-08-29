@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.css;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * CSS stylesheet metainformation.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CSSStyleSheetHeader {
 
     /**
@@ -94,125 +105,5 @@ public class CSSStyleSheetHeader {
      * Column offset of the end of the stylesheet within the resource (zero based).
      */
     private int endColumn;
-
-    public String getStyleSheetId() {
-        return styleSheetId;
-    }
-
-    public void setStyleSheetId(String styleSheetId) {
-        this.styleSheetId = styleSheetId;
-    }
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
-
-    public String getSourceURL() {
-        return sourceURL;
-    }
-
-    public void setSourceURL(String sourceURL) {
-        this.sourceURL = sourceURL;
-    }
-
-    public String getSourceMapURL() {
-        return sourceMapURL;
-    }
-
-    public void setSourceMapURL(String sourceMapURL) {
-        this.sourceMapURL = sourceMapURL;
-    }
-
-    public String getOrigin() {
-        return origin;
-    }
-
-    public void setOrigin(String origin) {
-        this.origin = origin;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public Number getOwnerNode() {
-        return ownerNode;
-    }
-
-    public void setOwnerNode(Number ownerNode) {
-        this.ownerNode = ownerNode;
-    }
-
-    public boolean getDisabled() {
-        return disabled;
-    }
-
-    public void setDisabled(boolean disabled) {
-        this.disabled = disabled;
-    }
-
-    public boolean getHasSourceURL() {
-        return hasSourceURL;
-    }
-
-    public void setHasSourceURL(boolean hasSourceURL) {
-        this.hasSourceURL = hasSourceURL;
-    }
-
-    public boolean getIsInline() {
-        return isInline;
-    }
-
-    public void setInline(boolean inline) {
-        isInline = inline;
-    }
-
-    public int getStartLine() {
-        return startLine;
-    }
-
-    public void setStartLine(int startLine) {
-        this.startLine = startLine;
-    }
-
-    public int getStartColumn() {
-        return startColumn;
-    }
-
-    public void setStartColumn(int startColumn) {
-        this.startColumn = startColumn;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    public int getEndLine() {
-        return endLine;
-    }
-
-    public void setEndLine(int endLine) {
-        this.endLine = endLine;
-    }
-
-    public int getEndColumn() {
-        return endColumn;
-    }
-
-    public void setEndColumn(int endColumn) {
-        this.endColumn = endColumn;
-    }
 
 }

@@ -27,11 +27,22 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
 /**
  * Issued when console API was called.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConsoleAPICalledEvent {
 
     /**
@@ -62,53 +73,5 @@ public class ConsoleAPICalledEvent {
      * for call on unnamed context, 'name#unique-logger-id' for call on named context.
      */
     private String context;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public List<RemoteObject> getArgs() {
-        return args;
-    }
-
-    public void setArgs(List<RemoteObject> args) {
-        this.args = args;
-    }
-
-    public int getExecutionContextId() {
-        return executionContextId;
-    }
-
-    public void setExecutionContextId(int executionContextId) {
-        this.executionContextId = executionContextId;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public StackTrace getStackTrace() {
-        return stackTrace;
-    }
-
-    public void setStackTrace(StackTrace stackTrace) {
-        this.stackTrace = stackTrace;
-    }
-
-    public String getContext() {
-        return context;
-    }
-
-    public void setContext(String context) {
-        this.context = context;
-    }
 
 }

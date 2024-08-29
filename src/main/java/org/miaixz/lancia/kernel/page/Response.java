@@ -83,8 +83,8 @@ public class Response {
         this.status = responsePayload.getStatus();
         this.statusText = responsePayload.getStatusText();
         this.url = request.url();
-        this.fromDiskCache = responsePayload.getFromDiskCache();
-        this.fromServiceWorker = responsePayload.getFromServiceWorker();
+        this.fromDiskCache = responsePayload.isFromDiskCache();
+        this.fromServiceWorker = responsePayload.isFromServiceWorker();
         this.headers = new HashMap<>();
 
         Map<String, String> headers = responsePayload.getHeaders();

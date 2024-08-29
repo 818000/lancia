@@ -27,6 +27,17 @@
 */
 package org.miaixz.lancia.nimble.dom;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Margin {
 
     private String top;
@@ -36,37 +47,5 @@ public class Margin {
     private String left;
 
     private String right;
-
-    public String getTop() {
-        return top;
-    }
-
-    public void setTop(String top) {
-        this.top = top;
-    }
-
-    public String getBottom() {
-        return bottom;
-    }
-
-    public void setBottom(String bottom) {
-        this.bottom = bottom;
-    }
-
-    public String getLeft() {
-        return left;
-    }
-
-    public void setLeft(String left) {
-        this.left = left;
-    }
-
-    public String getRight() {
-        return right;
-    }
-
-    public void setRight(String right) {
-        this.right = right;
-    }
 
 }

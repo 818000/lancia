@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.emulation;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Screen orientation.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ScreenOrientation {
 
     /**
@@ -40,29 +51,5 @@ public class ScreenOrientation {
      * Orientation angle.
      */
     private int angle;
-
-    public ScreenOrientation() {
-    }
-
-    public ScreenOrientation(int angle, String type) {
-        this.angle = angle;
-        this.type = type;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public int getAngle() {
-        return angle;
-    }
-
-    public void setAngle(int angle) {
-        this.angle = angle;
-    }
 
 }

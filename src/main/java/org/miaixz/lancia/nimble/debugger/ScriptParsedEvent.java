@@ -30,10 +30,21 @@ package org.miaixz.lancia.nimble.debugger;
 import org.miaixz.lancia.nimble.runtime.AuxData;
 import org.miaixz.lancia.nimble.runtime.StackTrace;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Fired when virtual machine parses script. This event is also fired for all known and uncollected scripts upon
  * enabling debugger.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ScriptParsedEvent {
 
     /**
@@ -96,125 +107,5 @@ public class ScriptParsedEvent {
      * JavaScript top stack frame of where the script parsed event was triggered if available.
      */
     private StackTrace stackTrace;
-
-    public String getScriptId() {
-        return scriptId;
-    }
-
-    public void setScriptId(String scriptId) {
-        this.scriptId = scriptId;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public int getStartLine() {
-        return startLine;
-    }
-
-    public void setStartLine(int startLine) {
-        this.startLine = startLine;
-    }
-
-    public int getStartColumn() {
-        return startColumn;
-    }
-
-    public void setStartColumn(int startColumn) {
-        this.startColumn = startColumn;
-    }
-
-    public int getEndLine() {
-        return endLine;
-    }
-
-    public void setEndLine(int endLine) {
-        this.endLine = endLine;
-    }
-
-    public int getEndColumn() {
-        return endColumn;
-    }
-
-    public void setEndColumn(int endColumn) {
-        this.endColumn = endColumn;
-    }
-
-    public int getExecutionContextId() {
-        return executionContextId;
-    }
-
-    public void setExecutionContextId(int executionContextId) {
-        this.executionContextId = executionContextId;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public AuxData getExecutionContextAuxData() {
-        return executionContextAuxData;
-    }
-
-    public void setExecutionContextAuxData(AuxData executionContextAuxData) {
-        this.executionContextAuxData = executionContextAuxData;
-    }
-
-    public boolean getIsLiveEdit() {
-        return isLiveEdit;
-    }
-
-    public void setIsLiveEdit(boolean isLiveEdit) {
-        this.isLiveEdit = isLiveEdit;
-    }
-
-    public String getSourceMapURL() {
-        return sourceMapURL;
-    }
-
-    public void setSourceMapURL(String sourceMapURL) {
-        this.sourceMapURL = sourceMapURL;
-    }
-
-    public boolean getHasSourceURL() {
-        return hasSourceURL;
-    }
-
-    public void setHasSourceURL(boolean hasSourceURL) {
-        this.hasSourceURL = hasSourceURL;
-    }
-
-    public boolean getIsModule() {
-        return isModule;
-    }
-
-    public void setIsModule(boolean isModule) {
-        this.isModule = isModule;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    public StackTrace getStackTrace() {
-        return stackTrace;
-    }
-
-    public void setStackTrace(StackTrace stackTrace) {
-        this.stackTrace = stackTrace;
-    }
 
 }

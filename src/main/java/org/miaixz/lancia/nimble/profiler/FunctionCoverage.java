@@ -27,12 +27,22 @@
 */
 package org.miaixz.lancia.nimble.profiler;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
 /**
  * Coverage data for a JavaScript function.
  */
-
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FunctionCoverage {
 
     /**
@@ -47,29 +57,5 @@ public class FunctionCoverage {
      * Whether coverage data for this function has block granularity.
      */
     private boolean isBlockCoverage;
-
-    public String getFunctionName() {
-        return functionName;
-    }
-
-    public void setFunctionName(String functionName) {
-        this.functionName = functionName;
-    }
-
-    public List<CoverageRange> getRanges() {
-        return ranges;
-    }
-
-    public void setRanges(List<CoverageRange> ranges) {
-        this.ranges = ranges;
-    }
-
-    public boolean getIsBlockCoverage() {
-        return isBlockCoverage;
-    }
-
-    public void setIsBlockCoverage(boolean isBlockCoverage) {
-        this.isBlockCoverage = isBlockCoverage;
-    }
 
 }

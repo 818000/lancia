@@ -27,6 +27,17 @@
 */
 package org.miaixz.lancia.nimble.accessbility;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AXProperty {
 
     /**
@@ -39,21 +50,5 @@ public class AXProperty {
      * The value of this property.
      */
     private AXValue value;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public AXValue getValue() {
-        return value;
-    }
-
-    public void setValue(AXValue value) {
-        this.value = value;
-    }
 
 }

@@ -27,6 +27,17 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CookieParam {
 
     private String name;
@@ -41,77 +52,5 @@ public class CookieParam {
      * Strict | Lax
      */
     private String sameSite;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public Number getExpires() {
-        return expires;
-    }
-
-    public void setExpires(Number expires) {
-        this.expires = expires;
-    }
-
-    public boolean getHttpOnly() {
-        return httpOnly;
-    }
-
-    public void setHttpOnly(boolean httpOnly) {
-        this.httpOnly = httpOnly;
-    }
-
-    public boolean getSecure() {
-        return secure;
-    }
-
-    public void setSecure(boolean secure) {
-        this.secure = secure;
-    }
-
-    public String getSameSite() {
-        return sameSite;
-    }
-
-    public void setSameSite(String sameSite) {
-        this.sameSite = sameSite;
-    }
 
 }

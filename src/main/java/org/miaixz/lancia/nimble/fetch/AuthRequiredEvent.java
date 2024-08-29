@@ -27,6 +27,11 @@
 */
 package org.miaixz.lancia.nimble.fetch;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.miaixz.lancia.nimble.network.AuthChallenge;
 import org.miaixz.lancia.nimble.network.RequestPayload;
 
@@ -34,6 +39,11 @@ import org.miaixz.lancia.nimble.network.RequestPayload;
  * Issued when the domain is enabled with handleAuthRequests set to true. The request is paused until client responds
  * with continueWithAuth.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuthRequiredEvent {
 
     /**
@@ -57,45 +67,5 @@ public class AuthRequiredEvent {
      * that contains AuthChallengeResponse.
      */
     private AuthChallenge pauthChallenge;
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public RequestPayload getRequest() {
-        return request;
-    }
-
-    public void setRequest(RequestPayload request) {
-        this.request = request;
-    }
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
-
-    public String getResourceType() {
-        return resourceType;
-    }
-
-    public void setResourceType(String resourceType) {
-        this.resourceType = resourceType;
-    }
-
-    public AuthChallenge getPauthChallenge() {
-        return pauthChallenge;
-    }
-
-    public void setPauthChallenge(AuthChallenge pauthChallenge) {
-        this.pauthChallenge = pauthChallenge;
-    }
 
 }

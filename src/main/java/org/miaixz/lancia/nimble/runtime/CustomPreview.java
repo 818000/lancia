@@ -27,6 +27,17 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CustomPreview {
 
     /**
@@ -39,21 +50,5 @@ public class CustomPreview {
      * the function that returns result of formatter.body(object, config) call. The result value is json ML array.
      */
     private String bodyGetterId;
-
-    public String getHeader() {
-        return header;
-    }
-
-    public void setHeader(String header) {
-        this.header = header;
-    }
-
-    public String getBodyGetterId() {
-        return bodyGetterId;
-    }
-
-    public void setBodyGetterId(String bodyGetterId) {
-        this.bodyGetterId = bodyGetterId;
-    }
 
 }

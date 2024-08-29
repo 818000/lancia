@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.accessbility;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * A single source for a computed AX property.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AXValueSource {
 
     /**
@@ -71,77 +82,5 @@ public class AXValueSource {
      * Reason for the value being invalid, if it is.
      */
     private String invalidReason;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public AXNode getValue() {
-        return value;
-    }
-
-    public void setValue(AXNode value) {
-        this.value = value;
-    }
-
-    public String getAttribute() {
-        return attribute;
-    }
-
-    public void setAttribute(String attribute) {
-        this.attribute = attribute;
-    }
-
-    public AXValue getAttributeValue() {
-        return attributeValue;
-    }
-
-    public void setAttributeValue(AXValue attributeValue) {
-        this.attributeValue = attributeValue;
-    }
-
-    public boolean getSuperseded() {
-        return superseded;
-    }
-
-    public void setSuperseded(boolean superseded) {
-        this.superseded = superseded;
-    }
-
-    public String getNativeSource() {
-        return nativeSource;
-    }
-
-    public void setNativeSource(String nativeSource) {
-        this.nativeSource = nativeSource;
-    }
-
-    public AXValue getNativeSourceValue() {
-        return nativeSourceValue;
-    }
-
-    public void setNativeSourceValue(AXValue nativeSourceValue) {
-        this.nativeSourceValue = nativeSourceValue;
-    }
-
-    public boolean getInvalid() {
-        return invalid;
-    }
-
-    public void setInvalid(boolean invalid) {
-        this.invalid = invalid;
-    }
-
-    public String getInvalidReason() {
-        return invalidReason;
-    }
-
-    public void setInvalidReason(String invalidReason) {
-        this.invalidReason = invalidReason;
-    }
 
 }

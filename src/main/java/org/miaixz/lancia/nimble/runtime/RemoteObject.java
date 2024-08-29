@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Mirror object referencing original JavaScript object.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RemoteObject {
 
     /**
@@ -67,77 +78,5 @@ public class RemoteObject {
     private ObjectPreview preview;
 
     private CustomPreview customPreview;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getSubtype() {
-        return subtype;
-    }
-
-    public void setSubtype(String subtype) {
-        this.subtype = subtype;
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
-    public Object getValue() {
-        return value;
-    }
-
-    public void setValue(Object value) {
-        this.value = value;
-    }
-
-    public String getUnserializableValue() {
-        return unserializableValue;
-    }
-
-    public void setUnserializableValue(String unserializableValue) {
-        this.unserializableValue = unserializableValue;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getObjectId() {
-        return objectId;
-    }
-
-    public void setObjectId(String objectId) {
-        this.objectId = objectId;
-    }
-
-    public ObjectPreview getPreview() {
-        return preview;
-    }
-
-    public void setPreview(ObjectPreview preview) {
-        this.preview = preview;
-    }
-
-    public CustomPreview getCustomPreview() {
-        return customPreview;
-    }
-
-    public void setCustomPreview(CustomPreview customPreview) {
-        this.customPreview = customPreview;
-    }
 
 }

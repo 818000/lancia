@@ -29,11 +29,21 @@ package org.miaixz.lancia.nimble.page;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.miaixz.lancia.option.data.AdFrameStatus;
 
 /**
  * Information about the Frame on the page.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FramePayload {
 
     /**
@@ -98,117 +108,5 @@ public class FramePayload {
      * | 'PerformanceMeasureMemory' | 'PerformanceProfile')
      */
     private List<String> gatedAPIFeatures;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(String parentId) {
-        this.parentId = parentId;
-    }
-
-    public String getLoaderId() {
-        return loaderId;
-    }
-
-    public void setLoaderId(String loaderId) {
-        this.loaderId = loaderId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getUrlFragment() {
-        return urlFragment;
-    }
-
-    public void setUrlFragment(String urlFragment) {
-        this.urlFragment = urlFragment;
-    }
-
-    public String getSecurityOrigin() {
-        return securityOrigin;
-    }
-
-    public void setSecurityOrigin(String securityOrigin) {
-        this.securityOrigin = securityOrigin;
-    }
-
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
-    }
-
-    public String getUnreachableUrl() {
-        return unreachableUrl;
-    }
-
-    public void setUnreachableUrl(String unreachableUrl) {
-        this.unreachableUrl = unreachableUrl;
-    }
-
-    public String getDomainAndRegistry() {
-        return domainAndRegistry;
-    }
-
-    public void setDomainAndRegistry(String domainAndRegistry) {
-        this.domainAndRegistry = domainAndRegistry;
-    }
-
-    public AdFrameStatus getAdFrameStatus() {
-        return adFrameStatus;
-    }
-
-    public void setAdFrameStatus(AdFrameStatus adFrameStatus) {
-        this.adFrameStatus = adFrameStatus;
-    }
-
-    public String getSecureContextType() {
-        return secureContextType;
-    }
-
-    public void setSecureContextType(String secureContextType) {
-        this.secureContextType = secureContextType;
-    }
-
-    public String getCrossOriginIsolatedContextType() {
-        return crossOriginIsolatedContextType;
-    }
-
-    public void setCrossOriginIsolatedContextType(String crossOriginIsolatedContextType) {
-        this.crossOriginIsolatedContextType = crossOriginIsolatedContextType;
-    }
-
-    public List<String> getGatedAPIFeatures() {
-        return gatedAPIFeatures;
-    }
-
-    public void setGatedAPIFeatures(List<String> gatedAPIFeatures) {
-        this.gatedAPIFeatures = gatedAPIFeatures;
-    }
 
 }

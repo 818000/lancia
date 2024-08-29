@@ -27,38 +27,24 @@
 */
 package org.miaixz.lancia.nimble.fetch;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Response HTTP header entry
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HeaderEntry {
 
     private String name;
 
     private String value;
-
-    public HeaderEntry() {
-
-    }
-
-    public HeaderEntry(String name, String value) {
-        this.name = name;
-        this.value = value;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
 
 }

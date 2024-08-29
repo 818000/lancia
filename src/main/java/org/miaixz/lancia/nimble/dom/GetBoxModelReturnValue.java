@@ -27,21 +27,23 @@
 */
 package org.miaixz.lancia.nimble.dom;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.miaixz.lancia.nimble.input.BoxModel;
 
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class GetBoxModelReturnValue {
 
     /**
      * Box model for the node.
      */
     private BoxModel model;
-
-    public BoxModel getModel() {
-        return model;
-    }
-
-    public void setModel(BoxModel model) {
-        this.model = model;
-    }
 
 }

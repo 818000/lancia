@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Description of an isolated world.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExecutionContextDescription {
 
     /**
@@ -49,37 +60,5 @@ public class ExecutionContextDescription {
      * Embedder-specific auxiliary data.
      */
     private AuxData auxData;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getOrigin() {
-        return origin;
-    }
-
-    public void setOrigin(String origin) {
-        this.origin = origin;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public AuxData getAuxData() {
-        return auxData;
-    }
-
-    public void setAuxData(AuxData auxData) {
-        this.auxData = auxData;
-    }
 
 }

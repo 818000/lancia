@@ -43,6 +43,7 @@ import lombok.experimental.SuperBuilder;
 public class AdFrameStatus {
 
     private List<String> explanations;
+
     private String adFrameType;
 
 }

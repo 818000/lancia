@@ -41,6 +41,7 @@ import lombok.experimental.SuperBuilder;
 public class FilterEntry {
 
     private boolean exclude;
+
     private String type;
 
 }

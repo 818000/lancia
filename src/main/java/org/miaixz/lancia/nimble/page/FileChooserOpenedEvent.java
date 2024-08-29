@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.page;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Emitted only when `page.interceptFileChooser` is enabled.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FileChooserOpenedEvent {
 
     /**
@@ -44,29 +55,5 @@ public class FileChooserOpenedEvent {
      * Input mode. "selectSingle"|"selectMultiple"
      */
     private String mode;
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
-
-    public int getBackendNodeId() {
-        return backendNodeId;
-    }
-
-    public void setBackendNodeId(int backendNodeId) {
-        this.backendNodeId = backendNodeId;
-    }
-
-    public String getMode() {
-        return mode;
-    }
-
-    public void setMode(String mode) {
-        this.mode = mode;
-    }
 
 }

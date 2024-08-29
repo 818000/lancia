@@ -27,6 +27,17 @@
 */
 package org.miaixz.lancia.nimble.console;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Location {
 
     private String url;
@@ -34,52 +45,5 @@ public class Location {
     private int lineNumber;
 
     private int columnNumber;
-
-    public Location() {
-        super();
-    }
-
-    public Location(String url, int lineNumber) {
-        super();
-        this.url = url;
-        this.lineNumber = lineNumber;
-    }
-
-    public Location(String url, int lineNumber, int columnNumber) {
-        super();
-        this.url = url;
-        this.lineNumber = lineNumber;
-        this.columnNumber = columnNumber;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public int getLineNumber() {
-        return lineNumber;
-    }
-
-    public void setLineNumber(int lineNumber) {
-        this.lineNumber = lineNumber;
-    }
-
-    public int getColumnNumber() {
-        return columnNumber;
-    }
-
-    public void setColumnNumber(int columnNumber) {
-        this.columnNumber = columnNumber;
-    }
-
-    @Override
-    public String toString() {
-        return "Location{" + "url='" + url + '\'' + ", lineNumber=" + lineNumber + ", columnNumber=" + columnNumber
-                + '}';
-    }
 
 }

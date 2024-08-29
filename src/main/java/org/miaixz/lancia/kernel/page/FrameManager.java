@@ -141,7 +141,7 @@ public class FrameManager extends Emitter<FrameManagerType> {
         Frame frame = this.frames.get(frameId);
         DOMWorld world = null;
         if (frame != null) {
-            if (contextPayload.getAuxData() != null && contextPayload.getAuxData().getIsDefault()) {
+            if (contextPayload.getAuxData() != null && contextPayload.getAuxData().isDefault()) {
                 world = frame.getMainWorld();
             } else if (contextPayload.getName().equals(UTILITY_WORLD_NAME) && !frame.getSecondaryWorld().hasContext()) {
                 // In case of multiple sessions to the same target, there's a race between

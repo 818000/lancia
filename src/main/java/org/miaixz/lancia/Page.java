@@ -53,7 +53,6 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.kernel.browser.Context;
 import org.miaixz.lancia.kernel.page.*;
-import org.miaixz.lancia.nimble.PageEvaluateType;
 import org.miaixz.lancia.nimble.console.Location;
 import org.miaixz.lancia.nimble.console.Payload;
 import org.miaixz.lancia.nimble.emulation.MediaFeature;
@@ -1096,7 +1095,8 @@ public class Page extends Emitter<PageEvent> {
         if (!"worker".equals(event.getEntry().getSource()))
             this.emit(PageEvent.CONSOLE,
                     new ConsoleMessage(event.getEntry().getLevel(), event.getEntry().getText(), Collections.emptyList(),
-                            new Location(event.getEntry().getUrl(), event.getEntry().getLineNumber())));
+                            Location.builder().url(event.getEntry().getUrl())
+                                    .lineNumber(event.getEntry().getLineNumber()).build()));
     }
 
     private void emitMetrics(MetricsEvent event) {

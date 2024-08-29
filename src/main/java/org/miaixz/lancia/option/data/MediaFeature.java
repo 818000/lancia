@@ -41,6 +41,7 @@ import lombok.experimental.SuperBuilder;
 public class MediaFeature {
 
     public String name;
+
     public String value;
 
 }

@@ -27,22 +27,25 @@
 */
 package org.miaixz.lancia.nimble.runtime;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Issued when execution context is destroyed.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExecutionContextDestroyedEvent {
 
     /**
      * Id of the destroyed context
      */
     private int executionContextId;
-
-    public int getExecutionContextId() {
-        return executionContextId;
-    }
-
-    public void setExecutionContextId(int executionContextId) {
-        this.executionContextId = executionContextId;
-    }
 
 }

@@ -35,7 +35,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.miaixz.lancia.Builder;
 import org.miaixz.lancia.Emitter;
-import org.miaixz.lancia.nimble.PageEvaluateType;
+import org.miaixz.lancia.worker.enums.PageEvaluateType;
 import org.miaixz.lancia.nimble.page.FramePayload;
 import org.miaixz.lancia.option.*;
 import org.miaixz.lancia.socket.CDPSession;

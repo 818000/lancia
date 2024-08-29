@@ -48,7 +48,7 @@ import org.miaixz.bus.health.Platform;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.kernel.page.QueryHandler;
 import org.miaixz.lancia.kernel.page.QuerySelector;
-import org.miaixz.lancia.nimble.PageEvaluateType;
+import org.miaixz.lancia.worker.enums.PageEvaluateType;
 import org.miaixz.lancia.nimble.runtime.CallFrame;
 import org.miaixz.lancia.nimble.runtime.ExceptionDetails;
 import org.miaixz.lancia.nimble.runtime.RemoteObject;

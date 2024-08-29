@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Fired when HTTP response is available.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResponseReceivedEvent {
 
     /**
@@ -56,53 +67,5 @@ public class ResponseReceivedEvent {
      * Frame identifier.
      */
     private String frameId;
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public String getLoaderId() {
-        return loaderId;
-    }
-
-    public void setLoaderId(String loaderId) {
-        this.loaderId = loaderId;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public ResponsePayload getResponse() {
-        return response;
-    }
-
-    public void setResponse(ResponsePayload response) {
-        this.response = response;
-    }
-
-    public String getFrameId() {
-        return frameId;
-    }
-
-    public void setFrameId(String frameId) {
-        this.frameId = frameId;
-    }
 
 }

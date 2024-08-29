@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Deletes browser cookies with matching name and url or domain/path pair.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DeleteCookiesParameters {
 
     /**
@@ -48,49 +59,5 @@ public class DeleteCookiesParameters {
      * If specified, deletes only cookies with the exact path.
      */
     private String path;
-
-    public DeleteCookiesParameters() {
-        super();
-    }
-
-    public DeleteCookiesParameters(String name, String url, String domain, String path) {
-        super();
-        this.name = name;
-        this.url = url;
-        this.domain = domain;
-        this.path = path;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
 
 }

@@ -27,9 +27,20 @@
 */
 package org.miaixz.lancia.nimble.page;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 /**
  * Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JavascriptDialogOpeningEvent {
 
     /**
@@ -55,45 +66,5 @@ public class JavascriptDialogOpeningEvent {
      */
 
     private String defaultPrompt;
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public boolean isHasBrowserHandler() {
-        return hasBrowserHandler;
-    }
-
-    public void setHasBrowserHandler(boolean hasBrowserHandler) {
-        this.hasBrowserHandler = hasBrowserHandler;
-    }
-
-    public String getDefaultPrompt() {
-        return defaultPrompt;
-    }
-
-    public void setDefaultPrompt(String defaultPrompt) {
-        this.defaultPrompt = defaultPrompt;
-    }
 
 }

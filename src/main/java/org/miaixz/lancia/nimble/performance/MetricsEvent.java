@@ -27,11 +27,22 @@
 */
 package org.miaixz.lancia.nimble.performance;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
 /**
  * Current values of the metrics.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MetricsEvent {
 
     /**
@@ -42,21 +53,5 @@ public class MetricsEvent {
      * Timestamp title.
      */
     private String title;
-
-    public List<Metric> getMetrics() {
-        return metrics;
-    }
-
-    public void setMetrics(List<Metric> metrics) {
-        this.metrics = metrics;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
 
 }

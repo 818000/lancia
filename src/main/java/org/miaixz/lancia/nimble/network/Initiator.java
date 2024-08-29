@@ -27,11 +27,21 @@
 */
 package org.miaixz.lancia.nimble.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.miaixz.lancia.nimble.runtime.StackTrace;
 
 /**
  * Information about the request initiator.
  */
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Initiator {
 
     /**
@@ -51,37 +61,5 @@ public class Initiator {
      * Initiator line number, set for Parser type or for Script type (when script is importing module) (0-based).
      */
     private int lineNumber;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public StackTrace getStack() {
-        return stack;
-    }
-
-    public void setStack(StackTrace stack) {
-        this.stack = stack;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public int getLineNumber() {
-        return lineNumber;
-    }
-
-    public void setLineNumber(int lineNumber) {
-        this.lineNumber = lineNumber;
-    }
 
 }

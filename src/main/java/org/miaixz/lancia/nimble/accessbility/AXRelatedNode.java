@@ -27,6 +27,17 @@
 */
 package org.miaixz.lancia.nimble.accessbility;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AXRelatedNode {
 
     /**
@@ -41,29 +52,5 @@ public class AXRelatedNode {
      * The text alternative of this node in the current context.
      */
     private String text;
-
-    public int getBackendDOMNodeId() {
-        return backendDOMNodeId;
-    }
-
-    public void setBackendDOMNodeId(int backendDOMNodeId) {
-        this.backendDOMNodeId = backendDOMNodeId;
-    }
-
-    public String getIdref() {
-        return idref;
-    }
-
-    public void setIdref(String idref) {
-        this.idref = idref;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
 
 }
