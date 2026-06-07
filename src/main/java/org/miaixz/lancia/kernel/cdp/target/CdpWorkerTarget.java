@@ -1,0 +1,73 @@
+/*
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                           ~
+ ~ Copyright (c) 2015-2026 miaixz.org and other contributors.                ~
+ ~                                                                           ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");           ~
+ ~ you may not use this file except in compliance with the License.          ~
+ ~ You may obtain a copy of the License at                                   ~
+ ~                                                                           ~
+ ~      https://www.apache.org/licenses/LICENSE-2.0                          ~
+ ~                                                                           ~
+ ~ Unless required by applicable law or agreed to in writing, software       ~
+ ~ distributed under the License is distributed on an "AS IS" BASIS,         ~
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  ~
+ ~ See the License for the specific language governing permissions and       ~
+ ~ limitations under the License.                                            ~
+ ~                                                                           ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+*/
+package org.miaixz.lancia.kernel.cdp.target;
+
+import org.miaixz.bus.core.lang.Optional;
+import org.miaixz.lancia.Worker;
+import org.miaixz.lancia.kernel.cdp.session.CDPSession;
+import org.miaixz.lancia.kernel.cdp.session.TargetInfo;
+import org.miaixz.lancia.kernel.cdp.worker.CdpWorker;
+
+/**
+ * CDP worker target.
+ *
+ * @author Kimi Liu
+ * @since Java 17+
+ */
+public class CdpWorkerTarget extends CdpTarget {
+
+    /**
+     * Current worker.
+     */
+    private final CdpWorker worker;
+
+    /**
+     * Creates a worker target.
+     *
+     * @param targetInfo target info
+     * @param opener     opener
+     */
+    public CdpWorkerTarget(TargetInfo targetInfo, CdpTarget opener) {
+        super(targetInfo, opener);
+        this.worker = new CdpWorker(targetInfo.getUrl(), null, targetInfo.getTargetId(), targetInfo.getType());
+    }
+
+    /**
+     * Returns the worker.
+     *
+     * @return optional value
+     */
+    @Override
+    public Optional<Worker> worker() {
+        return Optional.of(worker);
+    }
+
+    /**
+     * Updates session.
+     *
+     * @param session protocol session
+     */
+    @Override
+    protected void setSession(CDPSession session) {
+        super.setSession(session);
+        worker.setSession(session);
+    }
+
+}

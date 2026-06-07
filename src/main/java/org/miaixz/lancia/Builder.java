@@ -1,605 +1,521 @@
 /*
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
- ~                                                                               ~
- ~ The MIT License (MIT)                                                         ~
- ~                                                                               ~
- ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
- ~                                                                               ~
- ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
- ~ of this software and associated documentation files (the "Software"), to deal ~
- ~ in the Software without restriction, including without limitation the rights  ~
- ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
- ~ copies of the Software, and to permit persons to whom the Software is         ~
- ~ furnished to do so, subject to the following conditions:                      ~
- ~                                                                               ~
- ~ The above copyright notice and this permission notice shall be included in    ~
- ~ all copies or substantial portions of the Software.                           ~
- ~                                                                               ~
- ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
- ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
- ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
- ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
- ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
- ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
- ~ THE SOFTWARE.                                                                 ~
- ~                                                                               ~
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                           ~
+ ~ Copyright (c) 2015-2026 miaixz.org and other contributors.                ~
+ ~                                                                           ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");           ~
+ ~ you may not use this file except in compliance with the License.          ~
+ ~ You may obtain a copy of the License at                                   ~
+ ~                                                                           ~
+ ~      https://www.apache.org/licenses/LICENSE-2.0                          ~
+ ~                                                                           ~
+ ~ Unless required by applicable law or agreed to in writing, software       ~
+ ~ distributed under the License is distributed on an "AS IS" BASIS,         ~
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  ~
+ ~ See the License for the specific language governing permissions and       ~
+ ~ limitations under the License.                                            ~
+ ~                                                                           ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia;
 
-import java.io.*;
-import java.lang.reflect.Field;
-import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.concurrent.ForkJoinPool;
-import java.util.function.Consumer;
+import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.xyz.FileKit;
-import org.miaixz.bus.core.xyz.IoKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.health.Platform;
-import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.kernel.page.QueryHandler;
-import org.miaixz.lancia.kernel.page.QuerySelector;
-import org.miaixz.lancia.nimble.runtime.CallFrame;
-import org.miaixz.lancia.nimble.runtime.ExceptionDetails;
-import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.socket.CDPSession;
-import org.miaixz.lancia.worker.enums.PageEvaluateType;
-
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.jna.Native;
-import com.sun.jna.win32.StdCallLibrary;
-
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.internal.disposables.CancellableDisposable;
+import org.miaixz.bus.core.lang.Charset;
+import org.miaixz.bus.core.lang.Normal;
+import org.miaixz.bus.core.lang.Symbol;
+import org.miaixz.bus.core.lang.exception.InternalException;
+import org.miaixz.bus.core.net.url.UrlDecoder;
+import org.miaixz.bus.core.net.url.UrlEncoder;
+import org.miaixz.lancia.options.PDFOptions;
+import org.miaixz.lancia.shared.protocol.ProtocolStreams;
 
 /**
- * 公共方法
+ * Global Lancia builder utilities.
+ *
+ * <p>
+ * This class only carries shared constants and lightweight helpers. Browser session state does not belong here.
+ * </p>
  *
  * @author Kimi Liu
  * @since Java 17+
  */
-public class Builder {
+public final class Builder {
 
-    public static final String NONE = "NONE";
-    public static final String ONEWAY = "ONEWAY";
-    public static final String TWOWAY = "TWOWAY";
+    /**
+     * Default Lancia product name.
+     */
+    public static final String PRODUCT_NAME = "lancia";
 
-    public static final String MATCHED = "MATCHED";
-    public static final String NOT_MATCHED = "NOT_MATCHED";
-    public static final String CONTINUOUS = "CONTINUOUS";
-    public static final String TEXT = "TEXT";
-    public static final String BINARY = "BINARY";
-    public static final String PING = "PING";
-    public static final String PONG = "PONG";
-    public static final String CLOSING = "CLOSING";
+    /**
+     * Default protocol timeout in milliseconds.
+     */
+    public static final long DEFAULT_TIMEOUT_MILLIS = Normal._30 * Normal.KILO;
 
-    public static final Map<String, QueryHandler> CUSTOM_QUERY_HANDLERS = new HashMap<>();
     /**
-     * 指定版本
+     * Blank page URL.
      */
-    public static final String VERSION = "127.0.6533.99";
-    /**
-     * 临时文件夹前缀
-     */
-    public static final String PROFILE_PREFIX = "lancia_dev_chrome_profile-";
-    /**
-     * 把产品存放到环境变量的所有可用字段
-     */
-    public static final String[] PRODUCT_ENV = { "PUPPETEER_PRODUCT", "java_config_puppeteer_product",
-            "java_package_config_puppeteer_product" };
-    /**
-     * 把浏览器执行路径存放到环境变量的所有可用字段
-     */
-    public static final String[] EXECUTABLE_ENV = { "PUPPETEER_EXECUTABLE_PATH",
-            "java_config_puppeteer_executable_path", "java_package_config_puppeteer_executable_path" };
-    /**
-     * 把浏览器版本存放到环境变量的字段
-     */
-    public static final String PUPPETEER_CHROMIUM_REVISION_ENV = "PUPPETEER_CHROMIUM_REVISION";
-    /**
-     * 读取流中的数据的buffer size
-     */
-    public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
-    /**
-     * 存放下载浏览器脚本的临时目录
-     */
-    public static final String SHELLS_PREFIX = "lancia_browser_install_shells-";
-    public static final String CHROME_FOR_LINUX = "chrome-for-linux.sh";
-    public static final String CHROME_FOR_WIN = "chrome-for-win.ps1";
-    public static final String CHROME_FOR_MAC = "chrome-for-mac.sh";
-    /**
-     * 启动浏览器时，如果没有指定路径，那么会从以下路径搜索可执行的路径
-     */
-    public static final String[] PROBABLE_CHROME_EXECUTABLE_PATH = new String[] { "/usr/bin/chromium",
-            "/usr/bin/chromium-browser", "/usr/bin/google-chrome-stable", "/usr/bin/google-chrome",
-            "/Applications/Chromium.app/Contents/MacOS/Chromium",
-            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-            "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
-            "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-            "C:/Program Files/Google/Chrome/Application/chrome.exe" };
-    /**
-     * 谷歌浏览器默认启动参数
-     */
-    public static final List<String> DEFAULT_ARGS = Collections.unmodifiableList(new ArrayList<>() {
-        private static final long serialVersionUID = -1L;
-        {
-            addAll(Arrays.asList(
-                    // 旧版
-                    /*
-                     * "--disable-background-networking", "--disable-background-timer-throttling", "--disable-breakpad",
-                     * "--disable-browser-side-navigation", "--disable-client-side-phishing-detection",
-                     * "--disable-default-apps", "--disable-dev-shm-usage", "--disable-extensions",
-                     * "--disable-features=site-per-process", "--disable-hang-monitor", "--disable-popup-blocking",
-                     * "--disable-prompt-on-repost", "--disable-sync", "--disable-translate",
-                     * "--metrics-recording-only", "--no-first-run", "--safebrowsing-disable-auto-update",
-                     * "--enable-automation", "--password-store=basic", "--use-mock-keychain"
-                     */
-                    // 新版
-                    "--allow-pre-commit-input", "--disable-background-networking",
-                    "--disable-background-timer-throttling", "--disable-backgrounding-occluded-windows",
-                    "--disable-breakpad", "--disable-client-side-phishing-detection",
-                    "--disable-component-extensions-with-background-pages", "--disable-component-update",
-                    "--disable-default-apps", "--disable-dev-shm-usage", "--disable-extensions",
-                    "--disable-hang-monitor", "--disable-infobars", "--disable-ipc-flooding-protection",
-                    "--disable-popup-blocking", "--disable-prompt-on-repost", "--disable-renderer-backgrounding",
-                    "--disable-search-engine-choice-screen", "--disable-sync", "--enable-automation",
-                    "--export-tagged-pdf", "--generate-pdf-document-outline", "--force-color-profile=srgb",
-                    "--metrics-recording-only", "--no-first-run", "--password-store=basic", "--use-mock-keychain"));
-        }
-    });
-    public static final Set<String> SUPPORTED_METRICS = new HashSet<>() {
+    public static final String ABOUT_BLANK = "about" + Symbol.COLON + "blank";
 
-        private static final long serialVersionUID = -1L;
-        {
-            add("Timestamp");
-            add("Documents");
-            add("Frames");
-            add("JSEventListeners");
-            add("Nodes");
-            add("LayoutCount");
-            add("RecalcStyleCount");
-            add("LayoutDuration");
-            add("RecalcStyleDuration");
-            add("ScriptDuration");
-            add("TaskDuration");
-            add("JSHeapUsedSize");
-            add("JSHeapTotalSize");
-        }
-    };
     /**
-     * fastjson的一个实例
+     * Default viewport settings.
      */
-    public static final ObjectMapper OBJECTMAPPER = new ObjectMapper()
-            .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    /**
-     * 从浏览器的websocket接受到消息中有以下这些字段，在处理消息用到这些字段
-     */
-    public static final String MESSAGE_METHOD_PROPERTY = "method";
-    public static final String MESSAGE_PARAMS_PROPERTY = "params";
-    public static final String MESSAGE_ID_PROPERTY = "id";
-    public static final String MESSAGE_RESULT_PROPERTY = "result";
-    public static final String MESSAGE_SESSION_ID_PROPERTY = "sessionId";
-    public static final String MESSAGE_TARGETINFO_PROPERTY = "targetInfo";
-    public static final String MESSAGE_TYPE_PROPERTY = "type";
-    public static final String MESSAGE_ERROR_PROPERTY = "error";
-    public static final String MESSAGE_MESSAGE_PROPERTY = "message";
-    public static final String MESSAGE_DATA_PROPERTY = "data";
-    public static final String MESSAGE_TARGETID_PROPERTY = "targetId";
-    public static final String MESSAGE_STREAM_PROPERTY = "stream";
-    public static final String MESSAGE_EOF_PROPERTY = "eof";
-    public static final String MESSAGE_STREAM_DATA_PROPERTY = "data";
-    public static final String MESSAGE_BASE64ENCODED_PROPERTY = "base64Encoded";
-    /**
-     * 默认的超时时间：启动浏览器实例超时，websocket接受消息超时等
-     */
-    public static final int DEFAULT_TIMEOUT = 30000;
-    /**
-     * 追踪信息的默认分类
-     */
-    public static final Set<String> DEFAULTCATEGORIES = new LinkedHashSet<>() {
-        private static final long serialVersionUID = -1L;
-        {
-            add("-*");
-            add("devtools.timeline");
-            add("v8.execute");
-            add("disabled-by-default-devtools.timeline");
-            add("disabled-by-default-devtools.timeline.frame");
-            add("toplevel");
-            add("blink.console");
-            add("blink.user_timing");
-            add("latencyInfo");
-            add("disabled-by-default-devtools.timeline.stack");
-            add("disabled-by-default-v8.cpu_profiler");
-            add("disabled-by-default-v8.cpu_profiler.hires");
-        }
-    };
-    public static final String LINUX = "linux64";
-    public static final String MAC_ARM64 = "mac-arm64";
-    public static final String MAC_X64 = "mac-x64";
-    public static final String WIN32 = "win32";
-    public static final String WIN64 = "win64";
+    public static final Map<String, Object> DEFAULT_VIEWPORT = Map.of("width", 800, "height", 600);
 
-    public static String createProtocolError(JsonNode node) {
-        JsonNode methodNode = node.get(MESSAGE_METHOD_PROPERTY);
-        JsonNode errNode = node.get(MESSAGE_MESSAGE_PROPERTY);
-        JsonNode errorMsg = errNode.get(MESSAGE_MESSAGE_PROPERTY);
-        String method = "";
-        if (methodNode != null) {
-            method = methodNode.asText();
-        }
-        String message = "Protocol error " + method + ": " + errorMsg;
-        JsonNode dataNode = errNode.get(MESSAGE_DATA_PROPERTY);
-        if (dataNode != null) {
-            message += " " + dataNode;
-        }
-        return message;
-    }
+    /**
+     * sourceURL comment pattern.
+     */
+    public static final Pattern SOURCE_URL_REGEX = Pattern
+            .compile("^[\\x20\\t]*//[@#] sourceURL=\\s{0,10}(\\S*?)\\s{0,10}$", Pattern.MULTILINE);
 
-    public static String platform() {
-        return System.getProperty("os.name");
-    }
+    /**
+     * Cached normalized JavaScript function sources.
+     */
+    private static final Map<String, String> CREATED_FUNCTIONS = new ConcurrentHashMap<>();
 
-    public static String join(String root, String... args) {
-        return Paths.get(root, args).toString();
+    /**
+     * JavaScript function declaration pattern.
+     */
+    private static final Pattern FUNCTION_DECLARATION = Pattern
+            .compile("^(async\\s+)*function(\\(|\\s).*", Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
+
+    /**
+     * JavaScript generator function declaration pattern.
+     */
+    private static final Pattern FUNCTION_GENERATOR = Pattern
+            .compile("^(async\\s+)*function\\s*\\*\\s*.*", Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
+
+    /**
+     * JavaScript async arrow function pattern.
+     */
+    private static final Pattern ASYNC_ARROW = Pattern
+            .compile("^async\\s*\\(.*", Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
+
+    /**
+     * JavaScript identifier arrow function pattern.
+     */
+    private static final Pattern IDENTIFIER_ARROW = Pattern.compile(
+            "^(async)*\\s*[$_\\p{L}][$_\\p{L}\\p{N}\\u200C\\u200D]*\\s*=>.*",
+            Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
+
+    /**
+     * Prefix for async shorthand functions.
+     */
+    private static final String ASYNC_PREFIX = "async ";
+
+    /**
+     * Network idle time in milliseconds.
+     */
+    public static final long NETWORK_IDLE_TIME = 500L;
+
+    /**
+     * Hides the utility constructor.
+     */
+    private Builder() {
+        // No initialization required.
     }
 
     /**
-     * read stream from protocol : example for tracing file
+     * Returns whether the supplied object is a string.
      *
-     * @param client  CDPSession
-     * @param handler 发送给websocket的参数
-     * @param path    文件存放的路径
-     * @param isSync  是否是在新的线程中执行
-     * @throws IOException 操作文件的异常
-     * @return 可能是feture，可能是字节数组
+     * @param object object to test
+     * @return {@code true} when the object behaves like a string
      */
-    public static Object readProtocolStream(CDPSession client, String handler, String path, boolean isSync)
-            throws IOException {
-        if (isSync) {
-            return ForkJoinPool.commonPool().submit(() -> {
-                try {
-                    printPDF(client, handler, path);
-                } catch (IOException e) {
-                    Logger.error("Method readProtocolStream error", e);
-                }
-            });
-        } else {
-            return printPDF(client, handler, path);
-        }
+    public static boolean isString(Object object) {
+        return object instanceof CharSequence;
     }
 
-    private static byte[] printPDF(CDPSession client, String handler, String path) throws IOException {
-        boolean eof = false;
-        File file = null;
-        BufferedOutputStream writer = null;
-        BufferedInputStream reader = null;
+    /**
+     * Returns whether the supplied object is a number.
+     *
+     * @param object object to test
+     * @return {@code true} when the object is a number
+     */
+    public static boolean isNumber(Object object) {
+        return object instanceof Number;
+    }
 
-        if (StringKit.isNotEmpty(path)) {
-            file = new File(path);
-            FileKit.createTempFile(file.getParentFile());
-        }
+    /**
+     * Returns whether the supplied object is a plain object.
+     *
+     * @param object object to test
+     * @return {@code true} when the object is a plain map
+     */
+    public static boolean isPlainObject(Object object) {
+        return object instanceof Map<?, ?>;
+    }
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("handle", handler);
-        try {
+    /**
+     * Returns whether the supplied object is a regular expression.
+     *
+     * @param object object to test
+     * @return {@code true} when the object is a regular expression
+     */
+    public static boolean isRegExp(Object object) {
+        return object instanceof Pattern;
+    }
 
-            if (file != null) {
-                FileOutputStream fileOutputStream = new FileOutputStream(file);
-                writer = new BufferedOutputStream(fileOutputStream);
-            }
-            byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-            byte[] bytes;
-            List<byte[]> bufs = new ArrayList<>();
-            int byteLength = 0;
+    /**
+     * Returns whether the supplied object is a date.
+     *
+     * @param object object to test
+     * @return {@code true} when the object is date-like
+     */
+    public static boolean isDate(Object object) {
+        return object instanceof Date || object instanceof java.time.temporal.Temporal;
+    }
 
-            while (!eof) {
-                JsonNode response = client.send("IO.read", params);
-                JsonNode eofNode = response.get(MESSAGE_EOF_PROPERTY);
-                JsonNode base64EncodedNode = response.get(MESSAGE_BASE64ENCODED_PROPERTY);
-                JsonNode dataNode = response.get(MESSAGE_STREAM_DATA_PROPERTY);
-                String dataText;
+    /**
+     * Asserts that a value is JavaScript-truthy.
+     *
+     * @param value to assert
+     */
+    public static void assertThat(Object value) {
+        assertThat(value, Normal.EMPTY);
+    }
 
-                if (dataNode != null && StringKit.isNotEmpty(dataText = dataNode.asText())) {
-                    try {
-                        if (base64EncodedNode != null && base64EncodedNode.asBoolean()) {
-                            bytes = Base64.getDecoder().decode(dataText);
-                        } else {
-                            bytes = dataNode.asText().getBytes();
-                        }
-                        bufs.add(bytes);
-                        byteLength += bytes.length;
-                        // 转成二进制流 io
-                        if (file != null) {
-                            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
-                            reader = new BufferedInputStream(byteArrayInputStream);
-                            int read;
-                            while ((read = reader.read(buffer, 0, DEFAULT_BUFFER_SIZE)) != -1) {
-                                writer.write(buffer, 0, read);
-                                writer.flush();
-                            }
-                        }
-                    } finally {
-                        IoKit.closeQuietly(reader);
-                    }
-                }
-                eof = eofNode == null || eofNode.asBoolean();
-            }
-            client.send("IO.close", params);
-            return getBytes(bufs, byteLength);
-        } finally {
-            IoKit.closeQuietly(writer);
-            IoKit.closeQuietly(reader);
+    /**
+     * Asserts that a value is JavaScript-truthy.
+     *
+     * @param value   value to assert
+     * @param message failure message
+     */
+    public static void assertThat(Object value, String message) {
+        if (!isTruthy(value)) {
+            throw new InternalException(message == null ? Normal.EMPTY : message);
         }
     }
 
     /**
-     * 多个字节数组转成一个字节数组
-     * 
-     * @param bufs       数组集合
-     * @param byteLength 数组总长度
-     * @return 总数组
+     * Guards an operation against disposed state.
+     *
+     * @param disposed disposed state
+     * @param message  failure message
      */
-    private static byte[] getBytes(List<byte[]> bufs, int byteLength) {
-        // 返回字节数组
-        byte[] resultBuf = new byte[byteLength];
-        int destPos = 0;
-        for (byte[] buf : bufs) {
-            System.arraycopy(buf, 0, resultBuf, destPos, buf.length);
-            destPos += buf.length;
+    public static void guardDisposed(boolean disposed, String message) {
+        if (disposed) {
+            throw new InternalException(message == null ? "Object is disposed." : message);
         }
-        return resultBuf;
     }
 
-    public static String getExceptionMessage(ExceptionDetails exceptionDetails) {
-        if (exceptionDetails.getException() != null)
-            return StringKit.isNotEmpty(exceptionDetails.getException().getDescription())
-                    ? exceptionDetails.getException().getDescription()
-                    : (String) exceptionDetails.getException().getValue();
-        String message = exceptionDetails.getText();
-        StringBuilder sb = new StringBuilder(message);
-        if (exceptionDetails.getStackTrace() != null) {
-            for (CallFrame callframe : exceptionDetails.getStackTrace().getCallFrames()) {
-                String location = callframe.getUrl() + ":" + callframe.getColumnNumber() + ":"
-                        + callframe.getColumnNumber();
-                String functionName = StringKit.isNotEmpty(callframe.getFunctionName()) ? callframe.getFunctionName()
-                        : "<anonymous>";
-                sb.append("\n    at ").append(functionName).append("(").append(location).append(")");
-            }
+    /**
+     * Guards an operation against disconnected state.
+     *
+     * @param connected connected state
+     * @param message   failure message
+     */
+    public static void guardConnected(boolean connected, String message) {
+        if (!connected) {
+            throw new InternalException(message == null ? "Object is disconnected." : message);
         }
-        return sb.toString();
     }
 
-    // 定义通用方法用于创建Observable
-    public static <T, EventType> io.reactivex.rxjava3.core.Observable<T> fromEmitterEvent(Emitter<EventType> emitter,
-            EventType eventType) {
-        return io.reactivex.rxjava3.core.Observable.create(subscriber -> {
-            if (!subscriber.isDisposed()) {
-                Consumer<T> listener = subscriber::onNext;
-                emitter.on(eventType, listener);
-                Disposable disposable = new CancellableDisposable(() -> emitter.off(eventType, listener));
-                subscriber.setDisposable(disposable);
-            }
-        });
+    /**
+     * Guards a non-null value.
+     *
+     * @param <T>   value type
+     * @param value to convert
+     * @param name  value name
+     * @return non-null value
+     */
+    public static <T> T guardNonNull(T value, String name) {
+        if (value == null) {
+            throw new InternalException((name == null || name.isBlank() ? "value" : name) + " is required.");
+        }
+        return value;
     }
 
-    public static boolean isString(Object value) {
-        if (value == null)
+    /**
+     * Guards a protocol result.
+     *
+     * @param <T>     result type
+     * @param result  protocol result
+     * @param message failure message
+     * @return protocol result
+     */
+    public static <T> T guardProtocolResult(T result, String message) {
+        if (result == null) {
+            throw new InternalException(message == null ? "Protocol command returned no result." : message);
+        }
+        if (result instanceof Payload payload && payload.isNull()) {
+            throw new InternalException(message == null ? "Protocol command returned no result." : message);
+        }
+        return result;
+    }
+
+    /**
+     * Returns whether the value is JavaScript-truthy.
+     *
+     * @param value to inspect
+     * @return {@code true} when the value is truthy
+     */
+    public static boolean isTruthy(Object value) {
+        if (value == null) {
             return false;
-        return value.getClass().equals(String.class);
-    }
-
-    public static boolean isNumber(String s) {
-        Pattern pattern = Pattern.compile("-?[0-9]+(\\.[0-9]+)?");
-        Matcher matcher = pattern.matcher(s);
-        return matcher.matches();
-    }
-
-    public static Object valueFromRemoteObject(RemoteObject remoteObject) {
-        Assert.isTrue(StringKit.isEmpty(remoteObject.getObjectId()), "Cannot extract value when objectId is given");
-        if (StringKit.isNotEmpty(remoteObject.getUnserializableValue())) {
-            if ("bigint".equals(remoteObject.getType()))
-                return new BigInteger(remoteObject.getUnserializableValue().replace("n", ""));
-            switch (remoteObject.getUnserializableValue()) {
-            case "-0":
-                return -0;
-            case "NaN":
-                return "NaN";
-            case "Infinity":
-                return "Infinity";
-            case "-Infinity":
-                return "-Infinity";
-            default:
-                throw new IllegalArgumentException(
-                        "Unsupported unserializable value: " + remoteObject.getUnserializableValue());
-            }
         }
-        return remoteObject.getValue();
-    }
-
-    public static void releaseObject(CDPSession client, RemoteObject remoteObject, boolean isBlock) {
-        if (StringKit.isEmpty(remoteObject.getObjectId()))
-            return;
-        Map<String, Object> params = new HashMap<>();
-        params.put("objectId", remoteObject.getObjectId());
-        try {
-            client.send("Runtime.releaseObject", params, null, isBlock);
-        } catch (Exception e) {
-            // Exceptions might happen in case of a page been navigated or closed.
-            // 重新导航到某个网页 或者页面已经关闭
-            // Swallow these since they are harmless and we don't leak anything in this case.
-            // 在这种情况下不需要将这个错误在线程执行中抛出，打日志记录一下就可以了
+        if (value instanceof Boolean bool) {
+            return bool;
         }
-    }
-
-    public static String evaluationString(String fun, PageEvaluateType type, Object... args) {
-        if (PageEvaluateType.STRING.equals(type)) {
-            Assert.isTrue(args.length == 0, "Cannot evaluate a string with arguments");
-            return fun;
+        if (value instanceof Number number) {
+            double numeric = number.doubleValue();
+            return numeric != 0D && !Double.isNaN(numeric);
         }
-        List<String> argsList = new ArrayList<>();
-        for (Object arg : args) {
-            if (arg == null) {
-                argsList.add("undefined");
-            } else {
-                try {
-                    argsList.add(OBJECTMAPPER.writeValueAsString(arg));
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+        if (value instanceof CharSequence text) {
+            return !text.isEmpty();
         }
-        return MessageFormat.format("({0})({1})", fun, String.join(",", argsList));
+        return true;
     }
 
     /**
-     * 判断js字符串是否是一个函数
-     * 
-     * @param pageFunction js字符串
-     * @return true代表是js函数
-     */
-    public static boolean isFunction(String pageFunction) {
-        pageFunction = pageFunction.trim();
-        return pageFunction.startsWith("function") || pageFunction.startsWith("async") || pageFunction.contains("=>");
-    }
-
-    /**
-     * 获取进程id
+     * Creates a cached JavaScript function source from a function source string.
      *
-     * @param process 进程
-     * @return 进程id
+     * @param functionValue JavaScript function source
+     * @return cached normalized function source
      */
-    public static String getProcessId(Process process) {
-        long pid = -1;
-        Field field;
-        if (Platform.isWindows()) {
-            try {
-                field = process.getClass().getDeclaredField("handle");
-                field.setAccessible(true);
-                pid = Kernel32.INSTANCE.GetProcessId((Long) field.get(process));
-            } catch (Exception e) {
-                Logger.error("Failed to get processId on Windows platform.", e);
-            }
-        } else if (Platform.isLinux() || Platform.isAIX()) {
-            try {
-                String version = System.getProperty("java.version");
-                double jdkversion = Double.parseDouble(version.substring(0, 3));
-                Class<?> clazz;
-                if (jdkversion <= 1.8) {
-                    clazz = Class.forName("java.lang.UNIXProcess");
-                } else {
-                    clazz = Class.forName("java.lang.ProcessImpl");
-                }
-                field = clazz.getDeclaredField("pid");
-                field.setAccessible(true);
-                pid = (Integer) field.get(process);
-            } catch (Throwable e) {
-                Logger.error("Failed to get processId on Linux or Aix platform.", e);
-            }
-        }
-        return String.valueOf(pid);
-    }
-
-    public static String createProtocolErrorMessage(JsonNode receivedNode) {
-        String message = receivedNode.get("error").get("message").asText();
-        if (receivedNode.hasNonNull("error") && receivedNode.get("error").hasNonNull("data")) {
-            message += " " + receivedNode.get("error").get("data").asText();
-        }
-        return message;
+    public static String createFunction(String functionValue) {
+        String source = Assert.notBlank(functionValue, "functionValue");
+        return CREATED_FUNCTIONS.computeIfAbsent(source, Builder::stringifyFunction);
     }
 
     /**
-     * 根据给定的前缀创建临时文件夹
+     * Returns a JavaScript function source that can be evaluated as a standalone function.
      *
-     * @param prefix 临时文件夹前缀
-     * @return 临时文件夹路径
+     * @param functionSource JavaScript function source
+     * @return standalone JavaScript function source
      */
-    public static String createProfileDir(String prefix) {
-        try {
-            return Files.createTempDirectory(prefix).toRealPath().toString();
-        } catch (Exception e) {
-            throw new RuntimeException("create temp profile dir fail:", e);
+    public static String stringifyFunction(String functionSource) {
+        String value = Assert.notBlank(functionSource, "functionSource").trim();
+        if (FUNCTION_DECLARATION.matcher(value).matches() || FUNCTION_GENERATOR.matcher(value).matches()) {
+            return value;
         }
+        if (isArrowFunction(value)) {
+            return value;
+        }
+        String prefix = "function ";
+        if (value.startsWith(ASYNC_PREFIX)) {
+            prefix = ASYNC_PREFIX + prefix;
+            value = value.substring(ASYNC_PREFIX.length());
+        }
+        return prefix + value;
     }
 
     /**
-     * 断言路径是否是可执行的exe文件
+     * Replaces PLACEHOLDER calls with valid JavaScript replacement snippets.
      *
-     * @param executablePath 要断言的文件
-     * @return 可执行，返回true
+     * @param functionSource JavaScript function source
+     * @param replacements   replacement snippets keyed by placeholder name
+     * @return interpolated JavaScript function source
      */
-    public static boolean assertExecutable(String executablePath) {
-        Path path = Paths.get(executablePath);
-        return Files.isRegularFile(path) && Files.isReadable(path) && Files.isExecutable(path);
+    public static String interpolateFunction(String functionSource, Map<String, String> replacements) {
+        Assert.notNull(replacements, "replacements");
+        String value = stringifyFunction(functionSource);
+        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+            String name = Assert.notBlank(entry.getKey(), "replacement name");
+            String jsValue = entry.getValue() == null ? Normal.EMPTY : entry.getValue();
+            Pattern placeholder = Pattern.compile(
+                    "PLACEHOLDER\\(\\s*(?:'" + Pattern.quote(name) + "'|\"" + Pattern.quote(name) + "\")\\s*\\)");
+            value = placeholder.matcher(value)
+                    .replaceAll(Matcher.quoteReplacement(Symbol.PARENTHESE_LEFT + jsValue + Symbol.PARENTHESE_RIGHT));
+        }
+        return createFunction(value);
     }
 
-    public static void registerCustomQueryHandler(String name, QueryHandler handler) {
-        if (CUSTOM_QUERY_HANDLERS.containsKey(name))
-            throw new RuntimeException("A custom query handler named " + name + " already exists");
-        Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
-        Matcher isValidName = pattern.matcher(name);
-        if (!isValidName.matches())
-            throw new IllegalArgumentException("Custom query handler names may only contain [a-zA-Z]");
-
-        CUSTOM_QUERY_HANDLERS.put(name, handler);
+    /**
+     * Returns the current number of cached JavaScript function sources.
+     *
+     * @return cached function source count
+     */
+    public static int functionCacheSize() {
+        return CREATED_FUNCTIONS.size();
     }
 
-    public static final void unregisterCustomQueryHandler(String name) {
-        CUSTOM_QUERY_HANDLERS.remove(name);
+    /**
+     * Clears cached JavaScript function sources.
+     */
+    public static void clearFunctionCache() {
+        CREATED_FUNCTIONS.clear();
     }
 
-    public static Map<String, QueryHandler> customQueryHandlers() {
-        return CUSTOM_QUERY_HANDLERS;
+    /**
+     * Validates a JavaScript dialog type.
+     *
+     * @param type dialog type
+     * @return valid dialog type
+     */
+    public static String validateDialogType(String type) {
+        return switch (type) {
+            case "alert", "confirm", "prompt", "beforeunload" -> type;
+            default -> throw new InternalException("Unknown javascript dialog type: " + type);
+        };
     }
 
-    public static QuerySelector getQueryHandlerAndSelector(String selector, String defaultQueryHandler) {
-        Pattern pattern = Pattern.compile("^[a-zA-Z]+\\/");
-        Matcher hasCustomQueryHandler = pattern.matcher(selector);
-        if (!hasCustomQueryHandler.find())
-            return new QuerySelector(selector, new QueryHandler() {
-                @Override
-                public String queryOne() {
-                    return "(element,selector) =>\n" + "      element.querySelector(selector)";
-                }
-
-                @Override
-                public String queryAll() {
-                    return "(element,selector) =>\n" + "      element.querySelectorAll(selector)";
-                }
-            });
-        int index = selector.indexOf("/");
-        String name = selector.substring(0, index);
-        String updatedSelector = selector.substring(index + 1);
-        QueryHandler queryHandler = customQueryHandlers().get(name);
-        if (queryHandler == null)
-            throw new RuntimeException("Query set to use " + name + ", but no query handler of that name was found");
-        return new QuerySelector(updatedSelector, queryHandler);
+    /**
+     * Returns a sourceURL comment.
+     *
+     * @param url sourceURL
+     * @return sourceURL comment
+     */
+    public static String getSourceUrlComment(String url) {
+        return "//# sourceURL=" + (url == null ? Normal.EMPTY : url);
     }
 
-    public void clearQueryHandlers() {
-        CUSTOM_QUERY_HANDLERS.clear();
+    /**
+     * Parses PDF options.
+     *
+     * @param options PDF options
+     * @return parsed PDF options
+     */
+    public static PDFOptions.ParsedPDFOptions parsePDFOptions(PDFOptions options) {
+        return (options == null ? new PDFOptions() : options).parse();
     }
 
-    public interface Kernel32 extends StdCallLibrary {
-        Kernel32 INSTANCE = Native.load("kernel32", Kernel32.class);
+    /**
+     * Reads a protocol IO stream.
+     *
+     * @param session protocol session
+     * @param handle  stream handle
+     * @return stream bytes
+     */
+    public static byte[] readProtocolStream(Session session, String handle) {
+        return ProtocolStreams.read(session, handle);
+    }
 
-        long GetProcessId(Long hProcess);
+    /**
+     * Returns whether arrow function is enabled.
+     *
+     * @param value to use
+     * @return {@code true} when the condition matches
+     */
+    private static boolean isArrowFunction(String value) {
+        return value.startsWith(Symbol.PARENTHESE_LEFT) || ASYNC_ARROW.matcher(value).matches()
+                || IDENTIFIER_ARROW.matcher(value).matches();
+    }
+
+    /**
+     * Puppeteer sourceURL.
+     *
+     * @author Kimi Liu
+     * @since Java 17+
+     */
+    public static final class URL {
+
+        /**
+         * Internal URL.
+         */
+        public static final String INTERNAL_URL = "pptr:internal";
+
+        /**
+         * Function name.
+         */
+        private final String functionName;
+
+        /**
+         * Call site string.
+         */
+        private final String siteString;
+
+        /**
+         * Creates a Puppeteer sourceURL.
+         *
+         * @param functionName function name
+         * @param siteString   call site string
+         */
+        private URL(String functionName, String siteString) {
+            this.functionName = functionName == null ? Normal.EMPTY : functionName;
+            this.siteString = siteString == null ? Normal.EMPTY : siteString;
+        }
+
+        /**
+         * Creates a Puppeteer sourceURL from the current call site.
+         *
+         * @param functionName function name
+         * @return Puppeteer sourceURL
+         */
+        public static URL fromCallSite(String functionName) {
+            StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+            String site = stack.length > 2 ? stack[2].toString() : Normal.EMPTY;
+            return new URL(functionName, site);
+        }
+
+        /**
+         * Parses a Puppeteer sourceURL.
+         *
+         * @param url sourceURL
+         * @return Puppeteer sourceURL
+         */
+        public static URL parse(String url) {
+            String value = url == null ? Normal.EMPTY : url;
+            if (value.startsWith("pptr:")) {
+                value = value.substring("pptr:".length());
+            }
+            String[] parts = value.split(Symbol.SEMICOLON, 2);
+            String functionName = parts.length > 0 ? parts[0] : Normal.EMPTY;
+            String site = parts.length > 1 ? decode(parts[1]) : Normal.EMPTY;
+            return new URL(functionName, site);
+        }
+
+        /**
+         * Returns whether the URL is Puppeteer URL.
+         *
+         * @param url target URL
+         * @return {@code true} when the URL is a Puppeteer sourceURL
+         */
+        public static boolean isPuppeteerURL(String url) {
+            return url != null && url.startsWith("pptr:");
+        }
+
+        /**
+         * Returns the function name.
+         *
+         * @return function name
+         */
+        public String functionName() {
+            return functionName;
+        }
+
+        /**
+         * Returns the call site string.
+         *
+         * @return call site string
+         */
+        public String siteString() {
+            return siteString;
+        }
+
+        /**
+         * Converts this URL to a string.
+         *
+         * @return string value
+         */
+        @Override
+        public String toString() {
+            return "pptr:" + functionName + Symbol.SEMICOLON + encode(siteString);
+        }
+
+        /**
+         * Encodes a URL segment.
+         *
+         * @param value raw value
+         * @return encoded value
+         */
+        private static String encode(String value) {
+            return UrlEncoder.encodeAll(value == null ? Normal.EMPTY : value, Charset.UTF_8);
+        }
+
+        /**
+         * Decodes a URL segment.
+         *
+         * @param value encoded value
+         * @return raw value
+         */
+        private static String decode(String value) {
+            return UrlDecoder.decode(value == null ? Normal.EMPTY : value, Charset.UTF_8);
+        }
     }
 
 }

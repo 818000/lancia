@@ -1,345 +1,310 @@
 /*
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
- ~                                                                               ~
- ~ The MIT License (MIT)                                                         ~
- ~                                                                               ~
- ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
- ~                                                                               ~
- ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
- ~ of this software and associated documentation files (the "Software"), to deal ~
- ~ in the Software without restriction, including without limitation the rights  ~
- ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
- ~ copies of the Software, and to permit persons to whom the Software is         ~
- ~ furnished to do so, subject to the following conditions:                      ~
- ~                                                                               ~
- ~ The above copyright notice and this permission notice shall be included in    ~
- ~ all copies or substantial portions of the Software.                           ~
- ~                                                                               ~
- ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
- ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
- ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
- ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
- ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
- ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
- ~ THE SOFTWARE.                                                                 ~
- ~                                                                               ~
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                           ~
+ ~ Copyright (c) 2015-2026 miaixz.org and other contributors.                ~
+ ~                                                                           ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");           ~
+ ~ you may not use this file except in compliance with the License.          ~
+ ~ You may obtain a copy of the License at                                   ~
+ ~                                                                           ~
+ ~      https://www.apache.org/licenses/LICENSE-2.0                          ~
+ ~                                                                           ~
+ ~ Unless required by applicable law or agreed to in writing, software       ~
+ ~ distributed under the License is distributed on an "AS IS" BASIS,         ~
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  ~
+ ~ See the License for the specific language governing permissions and       ~
+ ~ limitations under the License.                                            ~
+ ~                                                                           ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import org.miaixz.bus.core.lang.exception.InternalException;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.kernel.*;
-import org.miaixz.lancia.kernel.browser.Context;
-import org.miaixz.lancia.kernel.page.Target;
-import org.miaixz.lancia.kernel.page.TargetInfo;
-import org.miaixz.lancia.option.BrowserContextOptions;
-import org.miaixz.lancia.option.data.Debug;
-import org.miaixz.lancia.option.data.GetVersionResponse;
-import org.miaixz.lancia.option.data.Viewport;
-import org.miaixz.lancia.socket.Connection;
-import org.miaixz.lancia.socket.factory.SessionFactory;
-import org.miaixz.lancia.worker.enums.*;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Observable;
+import org.miaixz.lancia.events.BrowserEvent;
+import org.miaixz.lancia.nimble.browser.WindowBounds;
+import org.miaixz.lancia.nimble.network.Cookie;
+import org.miaixz.lancia.nimble.network.CookieParam;
+import org.miaixz.lancia.nimble.network.DeleteCookiesParameters;
+import org.miaixz.lancia.nimble.screen.AddScreenParams;
+import org.miaixz.lancia.nimble.screen.ScreenInfo;
+import org.miaixz.lancia.options.BrowserContextOptions;
+import org.miaixz.lancia.options.CreatePageOptions;
+import org.miaixz.lancia.options.PermissionOptions;
 
 /**
- * 浏览器实例
+ * Public browser API for contexts, pages, targets, extensions, and connection lifecycle.
  *
  * @author Kimi Liu
  * @since Java 17+
  */
-public class Browser extends Emitter<BrowserEvent> {
+public interface Browser extends Emitter<BrowserEvent>, AutoCloseable {
 
-    private final Viewport defaultViewport;
-    private final Process process;
-    private final Connection connection;
-    private final Runnable closeCallback;
-    private final Context defaultContext;
-    private final Map<String, Context> contexts = new HashMap<>();
-    private final TargetManager targetManager;
-    private final Consumer<Target> onAttachedToTarget = (target) -> {
-        if (target.isTargetExposed() && target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS)) {
-            this.emit(BrowserEvent.TargetCreated, target);
-            target.browserContext().emit(BrowserContextEvent.TargetCreated, target);
-        }
-    };
-    private final Consumer<Object> emitDisconnected = (ignore) -> this.emit(BrowserEvent.Disconnected, null);
-    private final Consumer<Target> onDetachedFromTarget = (target) -> {
-        target.initializedSubject.onSuccess(InitializationStatus.ABORTED);
-        target.isClosedSubject.onSuccess(true);
-        if (target.isTargetExposed() && target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS)) {
-            this.emit(BrowserEvent.TargetDestroyed, target);
-            target.browserContext().emit(BrowserContextEvent.TargetDestroyed, target);
-        }
-    };
-    private final Consumer<Target> onTargetChanged = (target) -> {
-        this.emit(BrowserEvent.TargetChanged, target);
-        target.browserContext().emit(BrowserContextEvent.TargetChanged, target);
-    };
-    private final Consumer<TargetInfo> onTargetDiscovered = (target) -> {
-        this.emit(BrowserEvent.TargetDiscovered, target);
-    };
-    Function<Target, Boolean> targetFilterCallback;
-    Function<Target, Boolean> isPageTargetCallback;
+    /**
+     * Returns the connected.
+     *
+     * @return {@code true} when the condition matches
+     */
+    boolean connected();
 
-    public Browser(String product, Connection connection, List<String> contextIds, Viewport viewport, Process process,
-            Runnable closeCallback, Function<Target, Boolean> targetFilterCallback,
-            Function<Target, Boolean> isPageTargetCallback, boolean waitForInitiallyDiscoveredTargets) {
-        super();
-        product = StringKit.isEmpty(product) ? "chrome" : product;
-        this.defaultViewport = viewport;
-        this.process = process;
-        this.connection = connection;
-        if (closeCallback == null) {
-            closeCallback = () -> {
-            };
-        }
-        this.closeCallback = closeCallback;
-        if (targetFilterCallback == null) {
-            targetFilterCallback = (ignore) -> true;
-        }
-        this.targetFilterCallback = targetFilterCallback;
-        this.setIsPageTargetCallback(isPageTargetCallback);
-        if ("firefox".equals(product)) {
-            throw new InternalException("Not Support firefox");
-        } else {
-            this.targetManager = new ChromeTargetManager(connection, this.createTarget(), this.targetFilterCallback,
-                    waitForInitiallyDiscoveredTargets);
-        }
-        this.defaultContext = new Context(connection, this, "");
-        if (CollKit.isNotEmpty(contextIds)) {
-            for (String contextId : contextIds) {
-                this.contexts.putIfAbsent(contextId, new Context(this.connection, this, contextId));
-            }
-        }
-    }
+    /**
+     * Returns the launched process.
+     *
+     * @return process or {@code null}
+     */
+    Process process();
 
-    public static Browser create(String product, Connection connection, List<String> contextIds,
-            boolean acceptInsecureCerts, Viewport defaultViewport, Process process, Runnable closeCallback,
-            Function<Target, Boolean> targetFilterCallback, Function<Target, Boolean> IsPageTargetCallback,
-            boolean waitForInitiallyDiscoveredTargets) {
-        Browser browser = new Browser(product, connection, contextIds, defaultViewport, process, closeCallback,
-                targetFilterCallback, IsPageTargetCallback, waitForInitiallyDiscoveredTargets);
-        if (acceptInsecureCerts) {
-            Map<String, Object> params = new HashMap<>();
-            params.put("ignore", true);
-            connection.send("Security.setIgnoreCertificateErrors", params);
-        }
-        browser.attach();
-        return browser;
-    }
+    /**
+     * Returns the browser WebSocket endpoint.
+     *
+     * @return endpoint value
+     */
+    String wsEndpoint();
 
-    private void attach() {
-        this.connection.on(CDPSessionEvent.CDPSession_Disconnected, this.emitDisconnected);
-        this.targetManager.on(TargetManagerType.TargetAvailable, this.onAttachedToTarget);
-        this.targetManager.on(TargetManagerType.TargetGone, this.onDetachedFromTarget);
-        this.targetManager.on(TargetManagerType.TargetChanged, this.onTargetChanged);
-        this.targetManager.on(TargetManagerType.TargetDiscovered, this.onTargetDiscovered);
-        this.targetManager.initialize();
-    }
+    /**
+     * Creates a new page.
+     *
+     * @return page instance
+     */
+    Page newPage();
 
-    private void detach() {
-        this.connection.off(CDPSessionEvent.CDPSession_Disconnected, this.emitDisconnected);
-        this.targetManager.off(TargetManagerType.TargetAvailable, this.onAttachedToTarget);
-        this.targetManager.off(TargetManagerType.TargetGone, this.onDetachedFromTarget);
-        this.targetManager.off(TargetManagerType.TargetChanged, this.onTargetChanged);
-        this.targetManager.off(TargetManagerType.TargetDiscovered, this.onTargetDiscovered);
-    }
+    /**
+     * Creates a new page.
+     *
+     * @param options page creation options
+     * @return page instance
+     */
+    Page newPage(CreatePageOptions options);
 
-    public Process process() {
-        return this.process;
-    }
+    /**
+     * Returns browser pages.
+     *
+     * @return page list
+     */
+    List<Page> pages();
 
-    public TargetManager targetManager() {
-        return this.targetManager;
-    }
+    /**
+     * Returns browser contexts.
+     *
+     * @return browser context list
+     */
+    List<? extends Context> browserContexts();
 
-    public Function<Target, Boolean> getIsPageTargetCallback() {
-        return this.isPageTargetCallback;
-    }
+    /**
+     * Returns the default browser context.
+     *
+     * @return default browser context
+     */
+    Context defaultBrowserContext();
 
-    private void setIsPageTargetCallback(Function<Target, Boolean> isPageTargetCallback) {
-        if (isPageTargetCallback == null) {
-            isPageTargetCallback = (target -> TargetType.PAGE.equals(target.type())
-                    || TargetType.BACKGROUND_PAGE.equals(target.type()) || TargetType.WEBVIEW.equals(target.type()));
-        }
-        this.isPageTargetCallback = isPageTargetCallback;
-    }
+    /**
+     * Creates a browser context.
+     *
+     * @param options browser context options
+     * @return browser context
+     */
+    Context createBrowserContext(BrowserContextOptions options);
 
-    public void disposeContext(String contextId) {
-        if (StringKit.isEmpty(contextId)) {
-            return;
-        }
-        Map<String, Object> params = new HashMap<>();
-        params.put("browserContextId", contextId);
-        this.connection.send("Target.disposeBrowserContext", params);
-        this.contexts.remove(contextId);
-    }
+    /**
+     * Creates a browser context.
+     *
+     * @return browser context
+     */
+    Context createBrowserContext();
 
-    public Context createBrowserContext(BrowserContextOptions options) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("proxyServer", options.getProxyServer());
-        if (CollKit.isNotEmpty(options.getProxyBypassList())) {
-            params.put("proxyBypassList", String.join(",", options.getProxyBypassList()));
-        }
-        JsonNode result = this.connection.send("Target.createBrowserContext", params);
-        Context context = new Context(this.connection, this, result.get("browserContextId").asText());
-        this.contexts.put(result.get("browserContextId").asText(), context);
-        return context;
-    }
+    /**
+     * Installs an extension.
+     *
+     * @param path extension path
+     * @return extension id future
+     */
+    CompletableFuture<String> installExtension(String path);
 
-    public List<Context> browserContexts() {
-        List<Context> contexts = new ArrayList<>();
-        contexts.add(this.defaultBrowserContext());
-        contexts.addAll(this.contexts.values());
-        return contexts;
-    }
+    /**
+     * Installs an extension.
+     *
+     * @param path extension path
+     * @return extension id future
+     */
+    CompletableFuture<String> installExtension(Path path);
 
-    public Context defaultBrowserContext() {
-        return this.defaultContext;
-    }
+    /**
+     * Uninstalls an extension.
+     *
+     * @param id extension id
+     * @return completion future
+     */
+    CompletableFuture<Void> uninstallExtension(String id);
 
-    private TargetManager.TargetFactory createTarget() {
-        return (targetInfo, session, parentSession) -> {
-            String browserContextId = targetInfo.getBrowserContextId();
-            Context context;
-            if (StringKit.isNotEmpty(browserContextId) && this.contexts.containsKey(browserContextId)) {
-                context = this.contexts.get(browserContextId);
-            } else {
-                context = this.defaultContext;
-            }
-            if (context == null) {
-                throw new InternalException("Missing browser context");
-            }
-            SessionFactory createSession = (isAutoAttachEmulated) -> this.connection._createSession(targetInfo,
-                    isAutoAttachEmulated);
-            OtherTarget otherTarget = new OtherTarget(targetInfo, session, context, this.targetManager, createSession);
-            if (StringKit.isNotEmpty(targetInfo.getUrl()) && targetInfo.getUrl().startsWith("devtools://")) {
-                return new DevToolsTarget(targetInfo, session, context, this.targetManager, createSession,
-                        this.defaultViewport);
-            }
-            if (this.isPageTargetCallback.apply(otherTarget)) {
-                return new PageTarget(targetInfo, session, context, this.targetManager, createSession,
-                        this.defaultViewport);
-            }
-            if ("service_worker".equals(targetInfo.getType()) || "shared_worker".equals(targetInfo.getType())) {
-                return new WorkerTarget(targetInfo, session, context, this.targetManager, createSession);
-            }
-            return otherTarget;
-        };
-    }
+    /**
+     * Returns installed extensions.
+     *
+     * @return extension map
+     */
+    Map<String, ? extends Extension> extensions();
 
-    public String wsEndpoint() {
-        return this.connection.url();
-    }
+    /**
+     * Returns emulated screens.
+     *
+     * @return screen list
+     */
+    List<ScreenInfo> screens();
 
-    public Page newPage() {
-        return this.defaultContext.newPage();
-    }
+    /**
+     * Adds an emulated screen.
+     *
+     * @param params screen parameters
+     * @return screen info
+     */
+    ScreenInfo addScreen(AddScreenParams params);
 
-    public Page createPageInContext(String contextId) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("url", "about:blank");
-        if (StringKit.isNotEmpty(contextId)) {
-            params.put("browserContextId", contextId);
-        }
-        JsonNode result = this.connection.send("Target.createTarget", params);
-        if (result != null) {
-            String targetId = result.get(Builder.MESSAGE_TARGETID_PROPERTY).asText();
-            Target target = this.waitForTarget(t -> t.getTargetId().equals(targetId), Builder.DEFAULT_TIMEOUT);
-            if (target == null) {
-                throw new InternalException("Missing target for page (id = " + targetId + ")");
-            }
-            if (!target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS)) {
-                throw new InternalException("Failed to create target for page (id =" + targetId + ")");
-            }
-            Page page = target.page();
-            if (page == null) {
-                throw new InternalException("Failed to create a page for context (id = " + contextId + ")");
-            }
-            return page;
-        } else {
-            throw new InternalException("Failed to create target for page (id =" + contextId + ")");
-        }
-    }
+    /**
+     * Removes an emulated screen.
+     *
+     * @param screenId screen id
+     */
+    void removeScreen(String screenId);
 
-    public Target target() {
-        for (Target target : this.targets()) {
-            if (TargetType.BROWSER.equals(target.type())) {
-                return target;
-            }
-        }
-        throw new InternalException("Browser target is not found");
-    }
+    /**
+     * Returns targets.
+     *
+     * @return target list
+     */
+    List<? extends Target> targets();
 
-    public List<Target> targets() {
-        return this.targetManager.getAvailableTargets().values().stream()
-                .filter(target -> target.isTargetExposed()
-                        && target.initializedSubject.blockingGet().equals(InitializationStatus.SUCCESS))
-                .collect(Collectors.toList());
-    }
+    /**
+     * Returns the browser target.
+     *
+     * @return browser target
+     */
+    Target target();
 
-    public String version() {
-        GetVersionResponse version = this.getVersion();
-        return version.getProduct();
-    }
+    /**
+     * Waits for a target.
+     *
+     * @param predicate target predicate
+     * @param timeout   timeout value
+     * @return matched target
+     */
+    Target waitForTarget(Predicate<Target> predicate, Duration timeout);
 
-    public String userAgent() {
-        GetVersionResponse version = this.getVersion();
-        return version.getUserAgent();
-    }
+    /**
+     * Waits for a target.
+     *
+     * @param predicate target predicate
+     * @return matched target
+     */
+    Target waitForTarget(Predicate<Target> predicate);
 
-    public void close() {
-        this.closeCallback.run();
-        this.disconnect();
-    }
+    /**
+     * Returns the browser version.
+     *
+     * @return browser version
+     */
+    String version();
 
-    public void disconnect() {
-        this.targetManager.dispose();
-        this.connection.dispose();
-        this.detach();
-    }
+    /**
+     * Returns the browser user agent.
+     *
+     * @return user agent
+     */
+    String userAgent();
 
-    public boolean connected() {
-        return !this.connection.closed;
-    }
+    /**
+     * Returns protocol debug details.
+     *
+     * @return debug info map
+     */
+    Map<String, Object> debugInfo();
 
-    private GetVersionResponse getVersion() {
-        try {
-            return Builder.OBJECTMAPPER.treeToValue(this.connection.send("Browser.getVersion"),
-                    GetVersionResponse.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    /**
+     * Returns the protocol name.
+     *
+     * @return protocol name
+     */
+    String protocol();
 
-    public Debug debug() {
-        return Debug.builder().pendingProtocolErrors(this.connection.getPendingProtocolErrors()).build();
-    }
+    /**
+     * Returns whether network tracking is enabled.
+     *
+     * @return {@code true} when the condition matches
+     */
+    boolean isNetworkEnabled();
 
-    public Target waitForTarget(Predicate<Target> predicate, int timeout) {
-        Observable<Target> targetCreateObservable = Builder.fromEmitterEvent(this, BrowserEvent.TargetCreated);
-        Observable<Target> TargetChangeObservable = Builder.fromEmitterEvent(this, BrowserEvent.TargetChanged);
-        @NonNull
-        Observable<@NonNull Target> targetsObservable = Observable.fromIterable(this.targets());
-        return Observable.mergeArray(targetCreateObservable, TargetChangeObservable, targetsObservable)
-                .filter(predicate::test).timeout(timeout, TimeUnit.MILLISECONDS).blockingFirst();
-    }
+    /**
+     * Returns whether issue tracking is enabled.
+     *
+     * @return {@code true} when the condition matches
+     */
+    boolean isIssuesEnabled();
+
+    /**
+     * Returns cookies.
+     *
+     * @param urls URL filters
+     * @return cookie list
+     */
+    List<Cookie> cookies(String... urls);
+
+    /**
+     * Updates cookie.
+     *
+     * @param cookies cookies to use
+     */
+    void setCookie(CookieParam... cookies);
+
+    /**
+     * Deletes cookies.
+     *
+     * @param cookies cookie parameters
+     */
+    void deleteCookie(DeleteCookiesParameters... cookies);
+
+    /**
+     * Deletes matching cookies.
+     *
+     * @param predicate cookie predicate
+     */
+    void deleteMatchingCookies(Predicate<Map<String, Object>> predicate);
+
+    /**
+     * Updates permission.
+     *
+     * @param origin      origin value
+     * @param permissions permissions value
+     */
+    void setPermission(String origin, PermissionOptions... permissions);
+
+    /**
+     * Returns window bounds.
+     *
+     * @param windowId window id
+     * @return window bounds
+     */
+    WindowBounds getWindowBounds(String windowId);
+
+    /**
+     * Updates window bounds.
+     *
+     * @param windowId window ID value
+     * @param bounds   bounds value
+     */
+    void setWindowBounds(String windowId, WindowBounds bounds);
+
+    /**
+     * Disconnects the browser.
+     */
+    void disconnect();
+
+    /**
+     * Closes the browser.
+     */
+    @Override
+    void close();
 
 }

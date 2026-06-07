@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.miaixz</groupId>
+        <artifactId>bus-parent</artifactId>
+        <version>8.6.12</version>
+    </parent>
 
     <groupId>org.miaixz</groupId>
     <artifactId>lancia</artifactId>
     <version>8.0.6</version>
     <packaging>jar</packaging>
 
-    <name>${project.artifactId}</name>
+    <name>lancia</name>
     <description>Lancia</description>
     <url>https://github.com/839128/lancia</url>
 
@@ -20,18 +25,18 @@
         </license>
     </licenses>
 
-    <scm>
-        <connection>scm:git@github.com:839128/lancia.git</connection>
-        <developerConnection>scm:git@github.com:839128/lancia.git</developerConnection>
-        <url>git@github.com:839128/lancia.git</url>
-    </scm>
-
     <developers>
         <developer>
             <name>Kimi Liu</name>
             <url>https://github.com/839128/lancia.git</url>
         </developer>
     </developers>
+
+    <scm>
+        <connection>scm:git@github.com:839128/lancia.git</connection>
+        <developerConnection>scm:git@github.com:839128/lancia.git</developerConnection>
+        <url>git@github.com:839128/lancia.git</url>
+    </scm>
 
     <issueManagement>
         <system>Github Issue</system>
@@ -41,64 +46,31 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <lombok.version>1.18.32</lombok.version>
-        <jna.version>5.14.0</jna.version>
-        <logback.version>1.5.6</logback.version>
-        <fastjson.version>2.0.51</fastjson.version>
-        <rxjava.version>3.1.9</rxjava.version>
-        <bus.version>8.0.9</bus.version>
-
-        <jackson.version>2.13.4.1</jackson.version>
-
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.java-websocket</groupId>
-            <artifactId>Java-WebSocket</artifactId>
-            <version>1.5.0</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.miaixz</groupId>
             <artifactId>bus-all</artifactId>
-            <version>${bus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna-platform</artifactId>
-            <version>${jna.version}</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>${fastjson.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>${rxjava.version}</version>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
             <optional>true</optional>
         </dependency>
     </dependencies>
@@ -107,59 +79,188 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.3</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <configuration>
+                    <upToDateChecking>
+                        <enabled>false</enabled>
+                    </upToDateChecking>
+                    <formats>
+                        <format>
+                            <includes>
+                                <include>**/*.md</include>
+                                <include>**/*.yml</include>
+                                <include>**/*.yaml</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/target/**</exclude>
+                            </excludes>
+                            <trimTrailingWhitespace />
+                            <endWithNewline />
+                            <indent>
+                                <spaces>true</spaces>
+                                <spacesPerTab>2</spacesPerTab>
+                            </indent>
+                        </format>
+                        <format>
+                            <includes>
+                                <include>**/*.xml</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/target/**</exclude>
+                            </excludes>
+                            <trimTrailingWhitespace />
+                            <endWithNewline />
+                            <indent>
+                                <spaces>true</spaces>
+                                <spacesPerTab>4</spacesPerTab>
+                            </indent>
+                        </format>
+                        <format>
+                            <includes>
+                                <include>**/*.json</include>
+                                <include>**/*.properties</include>
+                                <include>**/*.svg</include>
+                                <include>**/*.imports</include>
+                                <include>**/*.factories</include>
+                                <include>**/META-INF/services/**</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/target/**</exclude>
+                            </excludes>
+                            <trimTrailingWhitespace />
+                            <endWithNewline />
+                        </format>
+                    </formats>
+                    <java>
+                        <licenseHeader>
+                            <file>.github/scripts/miaixz.org</file>
+                        </licenseHeader>
+                        <eclipse>
+                            <file>.github/scripts/format.xml</file>
+                        </eclipse>
+                        <removeUnusedImports />
+                        <trimTrailingWhitespace />
+                        <endWithNewline />
+                        <importOrder>
+                            <order>\#,java,javax,jakarta,lombok,org,com,net,org.miaixz</order>
+                        </importOrder>
+                    </java>
+                    <pom>
+                        <sortPom>
+                            <encoding>UTF-8</encoding>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                            <keepBlankLines>true</keepBlankLines>
+                            <indentBlankLines>false</indentBlankLines>
+                            <indentAttribute>schemaLocation</indentAttribute>
+                            <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
+                            <sortModules>false</sortModules>
+                            <sortExecutions>false</sortExecutions>
+                            <expandEmptyElements>false</expandEmptyElements>
+                            <sortProperties>false</sortProperties>
+                        </sortPom>
+                    </pom>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>attach-sources</id>
                         <goals>
-                            <goal>jar-no-fork</goal>
+                            <goal>apply</goal>
                         </goals>
+                        <phase>clean</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.miaixz.maven</groupId>
+                <artifactId>groom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>module-publish-pom</id>
+                        <goals>
+                            <goal>normalize</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <groomedPomFilename>${project.artifactId}-${project.version}.pom</groomedPomFilename>
+                            <resolveProjectVersion>true</resolveProjectVersion>
+                            <resolveProjectExpressions>true</resolveProjectExpressions>
+                            <groomMode>oss</groomMode>
+                            <groomDependencyMode>inherited</groomDependencyMode>
+                            <applyProjectElementRemovalsToPomPackaging>false</applyProjectElementRemovalsToPomPackaging>
+                            <pomElements>
+                                <parent>remove</parent>
+                                <properties>remove</properties>
+                                <dependencyManagement>remove</dependencyManagement>
+                                <distributionManagement>remove</distributionManagement>
+                                <repositories>remove</repositories>
+                                <pluginManagement>remove</pluginManagement>
+                                <pluginRepositories>remove</pluginRepositories>
+                                <compileScope>remove</compileScope>
+                                <reporting>remove</reporting>
+                                <build>remove</build>
+                                <profiles>remove</profiles>
+                            </pomElements>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>parent-publish-pom</id>
+                        <goals>
+                            <goal>normalize</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <groomedPomFilename>${project.artifactId}-${project.version}.pom</groomedPomFilename>
+                            <resolveProjectVersion>true</resolveProjectVersion>
+                            <resolveProjectExpressions>true</resolveProjectExpressions>
+                            <groomMode>resolveCiFriendliesOnly</groomMode>
+                            <pomElements>
+                                <parent>keep</parent>
+                                <properties>remove</properties>
+                                <dependencies>keep</dependencies>
+                                <compileScope>remove</compileScope>
+                                <build>keep</build>
+                                <buildPlugins>keep</buildPlugins>
+                                <pluginManagement>keep</pluginManagement>
+                                <dependencyManagement>keep</dependencyManagement>
+                                <distributionManagement>remove</distributionManagement>
+                                <pluginRepositories>remove</pluginRepositories>
+                                <repositories>remove</repositories>
+                                <reporting>remove</reporting>
+                                <profiles>remove</profiles>
+                            </pomElements>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>3.2.3</version>
+                <inherited>false</inherited>
                 <executions>
                     <execution>
                         <id>sonatype-nexus-staging</id>
-                        <phase>verify</phase>
                         <goals>
                             <goal>sign</goal>
                         </goals>
+                        <phase>verify</phase>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.5.0</version>
                 <extensions>true</extensions>
+                <inherited>false</inherited>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
                     <autoPublish>true</autoPublish>

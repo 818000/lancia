@@ -1,273 +1,497 @@
 /*
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
- ~                                                                               ~
- ~ The MIT License (MIT)                                                         ~
- ~                                                                               ~
- ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
- ~                                                                               ~
- ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
- ~ of this software and associated documentation files (the "Software"), to deal ~
- ~ in the Software without restriction, including without limitation the rights  ~
- ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
- ~ copies of the Software, and to permit persons to whom the Software is         ~
- ~ furnished to do so, subject to the following conditions:                      ~
- ~                                                                               ~
- ~ The above copyright notice and this permission notice shall be included in    ~
- ~ all copies or substantial portions of the Software.                           ~
- ~                                                                               ~
- ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
- ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
- ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
- ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
- ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
- ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
- ~ THE SOFTWARE.                                                                 ~
- ~                                                                               ~
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                           ~
+ ~ Copyright (c) 2015-2026 miaixz.org and other contributors.                ~
+ ~                                                                           ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");           ~
+ ~ you may not use this file except in compliance with the License.          ~
+ ~ You may obtain a copy of the License at                                   ~
+ ~                                                                           ~
+ ~      https://www.apache.org/licenses/LICENSE-2.0                          ~
+ ~                                                                           ~
+ ~ Unless required by applicable law or agreed to in writing, software       ~
+ ~ distributed under the License is distributed on an "AS IS" BASIS,         ~
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  ~
+ ~ See the License for the specific language governing permissions and       ~
+ ~ limitations under the License.                                            ~
+ ~                                                                           ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia;
 
-import static org.miaixz.lancia.Builder.PRODUCT_ENV;
-
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
-import org.miaixz.bus.core.lang.Keys;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.lancia.kernel.Variables;
-import org.miaixz.lancia.kernel.browser.Fetcher;
-import org.miaixz.lancia.launch.ChromeLauncher;
-import org.miaixz.lancia.option.ConnectOptions;
-import org.miaixz.lancia.option.FetcherOptions;
-import org.miaixz.lancia.option.LaunchOptions;
-import org.miaixz.lancia.socket.Transport;
+import org.miaixz.bus.core.lang.Optional;
+import org.miaixz.bus.logger.Logger;
+import org.miaixz.lancia.nimble.browser.BrowserVariant;
+import org.miaixz.lancia.options.ConnectOptions;
+import org.miaixz.lancia.options.LaunchOptions;
+import org.miaixz.lancia.runtime.BrowserRuntime;
+import org.miaixz.lancia.runtime.Configuration;
+import org.miaixz.lancia.runtime.QueryHandlers;
 
 /**
- * Puppeteer 也可以用来控制 Chrome 浏览器， 但它与绑定的 Chromium
- * 版本在一起使用效果最好。不能保证它可以与任何其他版本一起使用。谨慎地使用 executablePath 选项。 如果 Google
- * Chrome（而不是Chromium）是首选，一个 Chrome Canary 或 Dev Channel 版本是建议的
+ * Public Lancia entry point.
+ *
+ * <p>
+ * This class maps Puppeteer's default entry point and exposes launch, connect, and global query handler APIs.
+ * </p>
  *
  * @author Kimi Liu
  * @since Java 17+
  */
-public class Puppeteer {
+public final class Puppeteer {
 
-    private String productName;
+    /**
+     * Runtime configuration.
+     */
+    private static volatile Configuration configuration = Configuration.fromEnvironment(System.getenv());
 
-    private Launcher launcher;
+    /**
+     * Cached launcher.
+     */
+    private static volatile Launcher launcher;
 
-    private Variables env;
+    /**
+     * Browser variant for the cached launcher.
+     */
+    private static volatile BrowserVariant launcherBrowser;
 
-    private String projectRoot = Keys.get(Keys.USER_DIR);
+    /**
+     * Last launched browser variant.
+     */
+    private static volatile BrowserVariant lastLaunchedBrowser;
 
-    private String preferredRevision = Builder.VERSION;
-
-    private boolean isPuppeteerCore;
-
-    public Puppeteer() {
-
-    }
-
-    public Puppeteer(String projectRoot, String preferredRevision, boolean isPuppeteerCore, String productName) {
-        this.projectRoot = projectRoot;
-        this.preferredRevision = StringKit.isEmpty(preferredRevision) ? Builder.VERSION : preferredRevision;
-        this.isPuppeteerCore = isPuppeteerCore;
-        this.productName = productName;
+    /**
+     * Hides the entry point constructor.
+     */
+    private Puppeteer() {
+        // No initialization required.
     }
 
     /**
-     * 以默认参数启动浏览器 launch Browser by default options
+     * Launches a browser with default options.
      *
-     * @return 浏览器
+     * @return browser instance selected by the resolved protocol
      */
     public static Browser launch() {
-        return rawLaunch();
+        return launch(new LaunchOptions());
     }
 
-    public static Browser launch(boolean headless) {
-        return rawLaunch(headless);
-    }
-
+    /**
+     * Launches a browser with custom options and routes by protocol.
+     *
+     * @param options launch options
+     * @return browser instance selected by the resolved protocol
+     */
     public static Browser launch(LaunchOptions options) {
-        return rawLaunch(options, new Puppeteer());
-    }
-
-    private static Browser rawLaunch() {
-        return rawLaunch(true);
-    }
-
-    private static Browser rawLaunch(boolean headless) {
-        return rawLaunch(LaunchOptions.builder().headless(headless).build(), new Puppeteer());
-    }
-
-    /**
-     * 连接一个已经存在的浏览器实例 browserWSEndpoint、browserURL、transport有其中一个就行了 browserWSEndpoint:类似 UUID
-     * 的字符串，可通过{@link Browser#wsEndpoint()}获取 browserURL: 类似 localhost:8080 这个地址 transport: 之前已经创建好的 ConnectionTransport
-     * 
-     * @param options 连接的浏览器选项
-     * @return 浏览器实例
-     */
-    private static Browser connect(ConnectOptions options) {
-        Puppeteer puppeteer = new Puppeteer();
-        adapterLauncher(puppeteer);
-        return puppeteer.getLauncher().connect(options);
-    }
-
-    /**
-     * 连接一个已经存在的 Browser 实例 browserWSEndpoint:类似 UUID 的字符串，可通过{@link Browser#wsEndpoint()}获取 browserURL: 类似
-     * localhost:8080 这个地址
-     * 
-     * @param browserWSEndpointOrURL 一个Browser实例对应一个browserWSEndpoint
-     * @return 浏览器实例
-     */
-    public static Browser connect(String browserWSEndpointOrURL) {
-        ConnectOptions options = new ConnectOptions();
-        if (browserWSEndpointOrURL.contains(":")) {
-            options.setBrowserURL(browserWSEndpointOrURL);
-            return connect(options);
-        } else {
-            options.setBrowserWSEndpoint(browserWSEndpointOrURL);
-            return connect(options);
+        LaunchOptions actualOptions = options == null ? new LaunchOptions() : options;
+        BrowserVariant browser = actualOptions.getBrowser() == null ? defaultBrowser() : actualOptions.getBrowser();
+        actualOptions.setBrowser(browser);
+        if (browser == BrowserVariant.FIREFOX && !actualOptions.isProtocolConfigured()) {
+            actualOptions.setProtocol(ConnectOptions.PROTOCOL_WEB_DRIVER_BIDI);
         }
-    }
-
-    /**
-     * 连接一个已经存在的 Browser 实例 transport: 之前已经创建好的 ConnectionTransport
-     * 
-     * @param transport websocket http transport 三选一
-     * @return 浏览器实例
-     */
-    public static Browser connect(Transport transport) {
-        ConnectOptions options = new ConnectOptions();
-        options.setTransport(transport);
-        return connect(options);
-    }
-
-    /**
-     * The method launches a browser instance with given arguments. The browser will be closed when the parent java
-     * process is closed.
-     */
-    private static Browser rawLaunch(LaunchOptions options, Puppeteer puppeteer) {
-        if (StringKit.isNotBlank(options.getProduct())) {
-            puppeteer.setProductName(options.getProduct());
-        }
-        adapterLauncher(puppeteer);
-        return puppeteer.getLauncher().launch(options);
-    }
-
-    /**
-     * 适配chrome or firefox 浏览器
-     */
-    private static void adapterLauncher(Puppeteer puppeteer) {
-        String productName;
-        Launcher launcher;
-        Variables env;
-        if (StringKit.isEmpty(productName = puppeteer.getProductName()) && !puppeteer.getIsPuppeteerCore()) {
-
-            if ((env = puppeteer.getEnv()) == null) {
-                puppeteer.setEnv(env = System::getenv);
+        Logger.debug(
+                true,
+                "Launcher",
+                "Launch route requested: browser={}, protocol={}, pipe={}",
+                browser,
+                actualOptions.getProtocol(),
+                actualOptions.isPipe());
+        try {
+            Browser result;
+            if (ConnectOptions.PROTOCOL_WEB_DRIVER_BIDI.equals(actualOptions.getProtocol())) {
+                result = launchBidi(actualOptions);
+            } else {
+                result = launchCdp(actualOptions);
             }
-            for (int i = 0; i < PRODUCT_ENV.length; i++) {
-                String envProductName = PRODUCT_ENV[i];
-                productName = env.getEnv(envProductName);
-                if (StringKit.isNotEmpty(productName)) {
-                    puppeteer.setProductName(productName);
-                    break;
-                }
+            Logger.debug(
+                    false,
+                    "Launcher",
+                    "Launch route completed: browser={}, protocol={}",
+                    browser,
+                    actualOptions.getProtocol());
+            return result;
+        } catch (RuntimeException ex) {
+            Logger.error(
+                    false,
+                    "Launcher",
+                    ex,
+                    "Launch route failed: browser={}, protocol={}",
+                    browser,
+                    actualOptions.getProtocol());
+            throw ex;
+        }
+    }
+
+    /**
+     * Connects to an existing browser and routes by protocol.
+     *
+     * @param options connect options
+     * @return browser instance selected by the resolved protocol
+     */
+    public static Browser connect(ConnectOptions options) {
+        ConnectOptions actualOptions = options == null ? new ConnectOptions() : options;
+        Logger.debug(true, "Launcher", "Connect route requested: protocol={}", actualOptions.getProtocol());
+        try {
+            Browser result;
+            if (ConnectOptions.PROTOCOL_WEB_DRIVER_BIDI.equals(actualOptions.getProtocol())) {
+                result = connectBidi(actualOptions);
+            } else {
+                result = connectCdp(actualOptions);
             }
+            Logger.debug(false, "Launcher", "Connect route completed: protocol={}", actualOptions.getProtocol());
+            return result;
+        } catch (RuntimeException ex) {
+            Logger.error(false, "Launcher", ex, "Connect route failed: protocol={}", actualOptions.getProtocol());
+            throw ex;
         }
-        if (StringKit.isEmpty(productName)) {
-            productName = "chrome";
-            puppeteer.setProductName(productName);
-        }
-        switch (productName) {
-        case "firefox":
-        case "chrome":
-        default:
-            launcher = new ChromeLauncher(System.getProperty("user.dir"), puppeteer.getPreferredRevision());
-        }
-        puppeteer.setLauncher(launcher);
     }
 
     /**
-     * 指定启动版本，开启浏览器
-     * 
-     * @param options 启动参数
-     * @param version 浏览器版本
-     * @return 浏览器实例
+     * Returns the current Lancia package version.
+     *
+     * @return package version
      */
-    public static Browser launch(LaunchOptions options, String version) {
-        Puppeteer puppeteer = new Puppeteer();
-        if (StringKit.isNotEmpty(version)) {
-            puppeteer.setPreferredRevision(version);
-        }
-        return Puppeteer.rawLaunch(options, puppeteer);
+    public static String packageVersion() {
+        return Version.all();
     }
 
     /**
-     * 返回默认的运行的参数
-     * 
-     * @param options 可自己添加的选项
-     * @return 默认参数集合
+     * Downloads browsers using the active runtime configuration.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @return user-facing install messages
      */
-    public List<String> defaultArgs(LaunchOptions options) {
-        return this.getLauncher().defaultArgs(options);
+    public static List<String> downloadBrowsers() {
+        Logger.debug(true, "Browser", "Browser download requested.");
+        try {
+            List<String> messages = BrowserRuntime.download(configuration);
+            Logger.debug(false, "Browser", "Browser download completed: messages={}", messages.size());
+            return messages;
+        } catch (RuntimeException ex) {
+            Logger.error(false, "Browser", ex, "Browser download failed.");
+            throw ex;
+        }
     }
 
-    public String executablePath() throws IOException {
-        return this.getLauncher().executablePath();
+    /**
+     * Returns the executable path for the last launched or default browser.
+     *
+     * @return executable path
+     */
+    public static Path executablePath() {
+        return executablePath(new LaunchOptions());
     }
 
-    public Fetcher createBrowserFetcher() {
-        return new Fetcher(this.projectRoot, new FetcherOptions());
+    /**
+     * Returns the executable path for a Chrome channel.
+     *
+     * @param channel Chrome channel
+     * @return executable path
+     */
+    public static Path executablePath(String channel) {
+        LaunchOptions options = new LaunchOptions();
+        options.setBrowser(BrowserVariant.CHROME);
+        options.setChannel(channel);
+        return executablePath(options);
     }
 
-    public Fetcher createBrowserFetcher(FetcherOptions options) {
-        return new Fetcher(this.projectRoot, options);
+    /**
+     * Returns the executable path for launch options.
+     *
+     * @param options launch options
+     * @return executable path
+     */
+    public static Path executablePath(LaunchOptions options) {
+        LaunchOptions actualOptions = options == null ? new LaunchOptions() : options;
+        if (actualOptions.getExecutablePath() != null) {
+            return actualOptions.getExecutablePath();
+        }
+        if (configuration.getExecutablePath() != null) {
+            return configuration.getExecutablePath();
+        }
+        BrowserVariant browser = actualOptions.getBrowser() == null ? lastLaunchedBrowser()
+                : actualOptions.getBrowser();
+        return launcher(browser).executable(actualOptions);
     }
 
-    private String getProductName() {
-        return productName;
+    /**
+     * Returns the browser version used by the current configuration.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @return browser version
+     */
+    public static String browserVersion() {
+        return BrowserRuntime.version();
     }
 
-    private void setProductName(String productName) {
-        this.productName = productName;
+    /**
+     * Returns the default browser download path.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @return default download path
+     */
+    public static Path defaultDownloadPath() {
+        return configuration.getCacheDirectory();
     }
 
-    private boolean getIsPuppeteerCore() {
-        return isPuppeteerCore;
+    /**
+     * Creates a browser cache facade equivalent to Puppeteer's browser fetcher entry.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @return browser cache facade
+     */
+    public static Object createBrowserFetcher() {
+        return BrowserRuntime.fetcher(configuration);
     }
 
-    private Launcher getLauncher() {
-        return launcher;
+    /**
+     * Returns the browser variant that was last launched or the configured default browser.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @return browser variant
+     */
+    public static BrowserVariant lastLaunchedBrowser() {
+        return lastLaunchedBrowser == null ? defaultBrowser() : lastLaunchedBrowser;
     }
 
-    private void setLauncher(Launcher launcher) {
-        this.launcher = launcher;
+    /**
+     * Returns the configured default browser.
+     *
+     * @return default browser variant
+     */
+    public static BrowserVariant defaultBrowser() {
+        return BrowserVariant.fromValue(configuration.getDefaultBrowser()).orElse(BrowserVariant.CHROME);
     }
 
-    private Variables getEnv() {
-        return env;
+    /**
+     * Returns default launch arguments for the default browser.
+     *
+     * @return default launch arguments
+     */
+    public static List<String> defaultArgs() {
+        return defaultArgs(new LaunchOptions());
     }
 
-    private void setEnv(Variables env) {
-        this.env = env;
+    /**
+     * Returns default launch arguments for the requested browser.
+     *
+     * @param options launch options
+     * @return default launch arguments
+     */
+    public static List<String> defaultArgs(LaunchOptions options) {
+        LaunchOptions actualOptions = options == null ? new LaunchOptions() : options;
+        BrowserVariant browser = actualOptions.getBrowser() == null ? lastLaunchedBrowser()
+                : actualOptions.getBrowser();
+        return launcher(browser).args(actualOptions);
     }
 
-    public String getProjectRoot() {
-        return projectRoot;
+    /**
+     * Removes cached Chrome and Firefox builds that do not match the current Lancia revision.
+     */
+    public static void trimCache() {
+        BrowserRuntime.trim(configuration);
     }
 
-    public void setProjectRoot(String projectRoot) {
-        this.projectRoot = projectRoot;
+    /**
+     * Registers a custom query handler.
+     *
+     * @param name         query handler name
+     * @param queryHandler custom query handler
+     */
+    public static void registerCustomQueryHandler(String name, Handler queryHandler) {
+        QueryHandlers.register(name, queryHandler);
     }
 
-    public String getPreferredRevision() {
-        return preferredRevision;
+    /**
+     * Unregisters a custom query handler.
+     *
+     * @param name query handler name
+     */
+    public static void unregisterCustomQueryHandler(String name) {
+        QueryHandlers.unregister(name);
     }
 
-    public void setPreferredRevision(String preferredRevision) {
-        this.preferredRevision = preferredRevision;
+    /**
+     * Returns custom query handler names.
+     *
+     * @return custom query handler names
+     */
+    public static List<String> customQueryHandlerNames() {
+        return QueryHandlers.names();
+    }
+
+    /**
+     * Clears custom query handlers.
+     */
+    public static void clearCustomQueryHandlers() {
+        QueryHandlers.clear();
+    }
+
+    /**
+     * Creates a single-element custom query handler.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @param queryOne queryOne JavaScript source
+     * @return custom query handler
+     */
+    public static Handler queryOne(String queryOne) {
+        return QueryHandlers.queryOne(queryOne);
+    }
+
+    /**
+     * Creates a multi-element custom query handler.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @param queryAll queryAll JavaScript source
+     * @return custom query handler
+     */
+    public static Handler queryAll(String queryAll) {
+        return QueryHandlers.queryAll(queryAll);
+    }
+
+    /**
+     * Returns a registered custom query handler.
+     *
+     * <p>
+     * Lancia runtime extension.
+     * </p>
+     *
+     * @param name query handler name
+     * @return registered custom query handler
+     */
+    public static Optional<? extends Handler> customQueryHandler(String name) {
+        return QueryHandlers.get(name);
+    }
+
+    /**
+     * Launches a browser through the CDP protocol.
+     *
+     * @param options launch options
+     * @return CDP browser instance
+     */
+    private static Browser launchCdp(LaunchOptions options) {
+        LaunchOptions actualOptions = options == null ? new LaunchOptions() : options;
+        BrowserVariant browser = actualOptions.getBrowser() == null ? defaultBrowser() : actualOptions.getBrowser();
+        actualOptions.setBrowser(browser);
+        if (browser == BrowserVariant.FIREFOX && actualOptions.isProtocolConfigured()
+                && ConnectOptions.PROTOCOL_CDP.equals(actualOptions.getProtocol())) {
+            throw new IllegalArgumentException("Firefox launch with cdp protocol is disabled by configuration.");
+        }
+        actualOptions.setProtocol(ConnectOptions.PROTOCOL_CDP);
+        lastLaunchedBrowser = browser;
+        Logger.debug(true, "Launcher", "CDP launch requested: browser={}, pipe={}", browser, actualOptions.isPipe());
+        try {
+            Browser result = launcher(browser).launch(actualOptions);
+            Logger.debug(false, "Launcher", "CDP launch completed: browser={}", browser);
+            return result;
+        } catch (RuntimeException ex) {
+            Logger.error(false, "Launcher", ex, "CDP launch failed: browser={}", browser);
+            throw ex;
+        }
+    }
+
+    /**
+     * Connects to an existing browser through the CDP protocol.
+     *
+     * @param options connect options
+     * @return CDP browser instance
+     */
+    private static Browser connectCdp(ConnectOptions options) {
+        ConnectOptions actualOptions = options == null ? new ConnectOptions() : options;
+        actualOptions.setProtocol(ConnectOptions.PROTOCOL_CDP);
+        Logger.debug(true, "Launcher", "CDP connect requested.");
+        try {
+            Browser result = launcher(defaultBrowser()).connect(actualOptions);
+            Logger.debug(false, "Launcher", "CDP connect completed.");
+            return result;
+        } catch (RuntimeException ex) {
+            Logger.error(false, "Launcher", ex, "CDP connect failed.");
+            throw ex;
+        }
+    }
+
+    /**
+     * Launches a browser through the WebDriver BiDi protocol.
+     *
+     * @param options launch options
+     * @return BiDi browser instance
+     */
+    private static Browser launchBidi(LaunchOptions options) {
+        LaunchOptions actualOptions = options == null ? new LaunchOptions() : options;
+        BrowserVariant browser = actualOptions.getBrowser() == null ? defaultBrowser() : actualOptions.getBrowser();
+        actualOptions.setBrowser(browser);
+        actualOptions.setProtocol(ConnectOptions.PROTOCOL_WEB_DRIVER_BIDI);
+        lastLaunchedBrowser = browser;
+        Logger.debug(true, "Launcher", "BiDi launch requested: browser={}", browser);
+        try {
+            Browser result = launcher(browser).launch(actualOptions);
+            Logger.debug(false, "Launcher", "BiDi launch completed: browser={}", browser);
+            return result;
+        } catch (RuntimeException ex) {
+            Logger.error(false, "Launcher", ex, "BiDi launch failed: browser={}", browser);
+            throw ex;
+        }
+    }
+
+    /**
+     * Connects to an existing browser through the WebDriver BiDi protocol.
+     *
+     * @param options connect options
+     * @return BiDi browser instance
+     */
+    private static Browser connectBidi(ConnectOptions options) {
+        ConnectOptions actualOptions = options == null ? new ConnectOptions() : options;
+        actualOptions.setProtocol(ConnectOptions.PROTOCOL_WEB_DRIVER_BIDI);
+        Logger.debug(true, "Launcher", "BiDi connect requested.");
+        try {
+            Browser result = launcher(defaultBrowser()).connect(actualOptions);
+            Logger.debug(false, "Launcher", "BiDi connect completed.");
+            return result;
+        } catch (RuntimeException ex) {
+            Logger.error(false, "Launcher", ex, "BiDi connect failed.");
+            throw ex;
+        }
+    }
+
+    /**
+     * Returns a cached launcher for the browser variant.
+     *
+     * @param browser browser variant
+     * @return launcher
+     */
+    private static Launcher launcher(BrowserVariant browser) {
+        Launcher current = launcher;
+        if (current != null && (launcherBrowser == null || launcherBrowser == browser)) {
+            return current;
+        }
+        Launcher created = Launcher.of(browser);
+        launcher = created;
+        launcherBrowser = browser;
+        return created;
     }
 
 }

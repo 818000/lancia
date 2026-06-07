@@ -1,2244 +1,1113 @@
 /*
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
- ~                                                                               ~
- ~ The MIT License (MIT)                                                         ~
- ~                                                                               ~
- ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
- ~                                                                               ~
- ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
- ~ of this software and associated documentation files (the "Software"), to deal ~
- ~ in the Software without restriction, including without limitation the rights  ~
- ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
- ~ copies of the Software, and to permit persons to whom the Software is         ~
- ~ furnished to do so, subject to the following conditions:                      ~
- ~                                                                               ~
- ~ The above copyright notice and this permission notice shall be included in    ~
- ~ all copies or substantial portions of the Software.                           ~
- ~                                                                               ~
- ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
- ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
- ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
- ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
- ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
- ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
- ~ THE SOFTWARE.                                                                 ~
- ~                                                                               ~
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                           ~
+ ~ Copyright (c) 2015-2026 miaixz.org and other contributors.                ~
+ ~                                                                           ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");           ~
+ ~ you may not use this file except in compliance with the License.          ~
+ ~ You may obtain a copy of the License at                                   ~
+ ~                                                                           ~
+ ~      https://www.apache.org/licenses/LICENSE-2.0                          ~
+ ~                                                                           ~
+ ~ Unless required by applicable law or agreed to in writing, software       ~
+ ~ distributed under the License is distributed on an "AS IS" BASIS,         ~
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  ~
+ ~ See the License for the specific language governing permissions and       ~
+ ~ limitations under the License.                                            ~
+ ~                                                                           ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.Consumer;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import org.miaixz.bus.core.lang.Assert;
-import org.miaixz.bus.core.lang.Normal;
-import org.miaixz.bus.core.lang.exception.InternalException;
-import org.miaixz.bus.core.lang.exception.PageException;
-import org.miaixz.bus.core.lang.exception.TimeoutException;
-import org.miaixz.bus.core.xyz.CollKit;
-import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.logger.Logger;
-import org.miaixz.lancia.kernel.browser.Context;
-import org.miaixz.lancia.kernel.page.*;
-import org.miaixz.lancia.nimble.console.Location;
-import org.miaixz.lancia.nimble.console.Payload;
+import org.miaixz.bus.core.lang.Optional;
+import org.miaixz.lancia.events.PageEvent;
+import org.miaixz.lancia.kernel.Accessibility;
+import org.miaixz.lancia.kernel.Bluetooth;
+import org.miaixz.lancia.kernel.Coverage;
+import org.miaixz.lancia.kernel.Element;
+import org.miaixz.lancia.kernel.FileChooser;
+import org.miaixz.lancia.kernel.Frame;
+import org.miaixz.lancia.kernel.Handle;
+import org.miaixz.lancia.kernel.Keyboard;
+import org.miaixz.lancia.kernel.Locator;
+import org.miaixz.lancia.kernel.Mcp;
+import org.miaixz.lancia.kernel.Mouse;
+import org.miaixz.lancia.kernel.Prompts;
+import org.miaixz.lancia.kernel.Recorder;
+import org.miaixz.lancia.kernel.Touch;
+import org.miaixz.lancia.nimble.emulation.Device;
+import org.miaixz.lancia.nimble.emulation.Geolocation;
+import org.miaixz.lancia.nimble.emulation.IdleState;
 import org.miaixz.lancia.nimble.emulation.MediaFeature;
-import org.miaixz.lancia.nimble.logging.DialogType;
-import org.miaixz.lancia.nimble.logging.EntryAddedEvent;
+import org.miaixz.lancia.nimble.emulation.Viewport;
 import org.miaixz.lancia.nimble.network.Cookie;
 import org.miaixz.lancia.nimble.network.CookieParam;
+import org.miaixz.lancia.nimble.network.Credentials;
 import org.miaixz.lancia.nimble.network.DeleteCookiesParameters;
-import org.miaixz.lancia.nimble.page.FileChooserOpenedEvent;
-import org.miaixz.lancia.nimble.page.GetNavigationHistoryReturnValue;
-import org.miaixz.lancia.nimble.page.JavascriptDialogOpeningEvent;
-import org.miaixz.lancia.nimble.page.NavigationEntry;
-import org.miaixz.lancia.nimble.performance.Metric;
-import org.miaixz.lancia.nimble.performance.Metrics;
-import org.miaixz.lancia.nimble.performance.MetricsEvent;
-import org.miaixz.lancia.nimble.performance.PageMetrics;
-import org.miaixz.lancia.nimble.runtime.BindingCalledEvent;
-import org.miaixz.lancia.nimble.runtime.ConsoleAPICalledEvent;
-import org.miaixz.lancia.nimble.runtime.RemoteObject;
-import org.miaixz.lancia.nimble.runtime.StackTrace;
-import org.miaixz.lancia.nimble.webAuthn.Credentials;
-import org.miaixz.lancia.option.*;
-import org.miaixz.lancia.option.data.Clip;
-import org.miaixz.lancia.option.data.PDFMargin;
-import org.miaixz.lancia.option.data.Viewport;
-import org.miaixz.lancia.socket.CDPSession;
-import org.miaixz.lancia.socket.Connection;
-import org.miaixz.lancia.worker.enums.*;
-import org.miaixz.lancia.worker.events.AttachedToTargetEvent;
-import org.miaixz.lancia.worker.events.DetachedFromTargetEvent;
-import org.miaixz.lancia.worker.events.ExceptionThrownEvent;
+import org.miaixz.lancia.nimble.network.NetworkConditions;
+import org.miaixz.lancia.options.ClickOptions;
+import org.miaixz.lancia.options.GoToOptions;
+import org.miaixz.lancia.options.KeyboardTypeOptions;
+import org.miaixz.lancia.options.PDFOptions;
+import org.miaixz.lancia.options.PageCloseOptions;
+import org.miaixz.lancia.options.ScreencastOptions;
+import org.miaixz.lancia.options.ScreenshotOptions;
+import org.miaixz.lancia.options.ScriptTagOptions;
+import org.miaixz.lancia.options.StyleTagOptions;
+import org.miaixz.lancia.options.UserAgentOptions;
+import org.miaixz.lancia.options.WaitForOptions;
+import org.miaixz.lancia.options.WaitForSelectorOptions;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.subjects.SingleSubject;
 /**
- * 页面信息
+ * Public page API for navigation, execution, input, network, and page-level browser capabilities.
  *
  * @author Kimi Liu
  * @since Java 17+
  */
-public class Page extends Emitter<PageEvent> {
-
-    private static final String ABOUT_BLANK = "about:blank";
-    private static final Map<String, Double> UNIT_TO_PIXELS = new HashMap<>() {
-        private static final long serialVersionUID = -1L;
-        {
-            put("px", 1.00);
-            put("in", 96.00);
-            put("cm", 37.8);
-            put("mm", 3.78);
-        }
-    };
-    private final Set<FileChooserCallBack> fileChooserInterceptors;
-    private final CDPSession client;
-    private final Target target;
-    private final Keyboard keyboard;
-    private final Mouse mouse;
-    private final TimeoutSettings timeoutSettings;
-    private final Touchscreen touchscreen;
-    private final Accessibility accessibility;
-    private final FrameManager frameManager;
-    private final EmulationManager emulationManager;
-    private final Tracing tracing;
-    private final Map<String, Function<List<?>, Object>> pageBindings;
-    private final Coverage coverage;
-    private final Map<String, Worker> workers;
-    private final SingleSubject<Exception> sessionCloseSubject = SingleSubject.create();
-    private boolean closed;
-    private boolean javascriptEnabled;
-    private Viewport viewport;
-
-    public Page(CDPSession client, Target target) {
-        super();
-        this.closed = false;
-        this.client = client;
-        this.target = target;
-        this.keyboard = new Keyboard(client);
-        this.mouse = new Mouse(client, keyboard);
-        this.timeoutSettings = new TimeoutSettings();
-        this.touchscreen = new Touchscreen(client, keyboard);
-        this.accessibility = new Accessibility(client);
-        this.frameManager = new FrameManager(client, this, timeoutSettings);
-        this.emulationManager = new EmulationManager(client);
-        this.tracing = new Tracing(client);
-        this.pageBindings = new HashMap<>();
-        this.coverage = new Coverage(client);
-        this.javascriptEnabled = true;
-        this.viewport = null;
-        this.workers = new HashMap<>();
-        Map<FrameManagerType, Consumer<?>> frameManagerHandlers = Collections.unmodifiableMap(new HashMap<>() {
-            {
-                put(FrameManagerType.FrameAttached,
-                        ((Consumer<Frame>) (frame) -> Page.this.emit(PageEvent.FRAMEATTACHED, frame)));
-                put(FrameManagerType.FrameDetached,
-                        ((Consumer<Frame>) (frame) -> Page.this.emit(PageEvent.FRAMEDETACHED, frame)));
-                put(FrameManagerType.FrameNavigated,
-                        ((Consumer<Frame>) (frame) -> Page.this.emit(PageEvent.FRAMENAVIGATED, frame)));
-            }
-        });
-        frameManagerHandlers.forEach(this.frameManager::on);
-
-        Map<NetworkManagerType, Consumer<?>> networkManagerHandlers = Collections.unmodifiableMap(new HashMap<>() {
-            {
-                put(NetworkManagerType.Request,
-                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUEST, request)));
-                put(NetworkManagerType.RequestServedFromCache,
-                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUESTSERVEDFROMCACHE, request)));
-                put(NetworkManagerType.Response,
-                        ((Consumer<Response>) (response) -> Page.this.emit(PageEvent.RESPONSE, response)));
-                put(NetworkManagerType.RequestFailed,
-                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUESTFAILED, request)));
-                put(NetworkManagerType.RequestFinished,
-                        ((Consumer<Request>) (request) -> Page.this.emit(PageEvent.REQUESTFINISHED, request)));
-            }
-        });
-        networkManagerHandlers.forEach((key, value) -> this.frameManager.networkManager().on(key, value));
-        Map<CDPSessionEvent, Consumer<?>> sessionHandlers = Collections.unmodifiableMap(new HashMap<>() {
-            {
-                put(CDPSessionEvent.CDPSession_Disconnected,
-                        ((ignore) -> sessionCloseSubject.onSuccess(new InternalException("Target closed"))));
-                put(CDPSessionEvent.Page_domContentEventFired,
-                        ((ignore) -> Page.this.emit(PageEvent.DOMCONTENTLOADED, null)));
-                put(CDPSessionEvent.Page_loadEventFired, ((ignore) -> Page.this.emit(PageEvent.LOAD, null)));
-                put(CDPSessionEvent.Page_javascriptDialogOpening,
-                        ((Consumer<JavascriptDialogOpeningEvent>) Page.this::onDialog));
-                put(CDPSessionEvent.Runtime_exceptionThrown,
-                        (Consumer<ExceptionThrownEvent>) Page.this::handleException);
-                put(CDPSessionEvent.Inspector_targetCrashed, (arg) -> {
-                    Page.this.onTargetCrashed();
-                });
-                put(CDPSessionEvent.Performance_metrics, (Consumer<MetricsEvent>) Page.this::emitMetrics);
-                put(CDPSessionEvent.Log_entryAdde, (Consumer<EntryAddedEvent>) Page.this::onLogEntryAdded);
-                put(CDPSessionEvent.Page_fileChooserOpened,
-                        (Consumer<FileChooserOpenedEvent>) Page.this::onFileChooser);
-                put(CDPSessionEvent.Target_attachedToTarget,
-                        (Consumer<AttachedToTargetEvent>) Page.this::onAttachedToTarget);
-                put(CDPSessionEvent.Target_detachedFromTarget,
-                        (Consumer<DetachedFromTargetEvent>) Page.this::onDetachedFromTarget);
-                put(CDPSessionEvent.Runtime_consoleAPICalled,
-                        (Consumer<ConsoleAPICalledEvent>) Page.this::onConsoleAPI);
-                put(CDPSessionEvent.Runtime_bindingCalled, (Consumer<BindingCalledEvent>) Page.this::onBindingCalled);
-            }
-        });
-        this.fileChooserInterceptors = new CopyOnWriteArraySet<>();
-        sessionHandlers.forEach(this.client::on);
-    }
+public interface Page extends Emitter<PageEvent>, AutoCloseable {
 
     /**
-     * 创建一个page对象
+     * Returns the page target.
      *
-     * @param client   与页面通讯的客户端
-     * @param target   目标
-     * @param viewport 视图
-     * @return 页面实例
+     * @return page target
      */
-    public static Page create(CDPSession client, Target target, Viewport viewport) {
-        Page page = new Page(client, target);
-        page.initialize();
-        if (viewport != null) {
-            page.setViewport(viewport);
-        }
-        return page;
-    }
+    Target target();
 
     /**
-     * 反之使用的时候不小心暂停WebSocketConnectReadThread线程，还是使用异步吧
+     * Returns the owning browser.
      *
-     * @param event DetachedFromTargetEvent
+     * @return browser
      */
-    private void onDetachedFromTarget(DetachedFromTargetEvent event) {
-        CompletableFuture.runAsync(() -> {
-            Worker worker = this.workers().get(event.getSessionId());
-            if (worker == null) {
-                return;
-            }
-            this.emit(PageEvent.WORKERDESTROYED, worker);
-            this.workers().remove(event.getSessionId());
-        });
-    }
+    Browser browser();
 
     /**
-     * 这里是WebSocketConnectReadThread 线程执行的方法，不能暂停！！
+     * Returns the browser context.
      *
-     * @param event AttachedToTargetEvent
+     * @return browser context
      */
-    private void onAttachedToTarget(AttachedToTargetEvent event) {
-        CompletableFuture.runAsync(() -> {
-            if (!"worker".equals(event.getTargetInfo().getType())) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("sessionId", event.getSessionId());
-                /*
-                 * If we don't detach from service workers, they will never die
-                 */
-                client.send("Target.detachFromTarget", params, null, true);
-                return;
-            }
-            CDPSession session = Connection.fromSession(this.client).session(event.getSessionId());
-            Worker worker = new Worker(session, event.getTargetInfo().getUrl(), event.getTargetInfo().getTargetId(),
-                    TargetType.valueOf(event.getTargetInfo().getType()), this::addConsoleMessage,
-                    this::handleException);
-            this.workers().putIfAbsent(event.getSessionId(), worker);
-            this.emit(PageEvent.WORKERCREATED, worker);
-        });
-    }
+    Context browserContext();
 
     /**
-     * 监听页面的关闭事件
+     * Creates a CDP-compatible protocol session.
      *
-     * @param handler 要提供的处理器
+     * @return CDP session
      */
-    public void onClose(Consumer<Object> handler) {
-        this.on(PageEvent.CLOSE, handler);
-    }
+    Optional<? extends Session> createCDPSession();
 
-    public void onConsole(Consumer<ConsoleMessage> handler) {
-        this.on(PageEvent.CONSOLE, handler);
-    }
+    /**
+     * Returns the page window id.
+     *
+     * @return window id
+     */
+    String windowId();
+
+    /**
+     * Resizes the page contents.
+     *
+     * @param contentWidth  content width
+     * @param contentHeight content height
+     * @return command future
+     */
+    CompletableFuture<? extends Payload> resize(int contentWidth, int contentHeight);
+
+    /**
+     * Updates default navigation timeout.
+     *
+     * @param timeout timeout value
+     */
+    void setDefaultNavigationTimeout(Duration timeout);
+
+    /**
+     * Updates default timeout.
+     *
+     * @param timeout timeout value
+     */
+    void setDefaultTimeout(Duration timeout);
+
+    /**
+     * Returns default timeout.
+     *
+     * @return timeout
+     */
+    Duration getDefaultTimeout();
+
+    /**
+     * Returns default navigation timeout.
+     *
+     * @return timeout
+     */
+    Duration getDefaultNavigationTimeout();
+
+    /**
+     * Returns whether this object is closed.
+     *
+     * @return {@code true} when the condition matches
+     */
+    boolean isClosed();
+
+    /**
+     * Returns current page URL.
+     *
+     * @return URL
+     */
+    String url();
+
+    /**
+     * Navigates to the URL.
+     *
+     * @param url target URL
+     * @return main resource response or {@code null}
+     */
+    Response goTo(String url);
+
+    /**
+     * Navigates to the URL.
+     *
+     * @param url     target URL
+     * @param options navigation options
+     * @return main resource response or {@code null}
+     */
+    Response goTo(String url, GoToOptions options);
+
+    /**
+     * Waits for navigation.
+     *
+     * @return main resource response or {@code null}
+     */
+    Response waitForNavigation();
+
+    /**
+     * Waits for navigation.
+     *
+     * @param options wait options
+     * @return main resource response or {@code null}
+     */
+    Response waitForNavigation(WaitForOptions options);
+
+    /**
+     * Waits for navigation.
+     *
+     * @param timeout   timeout value
+     * @param waitUntil lifecycle markers
+     * @return main resource response or {@code null}
+     */
+    Response waitForNavigation(Duration timeout, String... waitUntil);
+
+    /**
+     * Waits for network idle state.
+     */
+    void waitForNetworkIdle();
+
+    /**
+     * Waits for network idle state.
+     *
+     * @param timeout             timeout value
+     * @param idleTime            idle time
+     * @param maxInflightRequests max in-flight request count
+     */
+    void waitForNetworkIdle(Duration timeout, Duration idleTime, int maxInflightRequests);
+
+    /**
+     * Waits for network idle state using the Puppeteer observable-style entrypoint name.
+     */
+    void waitForNetworkIdle$();
+
+    /**
+     * Waits for a request.
+     *
+     * @param predicate request predicate
+     * @return request
+     */
+    Request waitForRequest(Predicate<Request> predicate);
+
+    /**
+     * Waits for a request matching the URL.
+     *
+     * @param url request URL
+     * @return request
+     */
+    Request waitForRequest(String url);
+
+    /**
+     * Waits for a request matching the URL.
+     *
+     * @param url     request URL
+     * @param options wait options
+     * @return request
+     */
+    Request waitForRequest(String url, WaitForOptions options);
+
+    /**
+     * Waits for a request matching the URL pattern.
+     *
+     * @param pattern request URL pattern
+     * @return request
+     */
+    Request waitForRequest(Pattern pattern);
+
+    /**
+     * Waits for a request matching the URL pattern.
+     *
+     * @param pattern request URL pattern
+     * @param options wait options
+     * @return request
+     */
+    Request waitForRequest(Pattern pattern, WaitForOptions options);
+
+    /**
+     * Waits for a request.
+     *
+     * @param predicate request predicate
+     * @param timeout   timeout value
+     * @return request
+     */
+    Request waitForRequest(Predicate<Request> predicate, Duration timeout);
+
+    /**
+     * Waits for a response.
+     *
+     * @param predicate response predicate
+     * @return response
+     */
+    Response waitForResponse(Predicate<Response> predicate);
+
+    /**
+     * Waits for a response matching the URL.
+     *
+     * @param url response URL
+     * @return response
+     */
+    Response waitForResponse(String url);
+
+    /**
+     * Waits for a response matching the URL.
+     *
+     * @param url     response URL
+     * @param options wait options
+     * @return response
+     */
+    Response waitForResponse(String url, WaitForOptions options);
+
+    /**
+     * Waits for a response matching the URL pattern.
+     *
+     * @param pattern response URL pattern
+     * @return response
+     */
+    Response waitForResponse(Pattern pattern);
+
+    /**
+     * Waits for a response matching the URL pattern.
+     *
+     * @param pattern response URL pattern
+     * @param options wait options
+     * @return response
+     */
+    Response waitForResponse(Pattern pattern, WaitForOptions options);
+
+    /**
+     * Waits for a response.
+     *
+     * @param predicate response predicate
+     * @param timeout   timeout value
+     * @return response
+     */
+    Response waitForResponse(Predicate<Response> predicate, Duration timeout);
+
+    /**
+     * Reloads the page.
+     *
+     * @return main resource response or {@code null}
+     */
+    Response reload();
+
+    /**
+     * Reloads the page.
+     *
+     * @param options reload wait options
+     * @return main resource response or {@code null}
+     */
+    Response reload(WaitForOptions options);
+
+    /**
+     * Goes back in history.
+     *
+     * @return main resource response or {@code null}
+     */
+    Response goBack();
+
+    /**
+     * Goes back in history.
+     *
+     * @param options navigation wait options
+     * @return main resource response or {@code null}
+     */
+    Response goBack(WaitForOptions options);
+
+    /**
+     * Goes forward in history.
+     *
+     * @return main resource response or {@code null}
+     */
+    Response goForward();
+
+    /**
+     * Goes forward in history.
+     *
+     * @param options navigation wait options
+     * @return main resource response or {@code null}
+     */
+    Response goForward(WaitForOptions options);
+
+    /**
+     * Brings the page to front.
+     *
+     * @return command future
+     */
+    CompletableFuture<? extends Payload> bringToFront();
+
+    /**
+     * Returns page frames.
+     *
+     * @return frame list
+     */
+    List<? extends Frame> frames();
+
+    /**
+     * Waits for a frame.
+     *
+     * @param predicate frame predicate
+     * @param timeout   timeout value
+     * @return frame
+     */
+    Frame waitForFrame(Predicate predicate, Duration timeout);
+
+    /**
+     * Waits for a frame.
+     *
+     * @param predicate frame predicate
+     * @return frame
+     */
+    Frame waitForFrame(Predicate predicate);
+
+    /**
+     * Enables request interception.
+     *
+     * @param enabled enabled state
+     * @return command future
+     */
+    CompletableFuture<? extends Payload> setRequestInterception(boolean enabled);
+
+    /**
+     * Updates bypass service worker.
+     *
+     * @param bypass bypass value
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setBypassServiceWorker(boolean bypass);
+
+    /**
+     * Returns service worker bypass state.
+     *
+     * @return bypass state
+     */
+    boolean isServiceWorkerBypassed();
+
+    /**
+     * Updates drag interception.
+     *
+     * @param enabled whether the feature should be enabled
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setDragInterception(boolean enabled);
+
+    /**
+     * Returns drag interception state.
+     *
+     * @return interception state
+     */
+    boolean isDragInterceptionEnabled();
+
+    /**
+     * Updates offline mode.
+     *
+     * @param enabled whether the feature should be enabled
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setOfflineMode(boolean enabled);
+
+    /**
+     * Emulates network conditions.
+     *
+     * @param conditions network conditions
+     * @return command future
+     */
+    CompletableFuture<? extends Payload> emulateNetworkConditions(NetworkConditions conditions);
+
+    /**
+     * Updates extra HTTP headers.
+     *
+     * @param headers HTTP headers
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setExtraHTTPHeaders(Map<String, String> headers);
+
+    /**
+     * Updates user agent.
+     *
+     * @param userAgent user agent value
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setUserAgent(String userAgent);
+
+    /**
+     * Updates user agent.
+     *
+     * @param options operation options
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setUserAgent(UserAgentOptions options);
+
+    /**
+     * Authenticates the page.
+     *
+     * @param credentials credentials
+     * @return command future
+     */
+    CompletableFuture<? extends Payload> authenticate(Credentials credentials);
+
+    /**
+     * Authenticates the page.
+     *
+     * @param username username
+     * @param password password
+     * @return command future
+     */
+    CompletableFuture<? extends Payload> authenticate(String username, String password);
+
+    /**
+     * Updates cache enabled.
+     *
+     * @param enabled whether the feature should be enabled
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setCacheEnabled(boolean enabled);
+
+    /**
+     * Returns page content.
+     *
+     * @return content
+     */
+    String content();
+
+    /**
+     * Updates content.
+     *
+     * @param html HTML content
+     */
+    void setContent(String html);
+
+    /**
+     * Adds a script tag.
+     *
+     * @param content script content
+     * @return created script element
+     */
+    Element addScriptTag(String content);
+
+    /**
+     * Adds a script tag.
+     *
+     * @param options script tag options
+     * @return created script element
+     */
+    Element addScriptTag(ScriptTagOptions options);
+
+    /**
+     * Adds a style tag.
+     *
+     * @param content style content
+     * @return created style element
+     */
+    Element addStyleTag(String content);
+
+    /**
+     * Adds a style tag.
+     *
+     * @param options style tag options
+     * @return created style/link element
+     */
+    Element addStyleTag(StyleTagOptions options);
+
+    /**
+     * Returns page title.
+     *
+     * @return title
+     */
+    String title();
+
+    /**
+     * Evaluates source on new document.
+     *
+     * @param source source value
+     * @return identifier
+     */
+    String evaluateOnNewDocument(String source);
+
+    /**
+     * Removes source from new document evaluation.
+     *
+     * @param identifier script identifier
+     * @return command future
+     */
+    CompletableFuture<? extends Payload> removeScriptToEvaluateOnNewDocument(String identifier);
+
+    /**
+     * Returns cookies.
+     *
+     * @param urls URL values
+     * @return cookies
+     */
+    List<Cookie> cookies(String... urls);
+
+    /**
+     * Updates cookie.
+     *
+     * @param cookies cookies to use
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setCookie(CookieParam... cookies);
+
+    /**
+     * Deletes cookies.
+     *
+     * @param cookies cookies
+     * @return command future
+     */
+    CompletableFuture<Void> deleteCookie(DeleteCookiesParameters... cookies);
+
+    /**
+     * Waits for file chooser.
+     *
+     * @return file chooser
+     */
+    FileChooser waitForFileChooser();
+
+    /**
+     * Waits for file chooser.
+     *
+     * @param timeout timeout value
+     * @return file chooser
+     */
+    FileChooser waitForFileChooser(Duration timeout);
+
+    /**
+     * Starts screencast recording with the supplied options.
+     *
+     * @param options screencast options
+     * @return active recorder
+     */
+    Recorder screencast(ScreencastOptions options);
 
-    public void onDialog(Consumer<Dialog> handler) {
-        this.on(PageEvent.DIALOG, handler);
-    }
+    /**
+     * Starts screencast.
+     *
+     * @return command future
+     */
+    CompletableFuture<Void> startScreencast();
 
-    public void onError(Consumer<Error> handler) {
-        this.on(PageEvent.ERROR, handler);
-    }
+    /**
+     * Stops screencast.
+     *
+     * @return command future
+     */
+    CompletableFuture<Void> stopScreencast();
 
     /**
-     * frame attach的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * Takes a screenshot.
      *
-     * @param handler 事件处理器
+     * @return screenshot bytes
      */
-    public void onFrameAttached(Consumer<Frame> handler) {
-        this.on(PageEvent.FRAMEATTACHED, handler);
-    }
+    byte[] screenshot();
 
     /**
-     * frame detached的时候触发 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * Takes a screenshot.
      *
-     * @param handler 事件处理器
+     * @param options screenshot options
+     * @return screenshot bytes
      */
-    public void onFrameDetached(Consumer<Frame> handler) {
-        this.on(PageEvent.FRAMEDETACHED, handler);
-    }
+    byte[] screenshot(ScreenshotOptions options);
 
     /**
-     * 注意不要在这个事件内直接调用Frame中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * Creates a PDF.
      *
-     * @param handler 事件处理器
+     * @return PDF bytes
      */
-    public void onFrameNavigated(Consumer<Frame> handler) {
-        this.on(PageEvent.FRAMENAVIGATED, handler);
-    }
+    byte[] pdf();
 
-    public void onLoad(Consumer<Object> handler) {
-        this.on(PageEvent.LOAD, handler);
-    }
+    /**
+     * Creates a PDF.
+     *
+     * @param options PDF options
+     * @return PDF bytes
+     */
+    byte[] pdf(PDFOptions options);
 
-    public void onMetrics(Consumer<PageMetrics> handler) {
-        this.on(PageEvent.METRICS, handler);
-    }
+    /**
+     * Evaluates an expression.
+     *
+     * @param expression expression
+     * @return evaluation result
+     */
+    Object evaluate(String expression);
 
-    public void onPageError(Consumer<RuntimeException> handler) {
-        this.on(PageEvent.PAGEERROR, handler);
-    }
+    /**
+     * Runs a function against the first element matching a selector.
+     *
+     * @param selector     selector
+     * @param pageFunction page function
+     * @return evaluation result
+     */
+    Object $eval(String selector, String pageFunction);
 
-    public void onPopup(Consumer<Error> handler) {
-        this.on(PageEvent.POPUP, handler);
-    }
+    /**
+     * Runs a function against all elements matching a selector.
+     *
+     * @param selector     selector
+     * @param pageFunction page function
+     * @return evaluation result
+     */
+    Object $$eval(String selector, String pageFunction);
 
-    public void onRequest(Consumer<Request> handler) {
-        this.on(PageEvent.REQUEST, handler);
-    }
+    /**
+     * Evaluates an expression and returns a handle.
+     *
+     * @param expression expression
+     * @return handle
+     */
+    Handle evaluateHandle(String expression);
 
-    public void onRequestFailed(Consumer<Request> handler) {
-        this.on(PageEvent.REQUESTFAILED, handler);
-    }
+    /**
+     * Queries objects by prototype handle.
+     *
+     * @param prototypeHandle prototype handle
+     * @return handle
+     */
+    Handle queryObjects(Handle prototypeHandle);
 
-    public void onRequestFinished(Consumer<Request> handler) {
-        this.on(PageEvent.REQUESTFINISHED, handler);
-    }
+    /**
+     * Waits for a function.
+     *
+     * @param expression expression
+     * @return wait result
+     */
+    Object waitForFunction(String expression);
 
-    public void onResponse(Consumer<Response> handler) {
-        this.on(PageEvent.RESPONSE, handler);
-    }
+    /**
+     * Waits for a function.
+     *
+     * @param expression expression
+     * @param timeout    timeout value
+     * @return wait result
+     */
+    Object waitForFunction(String expression, Duration timeout);
 
     /**
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * Queries one element.
      *
-     * @param handler 事件处理器
+     * @param selector selector
+     * @return element handle
      */
-    public void onWorkerCreated(Consumer<Worker> handler) {
-        this.on(PageEvent.WORKERCREATED, handler);
-    }
+    Optional<? extends Element> $(String selector);
 
     /**
-     * 注意不要在这个事件内直接调用Worker中会暂停线程的方法 不然的话，websocket的read线程会被阻塞，程序无法正常运行 可以在将这些方法的调用移动到另外一个线程中
+     * Queries all elements.
      *
-     * @param handler 事件处理器
+     * @param selector selector
+     * @return element handles
      */
-    public void onWorkerDestroyed(Consumer<Worker> handler) {
-        this.on(PageEvent.WORKERDESTROYED, handler);
-    }
+    List<? extends Element> $$(String selector);
 
     /**
-     * 此方法在页面内执行 document.querySelector。如果没有元素匹配指定选择器，返回值是 null。
+     * Waits for selector.
      *
-     * @param selector 选择器
-     * @return ElementHandle
+     * @param selector selector
+     * @return element handle
      */
-    public ElementHandle $(String selector) {
-        return this.mainFrame().$(selector);
-    }
+    Optional<? extends Element> waitForSelector(String selector);
 
     /**
-     * 此方法在页面内执行 document.querySelectorAll。如果没有元素匹配指定选择器，返回值是 []。
+     * Waits for selector.
      *
-     * @param selector 选择器
-     * @return ElementHandle集合
+     * @param selector selector
+     * @param options  selector options
+     * @return element handle
      */
-    public List<ElementHandle> $$(String selector) {
-        return this.mainFrame().$$(selector);
-    }
+    Optional<? extends Element> waitForSelector(String selector, WaitForSelectorOptions options);
 
     /**
-     * 此方法在页面内执行 Array.from(document.querySelectorAll(selector))，然后把匹配到的元素数组作为第一个参数传给 pageFunction。
+     * Clicks an element.
      *
-     * @param selector     一个框架选择器
-     * @param pageFunction 在浏览器实例上下文中要执行的方法
-     * @return pageFunction 的返回值
+     * @param selector selector
      */
-    public Object $$eval(String selector, String pageFunction) {
-        return this.$$eval(selector, pageFunction, new ArrayList<>());
-    }
+    void click(String selector);
 
     /**
-     * 此方法在页面内执行 Array.from(document.querySelectorAll(selector))，然后把匹配到的元素数组作为第一个参数传给 pageFunction。
+     * Clicks an element.
      *
-     * @param selector     一个框架选择器
-     * @param pageFunction 在浏览器实例上下文中要执行的方法
-     * @param args         要传给 pageFunction 的参数。（比如你的代码里生成了一个变量，在页面中执行方法时需要用到，可以通过这个 args 传进去）
-     * @return pageFunction 的返回值
+     * @param selector selector
+     * @param options  click options
      */
-    public Object $$eval(String selector, String pageFunction, List<Object> args) {
-        return this.mainFrame().$$eval(selector, pageFunction, args);
-    }
+    void click(String selector, ClickOptions options);
 
     /**
-     * 返回主 Frame 保证页面一直有有一个主 frame
+     * Focuses an element.
      *
-     * @return {@link Frame}
+     * @param selector selector
      */
-    public Frame mainFrame() {
-        return this.frameManager.mainFrame();
-    }
+    void focus(String selector);
 
     /**
-     * 此方法在页面内执行 document.querySelector，然后把匹配到的元素作为第一个参数传给 pageFunction。
+     * Hovers an element.
      *
-     * @param selector     选择器
-     * @param pageFunction 在浏览器实例上下文中要执行的方法
-     * @return pageFunction 的返回值
+     * @param selector selector
      */
-    public Object $eval(String selector, String pageFunction) {
-        return this.$eval(selector, pageFunction, new ArrayList<>());
-    }
+    void hover(String selector);
 
     /**
-     * 此方法在页面内执行 document.querySelector，然后把匹配到的元素作为第一个参数传给 pageFunction。
+     * Taps an element.
      *
-     * @param selector     选择器
-     * @param pageFunction 在浏览器实例上下文中要执行的方法
-     * @param args         要传给 pageFunction 的参数。（比如你的代码里生成了一个变量，在页面中执行方法时需要用到，可以通过这个 args 传进去）
-     * @return pageFunction 的返回值
+     * @param selector selector
      */
-    public Object $eval(String selector, String pageFunction, List<Object> args) {
-        return this.mainFrame().$eval(selector, pageFunction, args);
-    }
+    void tap(String selector);
 
     /**
-     * 此方法解析指定的XPath表达式。
+     * Types text into an element.
      *
-     * @param expression XPath表达式。
-     * @return ElementHandle
+     * @param selector selector
+     * @param text     text
      */
-    public List<ElementHandle> $x(String expression) {
-        return this.mainFrame().$x(expression);
-    }
+    void type(String selector, String text);
 
     /**
-     * 注入一个指定src(url)或者代码(content)的 script 标签到当前页面。
+     * Types text into an element.
      *
-     * @param options 可选参数
-     * @return 注入完成的tag标签
-     * @throws IOException 异常
+     * @param selector selector
+     * @param text     text
+     * @param options  keyboard options
      */
-    public ElementHandle addScriptTag(ScriptTagOptions options) throws IOException {
-        return this.mainFrame().addScriptTag(options);
-    }
+    void type(String selector, String text, KeyboardTypeOptions options);
 
     /**
-     * 添加一个指定link的 link rel="stylesheet" 标签。 或者添加一个指定代码(content)的 style type="text/css" 标签。
+     * Selects option values.
      *
-     * @param options link标签
-     * @return 注入完成的tag标签。当style的onload触发或者代码被注入到frame。
-     * @throws IOException 异常
+     * @param selector selector
+     * @param values   values
+     * @return selected values
      */
-    public ElementHandle addStyleTag(StyleTagOptions options) throws IOException {
-        return this.mainFrame().addStyleTag(options);
-    }
+    List<String> select(String selector, String... values);
 
     /**
-     * 为HTTP authentication 提供认证凭据 。 传 null 禁用认证。
+     * Creates a locator.
      *
-     * @param credentials 验证信息
+     * @param selector selector
+     * @return locator
      */
-    public void authenticate(Credentials credentials) {
-        this.frameManager.networkManager().authenticate(credentials);
-    }
+    Locator locator(String selector);
 
     /**
-     * 相当于多个tab时，切换到某个tab。
+     * Creates a locator that races the supplied locators.
+     *
+     * @param locators locators
+     * @return racing locator
      */
-    public void bringToFront() {
-        this.client.send("Page.bringToFront");
-    }
+    Locator locatorRace(List<? extends Locator> locators);
 
     /**
-     * 返回页面隶属的浏览器
+     * Returns main frame.
      *
-     * @return 浏览器实例
+     * @return frame
      */
-    public Browser browser() {
-        return this.target.browser();
-    }
+    Frame mainFrame();
 
     /**
-     * 返回默认的浏览器上下文
+     * Returns coverage.
      *
-     * @return 浏览器上下文
+     * @return coverage
      */
-    public Context browserContext() {
-        return this.target.browserContext();
-    }
+    Coverage coverage();
 
     /**
-     * 此方法找到一个匹配 selector 选择器的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 点击它。 如果选择器没有匹配任何元素，此方法将会报错。 默认是阻塞的，会等待点击完成指令返回
+     * Returns tracing.
      *
-     * @param selector 选择器
-     * @param isBlock  是否是阻塞的，不阻塞的时候可以配合waitFor方法使用
-     * @throws InterruptedException 异常
-     * @throws ExecutionException   异常
+     * @return tracing
      */
-    public void click(String selector, boolean isBlock) throws InterruptedException, ExecutionException {
-        this.click(selector, new ClickOptions(), isBlock);
-    }
+    Tracing tracing();
 
     /**
-     * 此方法找到一个匹配 selector 选择器的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 点击它。 如果选择器没有匹配任何元素，此方法将会报错。 默认是阻塞的，会等待点击完成指令返回
+     * Returns accessibility.
      *
-     * @param selector 选择器
-     * @throws InterruptedException 异常
-     * @throws ExecutionException   异常
+     * @return accessibility
      */
-    public void click(String selector) throws InterruptedException, ExecutionException {
-        this.click(selector, new ClickOptions(), true);
-    }
+    Accessibility accessibility();
 
     /**
-     * 此方法找到一个匹配 selector 选择器的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 点击它。 如果选择器没有匹配任何元素，此方法将会报错。
+     * Waits for a device request prompt.
      *
-     * @param selector 选择器
-     * @param options  参数
-     * @param isBlock  是否是阻塞的，为true代表阻塞，为false代表不阻塞，不阻塞可以配合waitForNavigate等方法使用
-     * @throws InterruptedException 异常
-     * @throws ExecutionException   异常
+     * @param timeout timeout value
+     * @return prompt future
      */
-    public void click(String selector, ClickOptions options, boolean isBlock)
-            throws InterruptedException, ExecutionException {
-        this.mainFrame().click(selector, options, isBlock);
-    }
+    CompletableFuture<? extends Prompts> waitForDevicePrompt(Duration timeout);
 
     /**
-     * 关闭页面
+     * Returns Bluetooth emulation.
      *
-     * @throws InterruptedException 异常
+     * @return Bluetooth emulation
      */
-    public void close() throws InterruptedException {
-        this.close(false);
-    }
+    Bluetooth bluetooth();
 
     /**
-     * page.close() 在 beforeunload 处理之前默认不执行 <strong>注意 如果 runBeforeUnload 设置为true，可能会弹出一个 beforeunload 对话框。
-     * 这个对话框需要通过页面的 'dialog' 事件手动处理</strong>
+     * Returns the Lancia-only WebMCP extension controller.
      *
-     * 
-     * @param runBeforeUnload 默认 false. 是否执行 before unload
-     * @throws InterruptedException 异常
+     * @return WebMCP extension controller
      */
-    public void close(boolean runBeforeUnload) throws InterruptedException {
-        Assert.isTrue(this.client.getConnection() != null,
-                "Protocol error: Connection closed. Most likely the page has been closed.");
+    Mcp webmcp();
 
-        if (runBeforeUnload) {
-            this.client.send("Page.close", null, null, false);
-        } else {
-            Map<String, Object> params = new HashMap<>();
-            params.put("targetId", this.target.getTargetId());
-            this.client.getConnection().send("Target.closeTarget", params);
-            this.target.waitForTargetClose();
-        }
-    }
+    /**
+     * Returns extension realms.
+     *
+     * @return realms
+     */
+    List<? extends Realm> extensionRealms();
 
     /**
-     * 截图 备注 在OS X上 截图需要至少1/6秒
+     * Opens DevTools.
      *
-     * @param options 截图选项
-     * @return 图片base64的字节
+     * @return DevTools page
      */
-    public String screenshot(ScreenshotOptions options) {
-        synchronized (this.browserContext()) {// 一个上下文只能有一个截图操作
-            this.bringToFront();
-            if (StringKit.isEmpty(options.getType()) && StringKit.isNotEmpty(options.getPath())) {
-                String filePath = options.getPath();
-                String extension = filePath.substring(filePath.lastIndexOf('.') + 1).toLowerCase();
-                switch (extension) {
-                case "png":
-                    options.setType("png");
-                    break;
-                case "jpeg":
-                case "jpg":
-                    options.setType("jpeg");
-                    break;
-                case "webp":
-                    options.setType("webp");
-                    break;
-                }
-            }
-            if (options.getQuality() != 0) {
-                Assert.isTrue(options.getQuality() > 0 && options.getQuality() <= 100,
-                        "Expected quality (" + options.getQuality() + ") to be between 0 and 100 ,inclusive).");
-                Assert.isTrue(
-                        StringKit.isNotEmpty(options.getType())
-                                && Arrays.asList("jpeg", "webp").contains(options.getType()),
-                        StringKit.isEmpty(options.getType()) ? "png"
-                                : options.getType() + "screenshots do not support quality.");
-            }
+    Page openDevTools();
 
-            if (options.getClip() != null) {
-                Assert.isTrue(options.getClip().getWidth() > 0, "'width' in 'clip' must be positive.");
-                Assert.isTrue(options.getClip().getHeight() > 0, "'height' in 'clip' must be positive.");
-            }
-            Viewport viewport = null;
-            try {
-                if (options.getClip() != null) {
-                    // If `captureBeyondViewport` is `false`, then we set the viewport to
-                    // capture the full page. Note this may be affected by on-page CSS and
-                    // JavaScript.
-                    Assert.isTrue(!options.isFullPage(), "'clip' and 'fullPage' are mutually exclusive");
-                    options.setClip(roundRectangle(normalizeRectangle(options.getClip())));
-                } else {
-                    if (options.isFullPage()) {
-                        if (!options.isCaptureBeyondViewport()) {
-                            LinkedHashMap<String, Integer> scrollDimensions = (LinkedHashMap<String, Integer>) this
-                                    .mainFrame()
-                                    .evaluate("() => {\n" + "              const element = document.documentElement;\n"
-                                            + "              return {\n"
-                                            + "                width: element.scrollWidth,\n"
-                                            + "                height: element.scrollHeight,\n" + "              };\n"
-                                            + "            }", null);
+    /**
+     * Returns whether dev tools is available.
+     *
+     * @return {@code true} when the condition matches
+     */
+    boolean hasDevTools();
 
-                            viewport = this.viewport();
-                            viewport.setWidth(scrollDimensions.get("width"));
-                            viewport.setHeight(scrollDimensions.get("height"));
-                            this.setViewport(viewport);
-                        }
-                    } else {
-                        options.setCaptureBeyondViewport(false);
-                    }
-                }
-                return this._screenshot(options);
-            } catch (Exception e) {
-                Logger.error("_screenshot error: ", e);
-            } finally {
-                if (viewport != null) {
-                    this.setViewport(viewport);
-                }
-            }
-            return Normal.EMPTY;
-        }
+    /**
+     * Triggers an extension action.
+     *
+     * @param extension extension
+     * @return completion future
+     */
+    CompletableFuture<Void> triggerExtensionAction(Extension extension);
 
-    }
+    /**
+     * Returns workers.
+     *
+     * @return workers
+     */
+    List<? extends Worker> workers();
 
-    private String _screenshot(ScreenshotOptions options) {
-        Map<String, Object> params = new HashMap<>();
-        try {
-            if (options.isOptimizeForSpeed() && ("png".equals(options.getType()) || "webp".equals(options.getType()))) {
-                this.emulationManager.setTransparentBackgroundColor();
-            }
-            if (options.getClip() != null && !options.isCaptureBeyondViewport()) {
-                LinkedHashMap<String, Integer> viewportNode = (LinkedHashMap<String, Integer>) this.mainFrame()
-                        .evaluate("() => {\n" + "          const {\n" + "            height,\n"
-                                + "            pageLeft: x,\n" + "            pageTop: y,\n" + "            width,\n"
-                                + "          } = window.visualViewport;\n" + "          return {x, y, height, width};\n"
-                                + "        }", null);
-                Clip clip = getIntersectionRect(options.getClip(), viewportNode);
-                params.put("format", options.getType());
-                params.put("optimizeForSpeed", options.isOmitBackground());
-                params.put("quality", Math.round(options.getQuality()));
-                params.put("clip", clip);
-            }
-            JsonNode result = this.client.send("Page.captureScreenshot", params);
-            String data = result.get("data").asText();
-            byte[] buffer = Base64.getDecoder().decode(data);
-            if (StringKit.isNotEmpty(options.getPath())) {
-                Files.write(Paths.get(options.getPath()), buffer, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            }
-            return data;
-        } catch (Exception var) {
-            Logger.error("_screenshot error: ", var);
-        } finally {
-            this.emulationManager.resetDefaultBackgroundColor();
-        }
-        return null;
-    }
+    /**
+     * Returns keyboard.
+     *
+     * @return keyboard
+     */
+    Keyboard keyboard();
 
     /**
-     * @see <a href=
-     *      "https://w3c.github.io/webdriver-bidi/#rectangle-intersection">href="https://w3c.github.io/webdriver-bidi/#rectangle-intersection</a>
+     * Returns mouse.
+     *
+     * @return mouse
      */
-    private Clip getIntersectionRect(Clip clip, LinkedHashMap<String, Integer> viewport) {
-        double x = Math.max(clip.getX(), viewport.get("x"));
-        double y = Math.max(clip.getY(), viewport.get("y"));
-        return new Clip(x, y,
-                Math.max(Math.min(clip.getX() + clip.getWidth(), viewport.get("x") + viewport.get("width")) - x, 0),
-                Math.max(Math.min(clip.getY() + clip.getHeight(), viewport.get("y") + viewport.get("height")) - y, 0),
-                1);
-    }
+    Mouse mouse();
 
-    private Clip roundRectangle(Clip clip) {
-        double x = Math.round(clip.getX());
-        double y = Math.round(clip.getY());
-        double width = Math.round(clip.getWidth() + clip.getX() - x);
-        double height = Math.round(clip.getHeight() + clip.getY() - y);
-        Clip screenshotClip = new Clip(x, y, width, height, 1);
-        screenshotClip.setScale(clip.getScale());
-        return screenshotClip;
-    }
+    /**
+     * Returns touch input.
+     *
+     * @return touch input
+     */
+    Touch touchscreen();
 
     /**
-     * @see <a href=
-     *      "https://w3c.github.io/webdriver-bidi/#normalize-rect">href="https://w3c.github.io/webdriver-bidi/#normalize-rect</a>
+     * Updates viewport.
+     *
+     * @param viewport viewport value
+     * @return completion future
      */
-    private Clip normalizeRectangle(Clip clip) {
-        Clip screenshotClip = new Clip();
-        if (clip.getWidth() < 0) {
-            screenshotClip.setX(clip.getX() + clip.getWidth());
-            screenshotClip.setWidth(-clip.getWidth());
-        } else {
-            screenshotClip.setX(clip.getX());
-            screenshotClip.setWidth(clip.getWidth());
-        }
-        if (clip.getHeight() < 0) {
-            screenshotClip.setY(clip.getY() + clip.getHeight());
-            screenshotClip.setHeight(-clip.getHeight());
-        } else {
-            screenshotClip.setY(clip.getY());
-            screenshotClip.setHeight(clip.getHeight());
-        }
-        return screenshotClip;
-    }
+    CompletableFuture<Void> setViewport(Viewport viewport);
 
     /**
-     * 屏幕截图
+     * Returns viewport.
      *
-     * @param path 截图文件全路径
-     * @return base64编码后的图片数据
-     * @throws IOException 异常
+     * @return viewport
      */
-    public String screenshot(String path) throws IOException {
-        return this.screenshot(ScreenshotOptions.builder().path(path).build());
-    }
+    Viewport viewport();
 
     /**
-     * 当提供的选择器完成选中后，触发change和input事件 如果没有元素匹配指定选择器，将报错。
+     * Emulates a device.
      *
-     * @param selector 要查找的选择器
-     * @param values   查找的配置项。如果选择器有多个属性，所有的值都会查找，否则只有第一个元素被找到
-     * @return 选择器集合
+     * @param device device
+     * @return completion future
      */
-    public List<String> select(String selector, List<String> values) {
-        return this.mainFrame().select(selector, values);
-    }
+    CompletableFuture<Void> emulate(Device device);
 
     /**
-     * 返回页面标题
+     * Emulates media type.
      *
-     * @return 页面标题
+     * @param mediaType media type
+     * @return completion future
      */
-    public String title() {
-        return this.mainFrame().title();
-    }
+    CompletableFuture<Void> emulateMediaType(String mediaType);
 
     /**
-     * 设置绕过页面的安全政策 注意 CSP 发生在 CSP 初始化而不是评估阶段。也就是说应该在导航到这个域名前设置
+     * Emulates media features.
      *
-     * @param enabled 是否绕过页面的安全政策
+     * @param mediaFeatures media features
+     * @return completion future
      */
-    public void setBypassCSP(boolean enabled) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("enabled", enabled);
-        this.client.send("Page.setBypassCSP", params);
-    }
+    CompletableFuture<Void> emulateMediaFeatures(List<MediaFeature> mediaFeatures);
 
     /**
-     * 设置每个请求忽略缓存。默认是启用缓存的。
+     * Emulates CPU throttling.
      *
-     * @param enabled 设置缓存的 enabled 状态
+     * @param rate rate
+     * @return command future
      */
-    public void setCacheEnabled(boolean enabled) {
-        this.frameManager.networkManager().setCacheEnabled(enabled);
-    }
+    CompletableFuture<? extends Payload> emulateCPUThrottling(double rate);
 
     /**
-     * 给页面设置html
+     * Emulates idle state.
      *
-     * @param html 分派给页面的HTML。
+     * @param idleState idle state
+     * @return command future
      */
-    public void setContent(String html) {
-        this.setContent(html, new GoToOptions());
-    }
+    CompletableFuture<? extends Payload> emulateIdleState(IdleState idleState);
 
     /**
-     * 给页面设置html
+     * Emulates timezone.
      *
-     * @param html    分派给页面的HTML。
-     * @param options timeout 加载资源的超时时间，默认值为30秒，传入0禁用超时. 可以使用 page.setDefaultNavigationTimeout(timeout) 或者
-     *                page.setDefaultTimeout(timeout) 方法修改默认值 waitUntil HTML设置成功的标志事件, 默认为 load。
-     *                如果给定的是一个事件数组，那么当所有事件之后，给定的内容才被认为设置成功。 事件可以是： load - load事件触发后，设置HTML内容完成。 domcontentloaded -
-     *                DOMContentLoaded 事件触发后，设置HTML内容完成。 networkidle0 - 不再有网络连接时（至少500毫秒之后），设置HTML内容完成 networkidle2 -
-     *                只剩2个网络连接时（至少500毫秒之后），设置HTML内容完成
+     * @param timezone timezone
+     * @return command future
      */
-    public void setContent(String html, GoToOptions options) {
-        this.frameManager.mainFrame().setContent(html, options);
-    }
+    CompletableFuture<? extends Payload> emulateTimezone(String timezone);
 
     /**
-     * 获取指定url的cookies
+     * Emulates vision deficiency.
      *
-     * @param urls 指定的url集合
-     * @return the list
+     * @param visionDeficiency vision deficiency
+     * @return command future
      */
-    public List<Cookie> cookies(List<String> urls) {
-        Map<String, Object> params = new HashMap<>();
-        if (urls == null)
-            urls = new ArrayList<>();
-        if (urls.isEmpty())
-            urls.add(this.url());
-        params.put("urls", urls);
-        JsonNode result = this.client.send("Network.getCookies", params);
-        JsonNode cookiesNode = result.get("cookies");
-        Iterator<JsonNode> elements = cookiesNode.elements();
-        List<Cookie> cookies = new ArrayList<>();
-        while (elements.hasNext()) {
-            JsonNode cookieNode = elements.next();
-            Cookie cookie;
-            try {
-                cookie = Builder.OBJECTMAPPER.treeToValue(cookieNode, Cookie.class);
-                cookie.setPriority(null);
-                cookies.add(cookie);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return cookies;
-    }
+    CompletableFuture<? extends Payload> emulateVisionDeficiency(String visionDeficiency);
 
     /**
-     * 返回当前页面的cookies
+     * Updates geolocation.
      *
-     * @return the list
+     * @param geolocation geolocation value
+     * @return completion future
      */
-    public List<Cookie> cookies() {
-        return this.cookies(null);
-    }
+    CompletableFuture<? extends Payload> setGeolocation(Geolocation geolocation);
 
-    public void setCookie(List<CookieParam> cookies)
-            throws IllegalAccessException, IntrospectionException, InvocationTargetException {
-        String pageURL = this.url();
-        boolean startsWithHTTP = pageURL.startsWith("http");
-        cookies.replaceAll(cookie -> {
-            if (StringKit.isEmpty(cookie.getUrl()) && startsWithHTTP)
-                cookie.setUrl(pageURL);
-            Assert.isTrue(!ABOUT_BLANK.equals(cookie.getUrl()), "Blank page can not have cookie " + cookie.getName());
-            if (StringKit.isNotEmpty(cookie.getUrl())) {
-                Assert.isTrue(!cookie.getUrl().startsWith("data:"),
-                        "Data URL page can not have cookie " + cookie.getName());
-            }
-            return cookie;
-        });
-        List<DeleteCookiesParameters> deleteCookiesParameters = new ArrayList<>();
-        for (CookieParam cookie : cookies) {
-            deleteCookiesParameters.add(new DeleteCookiesParameters(cookie.getName(), cookie.getUrl(),
-                    cookie.getDomain(), cookie.getPath()));
-        }
+    /**
+     * Updates java script enabled.
+     *
+     * @param enabled whether the feature should be enabled
+     * @return completion future
+     */
+    CompletableFuture<? extends Payload> setJavaScriptEnabled(boolean enabled);
 
-        this.deleteCookie(deleteCookiesParameters);
-        Map<String, Object> params = new HashMap<>();
-        params.put("cookies", cookies);
-        this.client.send("Network.setCookies", params);
-    }
+    /**
+     * Returns JavaScript state.
+     *
+     * @return JavaScript state
+     */
+    boolean isJavaScriptEnabled();
 
     /**
-     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, GoToOptions,boolean)}
-     * {@link Page#goBack(WaitForOptions)} ${@link Page#goForward(WaitForOptions)} ${@link Page#reload(WaitForOptions)}
-     * {@link Page#waitForNavigation()}
+     * Updates bypass CSP.
      *
-     * @param timeout 超时时间
+     * @param enabled whether the feature should be enabled
+     * @return completion future
      */
-    public void setDefaultNavigationTimeout(int timeout) {
-        this.timeoutSettings.setDefaultNavigationTimeout(timeout);
-    }
+    CompletableFuture<? extends Payload> setBypassCSP(boolean enabled);
 
     /**
-     * 当前页面发起的每个请求都会带上这些请求头 注意 此方法不保证请求头的顺序
+     * Emulates focused page state.
      *
-     * @param headers 每个 HTTP 请求都会带上这些请求头。值必须是字符串
+     * @param enabled enabled state
+     * @return command future
      */
-    public void setExtraHTTPHeaders(Map<String, String> headers) {
-        this.frameManager.networkManager().setExtraHTTPHeaders(headers);
-    }
+    CompletableFuture<? extends Payload> emulateFocusedPage(boolean enabled);
 
     /**
-     * Sets the page's geolocation.
+     * Returns metrics.
      *
-     * @param longitude Latitude between -90 and 90.
-     * @param latitude  Longitude between -180 and 180.
-     * @param accuracy  Optional non-negative accuracy value.
+     * @return metrics
      */
-    public void setGeolocation(double longitude, double latitude, int accuracy) {
+    Map<String, Number> metrics();
 
-        if (longitude < -180 || longitude > 180)
-            throw new IllegalArgumentException(
-                    "Invalid longitude " + longitude + ": precondition -180 <= LONGITUDE <= 180 failed.");
-        if (latitude < -90 || latitude > 90)
-            throw new IllegalArgumentException(
-                    "Invalid latitude " + latitude + ": precondition -90 <= LATITUDE <= 90 failed.");
-        if (accuracy < 0)
-            throw new IllegalArgumentException("Invalid accuracy " + accuracy + ": precondition 0 <= ACCURACY failed.");
-        Map<String, Object> params = new HashMap<>();
-        params.put("longitude", longitude);
-        params.put("latitude", latitude);
-        params.put("accuracy", accuracy);
-        this.client.send("Emulation.setGeolocationOverride", params);
-    }
+    /**
+     * Captures a heap snapshot.
+     *
+     * @param path target path
+     */
+    void captureHeapSnapshot(Path path);
 
     /**
-     * 设置页面的地理位置
+     * Creates a PDF stream.
      *
-     * @param longitude 纬度 between -90 and 90.
-     * @param latitude  经度 between -180 and 180.
+     * @param options PDF options
+     * @return PDF stream
      */
-    public void setGeolocation(double longitude, double latitude) {
-        this.setGeolocation(longitude, latitude, 0);
-    }
+    InputStream createPDFStream(PDFOptions options);
 
     /**
-     * 是否启用js 注意 改变这个值不会影响已经执行的js。下一个跳转会完全起作用。
+     * Exposes a function.
      *
-     * @param enabled 是否启用js
+     * @param name function name
+     * @return command future
      */
-    public void setJavaScriptEnabled(boolean enabled) {
-        if (this.javascriptEnabled == enabled)
-            return;
-        this.javascriptEnabled = enabled;
-        Map<String, Object> params = new HashMap<>();
-        params.put("value", !enabled);
-        this.client.send("Emulation.setScriptExecutionDisabled", params);
-    }
+    CompletableFuture<? extends Payload> exposeFunction(String name);
 
     /**
-     * 设置启用离线模式。
+     * Exposes a Java callback as a page function.
      *
-     * @param enabled 设置 true, 启用离线模式。
+     * @param name     function name
+     * @param callback callback
+     * @return command future
      */
-    public void setOfflineMode(boolean enabled) {
-        this.frameManager.networkManager().setOfflineMode(enabled);
-    }
+    CompletableFuture<? extends Payload> exposeFunction(String name, Function<List<Object>, Object> callback);
 
     /**
-     * 启用请求拦截器，会激活 request.abort, request.continue 和 request.respond 方法。这提供了修改页面发出的网络请求的功能。
-     * 一旦启用请求拦截，每个请求都将停止，除非它继续，响应或中止
+     * Removes an exposed function.
      *
-     * @param value 是否启用请求拦截器
+     * @param name function name
+     * @return command future
      */
-    public void setRequestInterception(boolean value) {
-        this.frameManager.networkManager().setRequestInterception(value);
-    }
+    CompletableFuture<? extends Payload> removeExposedFunction(String name);
 
-    private void setTransparentBackgroundColor() {
-        Map<String, Object> params = new HashMap<>();
-        Map<String, Integer> colorMap = new HashMap<>();
-        colorMap.put("r", 0);
-        colorMap.put("g", 0);
-        colorMap.put("b", 0);
-        colorMap.put("a", 0);
-        params.put("color", colorMap);
-        this.client.send("Emulation.setDefaultBackgroundColorOverride", params);
-    }
+    /**
+     * Closes the page.
+     */
+    @Override
+    void close();
 
-    private Clip processClip(Clip clip) {
-        long x = Math.round(clip.getX());
-        long y = Math.round(clip.getY());
-        long width = Math.round(clip.getWidth() + clip.getX() - x);
-        long height = Math.round(clip.getHeight() + clip.getY() - y);
-        return new Clip(x, y, width, height, 1);
-    }
-
-    private void onFileChooser(FileChooserOpenedEvent event) {
-        ForkJoinPool.commonPool().submit(() -> {
-            if (CollKit.isEmpty(this.fileChooserInterceptors))
-                return;
-            Frame frame = this.frameManager.frame(event.getFrameId());
-            ExecutionContext context = frame.executionContext();
-            ElementHandle element = context.adoptBackendNodeId(event.getBackendNodeId());
-            Set<FileChooserCallBack> interceptors = new HashSet<>(this.fileChooserInterceptors);
-            this.fileChooserInterceptors.clear();
-            FileChooser fileChooser = new FileChooser(this.client, element, event);
-            for (FileChooserCallBack interceptor : interceptors)
-                interceptor.setFileChooser(fileChooser);
-        });
-    }
-
-    private void onLogEntryAdded(EntryAddedEvent event) {
-        if (CollKit.isNotEmpty(event.getEntry().getArgs()))
-            event.getEntry().getArgs().forEach(arg -> Builder.releaseObject(this.client, arg, false));
-        if (!"worker".equals(event.getEntry().getSource()))
-            this.emit(PageEvent.CONSOLE,
-                    new ConsoleMessage(event.getEntry().getLevel(), event.getEntry().getText(), Collections.emptyList(),
-                            Location.builder().url(event.getEntry().getUrl())
-                                    .lineNumber(event.getEntry().getLineNumber()).build()));
-    }
-
-    private void emitMetrics(MetricsEvent event) {
-        PageMetrics pageMetrics = new PageMetrics();
-        Metrics metrics = this.buildMetricsObject(event.getMetrics());
-        pageMetrics.setMetrics(metrics);
-        pageMetrics.setTitle(event.getTitle());
-        this.emit(PageEvent.METRICS, pageMetrics);
-    }
-
-    private void onTargetCrashed() {
-        this.emit(PageEvent.ERROR, new PageException("Page crashed!"));
-    }
-
-    /**
-     * 当js对话框出现的时候触发，比如alert, prompt, confirm 或者 beforeunload。Puppeteer可以通过Dialog's accept 或者 dismiss来响应弹窗。
-     *
-     * @param event 触发事件
-     */
-    private void onDialog(JavascriptDialogOpeningEvent event) {
-        DialogType dialogType = null;
-        if ("alert".equals(event.getType()))
-            dialogType = DialogType.Alert;
-        else if ("confirm".equals(event.getType()))
-            dialogType = DialogType.Confirm;
-        else if ("prompt".equals(event.getType()))
-            dialogType = DialogType.Prompt;
-        else if ("beforeunload".equals(event.getType()))
-            dialogType = DialogType.BeforeUnload;
-        Assert.isTrue(dialogType != null, "Unknown javascript dialog type: " + event.getType());
-        Dialog dialog = new Dialog(this.client, dialogType, event.getMessage(), event.getDefaultPrompt());
-        this.emit(PageEvent.DIALOG, dialog);
-    }
-
-    private void onConsoleAPI(ConsoleAPICalledEvent event) {
-        if (event.getExecutionContextId() == 0) {
-            // DevTools protocol stores the last 1000 console messages. These
-            // messages are always reported even for removed execution contexts. In
-            // this case, they are marked with executionContextId = 0 and are
-            // reported upon enabling Runtime agent.
-            //
-            // Ignore these messages since:
-            // - there's no execution context we can use to operate with message
-            // arguments
-            // - these messages are reported before Puppeteer clients can subscribe
-            // to the 'console'
-            // page event.
-            //
-            // @see https://github.com/puppeteer/puppeteer/issues/3865
-            return;
-        }
-        ExecutionContext context = this.frameManager.executionContextById(event.getExecutionContextId());
-        List<JSHandle> values = new ArrayList<>();
-        if (CollKit.isNotEmpty(event.getArgs())) {
-            for (int i = 0; i < event.getArgs().size(); i++) {
-                RemoteObject arg = event.getArgs().get(i);
-                values.add(JSHandle.createJSHandle(context, arg));
-            }
-        }
-        this.addConsoleMessage(event.getType(), values, event.getStackTrace());
-    }
-
-    private void onBindingCalled(BindingCalledEvent event) {
-        String payloadStr = event.getPayload();
-        Payload payload;
-        try {
-            payload = Builder.OBJECTMAPPER.readValue(payloadStr, Payload.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        String expression;
-        try {
-            Object result = this.pageBindings.get(event.getName()).apply(payload.getArgs());
-            expression = Builder.evaluationString(deliverResult(), PageEvaluateType.FUNCTION, payload.getName(),
-                    payload.getSeq(), result);
-        } catch (Exception e) {
-            expression = Builder.evaluationString(deliverError(), PageEvaluateType.FUNCTION, payload.getName(),
-                    payload.getSeq(), e, e.getMessage());
-        }
-        Map<String, Object> params = new HashMap<>();
-        params.put("expression", expression);
-        params.put("contextId", event.getExecutionContextId());
-        this.client.send("Runtime.evaluate", params, null, false);
-    }
-
-    private String deliverError() {
-        return "function deliverError(name, seq, message, stack) {\n" + "      const error = new Error(message);\n"
-                + "      error.stack = stack;\n" + "      window[name]['callbacks'].get(seq).reject(error);\n"
-                + "      window[name]['callbacks'].delete(seq);\n" + "    }";
-    }
-
-    private String deliverResult() {
-        return "function deliverResult(name, seq, result) {\n"
-                + "      window[name]['callbacks'].get(seq).resolve(result);\n"
-                + "      window[name]['callbacks'].delete(seq);\n" + "    }";
-    }
-
-    /**
-     * 如果是一个浏览器多个页面的情况，每个页面都可以有单独的viewport 注意 在大部分情况下，改变 viewport 会重新加载页面以设置 isMobile 或者 hasTouch
-     *
-     * @param viewport 设置的视图
-     */
-    public void setViewport(Viewport viewport) {
-        boolean needsReload = this.emulationManager.emulateViewport(viewport);
-        this.viewport = viewport;
-        if (needsReload)
-            this.reload(null);
-    }
-
-    protected void initialize() {
-        frameManager.initialize();
-        Map<String, Object> params = new HashMap<>();
-        params.put("autoAttach", true);
-        params.put("waitForDebuggerOnStart", false);
-        params.put("flatten", true);
-        this.client.send("Target.setAutoAttach", params);
-        params.clear();
-        this.client.send("Performance.enable", params);
-        this.client.send("Log.enable", params);
-    }
-
-    private void addConsoleMessage(String type, List<JSHandle> args, StackTrace stackTrace) {
-        if (this.listenerCount(PageEvent.CONSOLE) == 0) {
-            args.forEach(arg -> arg.dispose(false));
-            return;
-        }
-        List<String> textTokens = new ArrayList<>();
-        for (JSHandle arg : args) {
-            RemoteObject remoteObject = arg.getRemoteObject();
-            if (StringKit.isNotEmpty(remoteObject.getObjectId()))
-                textTokens.add(arg.toString());
-            else {
-                try {
-                    textTokens
-                            .add(Builder.OBJECTMAPPER.writeValueAsString(Builder.valueFromRemoteObject(remoteObject)));
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        Location location = stackTrace != null && !stackTrace.getCallFrames().isEmpty() ? new Location(
-                stackTrace.getCallFrames().get(0).getUrl(), stackTrace.getCallFrames().get(0).getLineNumber(),
-                stackTrace.getCallFrames().get(0).getColumnNumber()) : new Location();
-        ConsoleMessage message = new ConsoleMessage(type, String.join(" ", textTokens), args, location);
-        this.emit(PageEvent.CONSOLE, message);
-    }
-
-    private void handleException(ExceptionThrownEvent event) {
-        String message = Builder.getExceptionMessage(event.getExceptionDetails());
-        RuntimeException err = new RuntimeException(message);
-        this.emit(PageEvent.PAGEERROR, err);
-    }
-
-    /**
-     * 返回页面的完整 html 代码，包括 doctype。
-     *
-     * @return 页面内容
-     */
-    public String content() {
-        return this.frameManager.getMainFrame().content();
-    }
-
-    /**
-     * 导航到指定的url,可以配置是否阻塞，可以配合下面这个方法使用，但是不限于这个方法 {@link Page#waitForResponse(String)}
-     * 因为如果不阻塞的话，页面在加载完成时，waitForResponse等waitFor方法会接受不到结果而抛出超时异常
-     * 
-     * @param url     导航的地址
-     * @param isBlock true代表阻塞
-     * @return 不阻塞的话返回null
-     */
-    public Response goTo(String url, boolean isBlock) {
-        return this.goTo(url, new GoToOptions(), isBlock);
-    }
-
-    /**
-     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名 以下情况此方法将报错：发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效/超时/主页面不能加载
-     *
-     * @param url     url
-     * @param options timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
-     *                domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
-     *                只有2个网络连接时触发（至少500毫秒后）
-     *
-     * @return {@link Response}
-     */
-    public Response goTo(String url, GoToOptions options) {
-        return this.goTo(url, options, true);
-    }
-
-    /**
-     * 导航到指定的url,因为goto是java的关键字，所以就采用了goTo方法名 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效/超时/主页面不能加载
-     *
-     * @param url     url
-     * @param options timeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
-     *                waitUntil 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： load - 页面的load事件触发时
-     *                domcontentloaded - 页面的 DOMContentLoaded 事件触发时 networkidle0 - 不再有网络连接时触发（至少500毫秒后） networkidle2 -
-     *                只有2个网络连接时触发（至少500毫秒后）
-     * @param isBlock 是否阻塞，不阻塞代表只是发导航命令出去，并不等待导航结果，同时也不会抛异常
-     * @return {@link Response}
-     */
-    public Response goTo(String url, GoToOptions options, boolean isBlock) {
-        return this.frameManager.getMainFrame().goTo(url, options, isBlock);
-    }
-
-    /**
-     * 导航到某个网站 以下情况此方法将报错： 发生了 SSL 错误 (比如有些自签名的https证书). 目标地址无效/超时/主页面不能加载
-     *
-     * @param url 导航到的地址. 地址应该带有http协议, 比如 https://.
-     * @return {@link Response}
-     */
-    public Response goTo(String url) {
-        return this.goTo(url, true);
-    }
-
-    /**
-     * 删除cookies
-     * 
-     * @param cookies 指定删除的cookies
-     * @throws IllegalAccessException    异常
-     * @throws IntrospectionException    异常
-     * @throws InvocationTargetException 异常
-     */
-    public void deleteCookie(List<DeleteCookiesParameters> cookies)
-            throws IllegalAccessException, IntrospectionException, InvocationTargetException {
-        String pageURL = this.url();
-        for (DeleteCookiesParameters cookie : cookies) {
-            if (StringKit.isEmpty(cookie.getUrl()) && pageURL.startsWith("http"))
-                cookie.setUrl(pageURL);
-            Map<String, Object> params = getProperties(cookie);
-            this.client.send("Network.deleteCookies", params);
-        }
-    }
-
-    private Map<String, Object> getProperties(DeleteCookiesParameters cookie)
-            throws IntrospectionException, InvocationTargetException, IllegalAccessException {
-        Map<String, Object> params = new HashMap<>();
-        BeanInfo beanInfo = Introspector.getBeanInfo(cookie.getClass());
-        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
-        for (PropertyDescriptor descriptor : propertyDescriptors) {
-            params.put(descriptor.getName(), descriptor.getReadMethod().invoke(cookie));
-        }
-        return params;
-    }
-
-    /**
-     * 根据指定的参数和 user agent 生成模拟器。此方法是和下面两个方法效果相同 {@link Page#setViewport(Viewport)} {@link Page#setUserAgent(String)}
-     *
-     * @param options Device 模拟器枚举类
-     */
-    public void emulate(Device options) {
-        this.setViewport(options.getViewport());
-        this.setUserAgent(options.getUserAgent());
-    }
-
-    /**
-     * 给页面设置userAgent
-     *
-     * @param userAgent userAgent的值
-     */
-    public void setUserAgent(String userAgent) {
-        this.frameManager.networkManager().setUserAgent(userAgent);
-    }
-
-    /**
-     * 改变页面的css媒体类型。支持的值仅包括 'screen', 'print' 和 null。传 null 禁用媒体模拟
-     *
-     * @param type css媒体类型
-     */
-    public void emulateMediaType(String type) {
-        this.emulateMedia(type);
-    }
-
-    /**
-     * 此方法找到一个匹配的元素，如果需要会把此元素滚动到可视，然后通过 page.touchscreen 来点击元素的中间位置 如果没有匹配的元素，此方法会报错
-     *
-     * @param selector 要点击的元素的选择器。如果有多个匹配的元素，点击第一个
-     * @param isBlock  是否阻塞，如果是false,那么将在另外的线程中完成，可以配合waitFor方法
-     */
-    public void tap(String selector, boolean isBlock) {
-        this.mainFrame().tap(selector, isBlock);
-    }
-
-    /**
-     * 此方法找到一个匹配的元素，如果需要会把此元素滚动到可视，然后通过 page.touchscreen 来点击元素的中间位置 如果没有匹配的元素，此方法会报错
-     *
-     * @param selector 要点击的元素的选择器。如果有多个匹配的元素，点击第一个
-     */
-    public void tap(String selector) {
-        this.tap(selector, true);
-    }
-
-    /**
-     * 更改页面的时区，传null将禁用将时区仿真 <a href=
-     * "https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1">时区id列表</a>
-     * 
-     * @param timezoneId 时区id
-     */
-    public void emulateTimezone(String timezoneId) {
-        try {
-            Map<String, Object> params = new HashMap<>();
-            if (timezoneId == null) {
-                timezoneId = "";
-            }
-            params.put("timezoneId", timezoneId);
-            this.client.send("Emulation.setTimezoneOverride", params);
-        } catch (Exception e) {
-            if (e.getMessage().contains("Invalid timezone"))
-                throw new IllegalArgumentException("Invalid timezone ID: " + timezoneId);
-            throw e;
-        }
-    }
-
-    /**
-     * 模拟页面上给定的视力障碍,不同视力障碍，截图有不同效果
-     * 
-     * @param type 视力障碍类型
-     */
-    public void emulateVisionDeficiency(VisionDeficiency type) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("type", type.getValue());
-        this.client.send("Emulation.setEmulatedVisionDeficiency", params);
-    }
-
-    /**
-     * 此方法是{@link Page#evaluateOnNewDocument(String, Object...)}的简化版，自动判断参数pageFunction是 Javascript 函数还是 Javascript 的字符串
-     * 
-     * @param pageFunction 要执行的字符串
-     * @param args         如果是 Javascript 函数的话，对应函数上的参数
-     */
-    public void evaluateOnNewDocument(String pageFunction, Object... args) {
-        this.evaluateOnNewDocument(pageFunction,
-                Builder.isFunction(pageFunction) ? PageEvaluateType.FUNCTION : PageEvaluateType.STRING, args);
-    }
-
-    /**
-     * 在新dom产生之际执行给定的javascript 当你的js代码为函数时，type={@link PageEvaluateType#FUNCTION}
-     * 当你的js代码为字符串时，type={@link PageEvaluateType#STRING}
-     * 
-     * @param pageFunction js代码
-     * @param type         一般为PageEvaluateType#FUNCTION
-     * @param args         当你js代码是函数时，你的函数的参数
-     */
-    public void evaluateOnNewDocument(String pageFunction, PageEvaluateType type, Object... args) {
-        Map<String, Object> params = new HashMap<>();
-        if (Objects.equals(PageEvaluateType.STRING, type)) {
-            Assert.isTrue(args.length == 0, "Cannot evaluate a string with arguments");
-            params.put("source", pageFunction);
-        } else {
-            List<Object> objects = Arrays.asList(args);
-            List<String> argsList = new ArrayList<>();
-            objects.forEach(arg -> {
-                if (arg == null) {
-                    argsList.add("undefined");
-                } else {
-                    try {
-                        argsList.add(Builder.OBJECTMAPPER.writeValueAsString(arg));
-                    } catch (JsonProcessingException e) {
-                        argsList.add("undefined");
-                    }
-                }
-            });
-            String source = "(" + pageFunction + ")(" + String.join(",", argsList) + ")";
-            params.put("source", source);
-        }
-        this.client.send("Page.addScriptToEvaluateOnNewDocument", params);
-    }
-
-    /**
-     * 此方法添加一个命名为 name 的方法到页面的 window 对象 当调用 name 方法时，在 node.js 中执行 puppeteerFunction
-     *
-     * @param name              挂载到window对象的方法名
-     * @param puppeteerFunction 调用name方法时实际执行的方法
-     */
-    public void exposeFunction(String name, Function<List<?>, Object> puppeteerFunction) {
-        if (this.pageBindings.containsKey(name)) {
-            throw new IllegalArgumentException(MessageFormat
-                    .format("Failed to add page binding with name {0}: window['{1}'] already exists!", name, name));
-        }
-        this.pageBindings.put(name, puppeteerFunction);
-        String expression = Builder.evaluationString(addPageBinding(), PageEvaluateType.FUNCTION, name);
-        Map<String, Object> params = new HashMap<>();
-        params.put("name", name);
-        this.client.send("Runtime.addBinding", params);
-        params.clear();
-        params.put("source", expression);
-        this.client.send("Page.addScriptToEvaluateOnNewDocument", params);
-        List<Frame> frames = this.frames();
-        if (frames.isEmpty()) {
-            return;
-        }
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        frames.forEach(frame -> {
-            futures.add(CompletableFuture.runAsync(() -> frame.evaluate(expression, null)));
-        });
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-    }
-
-    private String addPageBinding() {
-        return "function addPageBinding(bindingName) {\n" + "      const win = (window);\n"
-                + "      const binding = (win[bindingName]);\n" + "      win[bindingName] = (...args) => {\n"
-                + "        const me = window[bindingName];\n" + "        let callbacks = me['callbacks'];\n"
-                + "        if (!callbacks) {\n" + "          callbacks = new Map();\n"
-                + "          me['callbacks'] = callbacks;\n" + "        }\n"
-                + "        const seq = (me['lastSeq'] || 0) + 1;\n" + "        me['lastSeq'] = seq;\n"
-                + "        const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));\n"
-                + "        binding(JSON.stringify({name: bindingName, seq, args}));\n" + "        return promise;\n"
-                + "      };\n" + "    }";
-    }
-
-    /**
-     * 此方法找到一个匹配selector的元素，并且把焦点给它。 如果没有匹配的元素，此方法将报错。
-     *
-     * @param selector 要给焦点的元素的选择器selector。如果有多个匹配的元素，焦点给第一个元素。
-     */
-    public void focus(String selector) {
-        this.mainFrame().focus(selector);
-    }
-
-    /**
-     * 返回加载到页面中的所有iframe标签
-     *
-     * @return iframe标签
-     */
-    public List<Frame> frames() {
-        return this.frameManager.frames();
-    }
-
-    public Response goBack() {
-        return this.go(-1, new WaitForOptions());
-    }
-
-    /**
-     * 导航到页面历史的前一个页面 options 的 referer参数不用填，填了也用不上 options 导航配置，可选值： otimeout 跳转等待时间，单位是毫秒, 默认是30秒, 传 0
-     * 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值 owaitUntil
-     * 满足什么条件认为页面跳转完成，默认是load事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括： oload - 页面的load事件触发时 odomcontentloaded -
-     * 页面的DOMContentLoaded事件触发时 onetworkidle0 - 不再有网络连接时触发（至少500毫秒后） onetworkidle2 - 只有2个网络连接时触发（至少500毫秒后）
-     *
-     * @param options 见上面注释
-     * @return 响应
-     */
-    public Response goBack(WaitForOptions options) {
-        return this.go(-1, options);
-    }
-
-    public Response goForward() {
-        return this.go(+1, new WaitForOptions());
-    }
-
-    /**
-     * 导航到页面历史的后一个页面。 options 的 referer参数不用填，填了也用不上
-     * 
-     * @param options 可以看{@link Page#goTo(String, GoToOptions,boolean)}方法介绍
-     * @return Response 响应
-     */
-    public Response goForward(WaitForOptions options) {
-        return this.go(+1, options);
-    }
-
-    /**
-     * 此方法找到一个匹配的元素，如果需要会把此元素滚动到可视，然后通过 page.mouse 来hover到元素的中间。 如果没有匹配的元素，此方法将会报错。
-     *
-     * @param selector 要hover的元素的选择器。如果有多个匹配的元素，hover第一个。
-     */
-    public void hover(String selector) {
-        this.mainFrame().hover(selector);
-    }
-
-    /**
-     * 表示页面是否被关闭。
-     *
-     * @return 页面是否被关闭。
-     */
-    public boolean isClosed() {
-        return this.closed;
-    }
-
-    protected void setClosed(boolean closed) {
-        this.closed = closed;
-    }
-
-    /**
-     * 返回页面的一些基本信息
-     *
-     * @return Metrics 基本信息载体
-     * @throws IllegalAccessException    异常
-     * @throws IntrospectionException    异常
-     * @throws InvocationTargetException 异常
-     */
-    public Metrics metrics() throws IllegalAccessException, IntrospectionException, InvocationTargetException {
-        JsonNode responseNode = this.client.send("Performance.getMetrics");
-        List<Metric> metrics = new ArrayList<>();
-        Iterator<JsonNode> elements = responseNode.get("metrics").elements();
-        while (elements.hasNext()) {
-            JsonNode next = elements.next();
-            try {
-                Metric value = Builder.OBJECTMAPPER.treeToValue(next, Metric.class);
-                metrics.add(value);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return this.buildMetricsObject(metrics);
-    }
-
-    /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') 注意
-     * 目前仅支持无头模式的 Chrome
-     */
-    public byte[] pdf(PDFOptions options) {
-        return this.pdf(options, LengthUnit.IN);
-    }
-
-    /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') 注意
-     * 目前仅支持无头模式的 Chrome
-     *
-     * 
-     * @param path pdf存放的路径
-     */
-    public void pdf(String path) {
-        this.pdf(PDFOptions.builder().path(path).build(), LengthUnit.IN);
-    }
-
-    /**
-     * 生成当前页面的pdf格式，带着 pring css media。如果要生成带着 screen media的pdf，在page.pdf() 前面先调用 page.emulateMedia('screen') 注意
-     * 目前仅支持无头模式的 Chrome
-     *
-     * @param options 选项
-     * @return pdf文件的字节数组数据
-     */
-    public byte[] pdf(PDFOptions options, LengthUnit lengthUnit) {
-        double paperWidth = 8.5;
-        double paperHeight = 11;
-        if (options.getFormat() != null) {
-            PaperFormats format = options.getFormat();
-            paperWidth = format.getWidth();
-            paperHeight = format.getHeight();
-        } else {
-            Double width = convertPrintParameterToInches(options.getWidth(), lengthUnit);
-            if (width != null) {
-                paperWidth = width;
-            }
-            Double height = convertPrintParameterToInches(options.getHeight(), lengthUnit);
-            if (height != null) {
-                paperHeight = height;
-            }
-        }
-        PDFMargin margin = options.getMargin();
-        Number marginTop, marginLeft, marginBottom, marginRight;
-        if ((marginTop = convertPrintParameterToInches(margin.getTop(), lengthUnit)) == null) {
-            marginTop = 0;
-        }
-        if ((marginLeft = convertPrintParameterToInches(margin.getLeft(), lengthUnit)) == null) {
-            marginLeft = 0;
-        }
-        if ((marginBottom = convertPrintParameterToInches(margin.getBottom(), lengthUnit)) == null) {
-            marginBottom = 0;
-        }
-        if ((marginRight = convertPrintParameterToInches(margin.getRight(), lengthUnit)) == null) {
-            marginRight = 0;
-        }
-        if (options.isOutline()) {
-            options.setTagged(true);
-        }
-        if (options.isOmitBackground()) {
-            this.emulationManager.setTransparentBackgroundColor();
-        }
-        if (options.isWaitForFonts()) {
-//            this.bringToFront();
-            Single.fromCallable(() -> this.mainFrame().evaluate("() => { return document.fonts.ready;}", null))
-                    .timeout(options.getTimeout(), TimeUnit.MILLISECONDS).blockingSubscribe();
-
-        }
-        Map<String, Object> params = new HashMap<>();
-        params.put("transferMode", "ReturnAsStream");
-        params.put("landscape", options.isLandscape());
-        params.put("displayHeaderFooter", options.isDisplayHeaderFooter());
-        params.put("headerTemplate", options.getHeaderTemplate());
-        params.put("footerTemplate", options.getFooterTemplate());
-        params.put("printBackground", options.isPrintBackground());
-        params.put("scale", options.getScale());
-        params.put("paperWidth", paperWidth);
-        params.put("paperHeight", paperHeight);
-        params.put("marginTop", marginTop);
-        params.put("marginBottom", marginBottom);
-        params.put("marginLeft", marginLeft);
-        params.put("marginRight", marginRight);
-        params.put("pageRanges", options.getPageRanges());
-        params.put("preferCSSPageSize", options.isPreferCSSPageSize());
-        params.put("generateTaggedPDF", options.isTagged());
-        params.put("generateDocumentOutline", options.isOutline());
-
-        JsonNode result = Single.fromCallable(() -> this.client.send("Page.printToPDF", params))
-                .timeout(options.getTimeout(), TimeUnit.MILLISECONDS).blockingGet();
-        if (result == null) {
-            throw new InternalException("Page.printToPDF no response");
-        }
-        JsonNode handle = result.get(Builder.MESSAGE_STREAM_PROPERTY);
-        Assert.isTrue(handle != null,
-                "Page.printToPDF result has no stream handle. Please check your chrome version. result=" + result);
-        try {
-            return (byte[]) Builder.readProtocolStream(this.client, handle.asText(), options.getPath(), false);
-        } catch (IOException e) {
-            throw new InternalException(e);
-        }
-    }
-
-    /**
-     * 此方法会改变下面几个方法的默认30秒等待时间： ${@link Page#goTo(String)} ${@link Page#goTo(String, GoToOptions,boolean)}
-     * ${@link Page#goBack(WaitForOptions)} ${@link Page#goForward(WaitForOptions)} ${@link Page#reload(WaitForOptions)}
-     * ${@link Page#waitForNavigation()}
-     *
-     * @param timeout 超时时间
-     */
-    public void setDefaultTimeout(int timeout) {
-        this.timeoutSettings.setDefaultTimeout(timeout);
-    }
-
-    /**
-     * 此方法遍历js堆栈，找到所有带有指定原型的对象
-     *
-     * @param prototypeHandle 原型处理器
-     * @return 代表页面元素的一个实例
-     */
-    public JSHandle queryObjects(JSHandle prototypeHandle) {
-        ExecutionContext context = this.mainFrame().executionContext();
-        return context.queryObjects(prototypeHandle);
-    }
-
-    private Double convertPrintParameterToInches(String parameter, LengthUnit lengthUnit) {
-        if (StringKit.isEmpty(parameter)) {
-            return null;
-        }
-        double pixels;
-        if (Builder.isNumber(parameter)) {
-            pixels = Double.parseDouble(parameter);
-        } else if (parameter.endsWith("px") || parameter.endsWith("in") || parameter.endsWith("cm")
-                || parameter.endsWith("mm")) {
-            String unit = parameter.substring(parameter.length() - 2).toLowerCase();
-            String valueText;
-            if (UNIT_TO_PIXELS.containsKey(unit)) {
-                valueText = parameter.substring(0, parameter.length() - 2);
-            } else {
-                // In case of unknown unit try to parse the whole parameter as number of pixels.
-                // This is consistent with phantom's paperSize behavior.
-                unit = "px";
-                valueText = parameter;
-            }
-            double value = Double.parseDouble(valueText);
-            Assert.isTrue(!Double.isNaN(value), "Failed to parse parameter value: " + parameter);
-            pixels = value * UNIT_TO_PIXELS.get(unit);
-        } else {
-            throw new IllegalArgumentException("page.pdf() Cannot handle parameter type: " + parameter);
-        }
-        return pixels / UNIT_TO_PIXELS.get(lengthUnit.getValue());
-    }
-
-    /**
-     * 重新加载页面
-     *
-     * @param options 与${@link Page#goTo(String, GoToOptions,boolean)}中的options是一样的配置
-     * @return 响应
-     */
-    public Response reload(WaitForOptions options) {
-        return this.waitForNavigation(options, true);
-    }
-
-    private Metrics buildMetricsObject(List<Metric> metrics) {
-        Metrics result = new Metrics();
-        if (CollKit.isNotEmpty(metrics)) {
-            for (Metric metric : metrics) {
-                if (Builder.SUPPORTED_METRICS.contains(metric.getName())) {
-                    try {
-                        PropertyDescriptor descriptor = new PropertyDescriptor(metric.getName(), Metrics.class);
-                        descriptor.getWriteMethod().invoke(result, metric.getValue());
-                    } catch (IntrospectionException | IllegalAccessException | InvocationTargetException e) {
-                        throw new InternalException(e);
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
-    private Response go(int delta, WaitForOptions options) {
-        JsonNode historyNode = this.client.send("Page.getNavigationHistory");
-        GetNavigationHistoryReturnValue history;
-        try {
-            history = Builder.OBJECTMAPPER.treeToValue(historyNode, GetNavigationHistoryReturnValue.class);
-        } catch (JsonProcessingException e) {
-            throw new InternalException(e);
-        }
-        NavigationEntry entry = history.getEntries().get(history.getCurrentIndex() + delta);
-        if (entry == null)
-            return null;
-        Response response = this.waitForNavigation(options, false);
-        Map<String, Object> params = new HashMap<>();
-        params.put("entryId", entry.getId());
-        this.client.send("Page.navigateToHistoryEntry", params);
-        return response;
-    }
-
-    /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
-     *
-     * @return 响应
-     */
-    public Response waitForNavigation() {
-        return this.waitForNavigation(new WaitForOptions(), false);
-    }
-
-    /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
-     *
-     * @param options PageNavigateOptions
-     * @return 响应
-     */
-    public Response waitForNavigation(WaitForOptions options) {
-        return this.frameManager.mainFrame().waitForNavigation(options, false);
-    }
-
-    /**
-     * 此方法在页面跳转到一个新地址或重新加载时解析，如果你的代码会间接引起页面跳转，这个方法比较有用 比如你在在代码中使用了Page.click()方法，引起了页面跳转 注意 通过 History API 改变地址会认为是一次跳转。
-     *
-     * @param options PageNavigateOptions
-     * @param reload  reload页面，这个参数配合{@link Page#setViewport(Viewport)}中的reload方法使用
-     * @return 响应
-     */
-    private Response waitForNavigation(WaitForOptions options, boolean reload) {
-        return this.frameManager.mainFrame().waitForNavigation(options, reload);
-    }
-
-    /**
-     * 执行一段 JavaScript代码 此方法是{@link Page#evaluate(String, List)}的简化版，自动判断参数pageFunction是 Javascript 函数还是 Javascript 的字符串
-     *
-     * @param pageFunction 要执行的字符串
-     * @return 有可能是JShandle String等
-     */
-    public Object evaluate(String pageFunction) {
-        return this.evaluate(pageFunction, new ArrayList<>());
-    }
-
-    /**
-     * 执行一段 JavaScript代码
-     *
-     * @param pageFunction 要执行的字符串
-     * @param args         如果是 Javascript 函数的话，对应函数上的参数
-     * @return 有可能是JShandle String等
-     */
-    public Object evaluate(String pageFunction, List<Object> args) {
-        return this.mainFrame().evaluate(pageFunction, args);
-    }
-
-    /**
-     * 此方法和 page.evaluate 的唯一区别是此方法返回的是页内类型(JSHandle)
-     * 此方法是{@link Page#evaluateHandle(String, List)}的简化版，自动判断参数pageFunction是 Javascript 函数还是 Javascript 的字符串
-     *
-     * @param pageFunction 要执行的字符串
-     * @return JSHandle
-     */
-    public JSHandle evaluateHandle(String pageFunction) {
-        return this.evaluateHandle(pageFunction, new ArrayList<>());
-    }
-
-    /**
-     * 此方法和 page.evaluate 的唯一区别是此方法返回的是页内类型(JSHandle)
-     *
-     * @param pageFunction 要在页面实例上下文中执行的方法
-     * @param args         要在页面实例上下文中执行的方法的参数
-     * @return 代表页面元素的实例
-     */
-    private JSHandle evaluateHandle(String pageFunction, List<Object> args) {
-        ExecutionContext context = this.mainFrame().executionContext();
-        return (JSHandle) context.evaluateHandle(pageFunction, args);
-    }
-
-    /**
-     * 改变页面的css媒体类型。支持的值仅包括 'screen', 'print' 和 null。传 null 禁用媒体模拟
-     *
-     * @param type css媒体类型
-     */
-    public void emulateMedia(String type) {
-        Assert.isTrue("screen".equals(type) || "print".equals(type) || type == null, "Unsupported media type: " + type);
-        Map<String, Object> params = new HashMap<>();
-        params.put("media", type);
-        this.client.send("Emulation.setEmulatedMedia", params);
-    }
-
-    public void emulateMediaFeatures(List<MediaFeature> features) {
-        Pattern pattern = Pattern.compile("^prefers-(?:color-scheme|reduced-motion)$");
-        Map<String, Object> params = new HashMap<>();
-        if (features == null) {
-            params.put("features", null);
-            this.client.send("Emulation.setEmulatedMedia", params);
-        }
-        if (CollKit.isNotEmpty(features)) {
-            features.forEach(mediaFeature -> {
-                String name = mediaFeature.getName();
-                Assert.isTrue(pattern.matcher(name).find(), "Unsupported media feature: " + name);
-            });
-        }
-        params.put("features", features);
-        this.client.send("Emulation.setEmulatedMedia", params);
-    }
-
-    /**
-     * 此方法根据第一个参数的不同有不同的结果： 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是
-     * page.waitForSelector 或 page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function,
-     * 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写 如果 selectorOrFunctionOrTimeout 是 number,
-     * 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
-     *
-     * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
-     * @return 代表页面元素的一个实例
-     * @throws InterruptedException 打断异常
-     */
-    public JSHandle waitFor(String selectorOrFunctionOrTimeout) throws InterruptedException {
-        return this.waitFor(selectorOrFunctionOrTimeout, new WaitForSelectorOptions(), new ArrayList<>());
-    }
-
-    /**
-     * 此方法根据第一个参数的不同有不同的结果： 如果 selectorOrFunctionOrTimeout 是 string, 那么认为是 css 选择器或者一个xpath, 根据是不是'//'开头, 这时候此方法是
-     * page.waitForSelector 或 page.waitForXPath的简写 如果 selectorOrFunctionOrTimeout 是 function,
-     * 那么认为是一个predicate，这时候此方法是page.waitForFunction()的简写 如果 selectorOrFunctionOrTimeout 是 number,
-     * 那么认为是超时时间，单位是毫秒，返回的是Promise对象,在指定时间后resolve 否则会报错
-     *
-     * @param selectorOrFunctionOrTimeout 选择器, 方法 或者 超时时间
-     * @param options                     可选的等待参数
-     * @param args                        传给 pageFunction 的参数
-     * @throws InterruptedException 打断异常
-     * @return 代表页面元素的一个实例
-     */
-    public JSHandle waitFor(String selectorOrFunctionOrTimeout, WaitForSelectorOptions options, List<Object> args)
-            throws InterruptedException {
-        return this.mainFrame().waitFor(selectorOrFunctionOrTimeout, options, args);
-    }
-
-    /**
-     * 等待一个文件选择事件，默认等待时间是30s
-     *
-     * @return 文件选择器
-     */
-    public Future<FileChooser> waitForFileChooser() {
-        return this.waitForFileChooser(this.timeoutSettings.timeout());
-    }
-
-    /**
-     * 等待一个文件选择事件，默认等待时间是30s
-     *
-     * @param timeout 等待时间
-     * @return 文件选择器
-     */
-    public Future<FileChooser> waitForFileChooser(int timeout) {
-        if (timeout <= 0)
-            timeout = this.timeoutSettings.timeout();
-        int finalTimeout = timeout;
-        return ForkJoinPool.commonPool().submit(() -> {
-            if (CollKit.isEmpty(this.fileChooserInterceptors)) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("enabled", true);
-                this.client.send("Page.setInterceptFileChooserDialog", params);
-            }
-            CountDownLatch latch = new CountDownLatch(1);
-            FileChooserCallBack callback = new FileChooserCallBack(latch);
-            this.fileChooserInterceptors.add(callback);
-            try {
-                callback.waitForFileChooser(finalTimeout);
-                return callback.getFileChooser();
-            } catch (InterruptedException e) {
-                this.fileChooserInterceptors.remove(callback);
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    /**
-     * 要在浏览器实例上下文执行方法
-     *
-     * @param pageFunction 要在浏览器实例上下文执行的方法
-     * @return JSHandle
-     * @throws InterruptedException 打断异常
-     */
-    public JSHandle waitForFunction(String pageFunction) throws InterruptedException {
-        return this.waitForFunction(pageFunction, new WaitForSelectorOptions());
-    }
-
-    /**
-     * 要在浏览器实例上下文执行方法
-     *
-     * @param pageFunction 要在浏览器实例上下文执行的方法
-     * @param args         js函数的参数
-     * @return JSHandle 指定的页面元素 对象
-     * @throws InterruptedException 异常
-     */
-    public JSHandle waitForFunction(String pageFunction, List<Object> args) throws InterruptedException {
-        return this.waitForFunction(pageFunction, new WaitForSelectorOptions(), args);
-    }
-
-    /**
-     * 要在浏览器实例上下文执行方法
-     *
-     * @param pageFunction 要在浏览器实例上下文执行的方法
-     * @param options      可选参数
-     * @return JSHandle
-     * @throws InterruptedException 异常
-     */
-    public JSHandle waitForFunction(String pageFunction, WaitForSelectorOptions options) throws InterruptedException {
-        return this.waitForFunction(pageFunction, options, new ArrayList<>());
-    }
-
-    /**
-     * 要在浏览器实例上下文执行方法
-     *
-     * @param pageFunction 要在浏览器实例上下文执行的方法
-     * @param options      可选参数
-     * @param args         执行的方法的参数
-     * @return JSHandle
-     * @throws InterruptedException 异常
-     */
-    public JSHandle waitForFunction(String pageFunction, WaitForSelectorOptions options, List<Object> args)
-            throws InterruptedException {
-        return this.mainFrame().waitForFunction(pageFunction, options, args);
-    }
-
-    /**
-     * 等到某个请求
-     *
-     * @param predicate 等待的请求
-     * @return 要等到的请求
-     * @throws InterruptedException 异常
-     */
-    public Request waitForRequest(Predicate<Request> predicate) throws InterruptedException {
-        Assert.notNull(predicate, "waitForRequest predicate must not be null");
-        return this.waitForRequest(null, predicate, this.timeoutSettings.timeout());
-    }
-
-    /**
-     * 等到某个请求，url或者predicate只有有一个不为空,默认等待时间是30s
-     *
-     * @param url 等待的请求
-     * @return 要等到的请求
-     * @throws InterruptedException 异常
-     */
-    public Request waitForRequest(String url) throws InterruptedException {
-        Assert.isTrue(StringKit.isNotEmpty(url), "waitForRequest url must not be empty");
-        return this.waitForRequest(url, null, this.timeoutSettings.timeout());
-    }
-
-    /**
-     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
-     * PageEvaluateType.FUNCTION
-     *
-     * @param url       等待的请求
-     * @param predicate 方法
-     * @param timeout   超时时间
-     * @return 要等到的请求
-     */
-    public Request waitForRequest(String url, Predicate<Request> predicate, int timeout) {
-        if (timeout <= 0) {
-            timeout = this.timeoutSettings.timeout();
-        }
-        io.reactivex.rxjava3.functions.Predicate<Request> requestPredicate = request -> {
-            if (StringKit.isNotEmpty(url)) {
-                return url.equals(request.url());
-            } else if (predicate != null) {
-                return predicate.test(request);
-            }
-            return false;
-        };
-        Disposable closeDisposable = null;
-        Disposable requestDisposable = null;
-        try {
-            Observable<Object> closeObservable = Builder.fromEmitterEvent(this, PageEvent.CLOSE).map((s) -> {
-                throw new InternalException("Page closed!");
-            });
-            closeDisposable = closeObservable.subscribe();
-            Observable<Request> requestObservable = Builder
-                    .<Request, PageEvent>fromEmitterEvent(this, PageEvent.REQUEST).filter(requestPredicate)
-                    .timeout(timeout, TimeUnit.MILLISECONDS);
-            requestDisposable = requestObservable.subscribe();
-            Object o = Observable.ambArray(requestObservable, closeObservable).blockingFirst();
-            if (o instanceof Request) {
-                return (Request) o;
-            }
-            return null;
-        } finally {
-            Optional.ofNullable(closeDisposable).ifPresent(Disposable::dispose);
-            Optional.ofNullable(requestDisposable).ifPresent(Disposable::dispose);
-        }
-    }
-
-    /**
-     * 等到某个请求,默认等待的时间是30s
-     *
-     * @param predicate 判断具体某个请求
-     * @return 要等到的请求
-     * @throws InterruptedException 异常
-     */
-    public Response waitForResponse(Predicate<Response> predicate) throws InterruptedException {
-        return this.waitForResponse(null, predicate);
-    }
-
-    /**
-     * 等到某个请求,默认等待的时间是30s
-     *
-     * @param url 等待的请求
-     * @return 要等到的请求
-     */
-    public Response waitForResponse(String url) {
-        return this.waitForResponse(url, null);
-    }
-
-    /**
-     * 等到某个请求，url或者predicate只有有一个不为空,默认等待的时间是30s 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
-     * PageEvaluateType.FUNCTION
-     *
-     * @param url       等待的请求
-     * @param predicate 方法
-     * @return 要等到的请求
-     */
-    public Response waitForResponse(String url, Predicate<Response> predicate) {
-        return this.waitForResponse(url, predicate, this.timeoutSettings.timeout());
-    }
-
-    /**
-     * 等到某个请求，url或者predicate只有有一个不为空 当url不为空时， type = PageEvaluateType.STRING 当predicate不为空时， type =
-     * PageEvaluateType.FUNCTION
-     *
-     * @param url       等待的请求
-     * @param predicate 方法
-     * @param timeout   超时时间
-     * @return 要等到的请求
-     */
-    public Response waitForResponse(String url, Predicate<Response> predicate, int timeout) {
-        if (timeout <= 0)
-            timeout = this.timeoutSettings.timeout();
-        io.reactivex.rxjava3.functions.Predicate<Response> predi = response -> {
-            if (StringKit.isNotEmpty(url)) {
-                return url.equals(response.url());
-            } else if (predicate != null) {
-                return predicate.test(response);
-            }
-            return false;
-        };
-        Disposable responseDisposable = null;
-        Disposable closeDisposable = null;
-        try {
-            Observable<Response> responseObservable = Builder
-                    .<Response, PageEvent>fromEmitterEvent(this, PageEvent.RESPONSE).filter(predi)
-                    .timeout(timeout, TimeUnit.MILLISECONDS);
-            responseDisposable = responseObservable.subscribe();
-            Observable<Object> closeObservable = Builder.fromEmitterEvent(this, PageEvent.CLOSE).map((s) -> {
-                throw new InternalException("Page closed!");
-            });
-            closeDisposable = closeObservable.subscribe();
-            Object o = Observable.ambArray(responseObservable, closeObservable).blockingFirst();
-            if (o instanceof Response) {
-                return (Response) o;
-            }
-            return null;
-        } finally {
-            Optional.ofNullable(closeDisposable).ifPresent(Disposable::dispose);
-            Optional.ofNullable(responseDisposable).ifPresent(Disposable::dispose);
-        }
-    }
-
-    /**
-     * 等待指定的选择器匹配的元素出现在页面中，如果调用此方法时已经有匹配的元素，那么此方法立即返回。 如果指定的选择器在超时时间后扔不出现，此方法会报错。
-     *
-     * @param selector 要等待的元素选择器
-     * @throws InterruptedException 打断异常
-     * @return {@link ElementHandle}
-     */
-    public ElementHandle waitForSelector(String selector) throws InterruptedException {
-        return this.waitForSelector(selector, new WaitForSelectorOptions());
-    }
-
-    /**
-     * 等待指定的选择器匹配的元素出现在页面中，如果调用此方法时已经有匹配的元素，那么此方法立即返回。 如果指定的选择器在超时时间后扔不出现，此方法会报错。
-     *
-     * @param selector 要等待的元素选择器
-     * @param options  可选参数
-     * @throws InterruptedException 打断异常
-     * @return {@link ElementHandle}
-     */
-    public ElementHandle waitForSelector(String selector, WaitForSelectorOptions options) throws InterruptedException {
-        return this.mainFrame().waitForSelector(selector, options);
-    }
-
-    /**
-     * 等待指定的xpath匹配的元素出现在页面中，如果调用此方法时已经有匹配的元素，那么此方法立即返回。 如果指定的xpath在超时时间后扔不出现，此方法会报错。
-     *
-     * @param xpath 要等待的元素的xpath
-     * @throws InterruptedException 打断异常
-     * @return {@link JSHandle}
-     */
-    public JSHandle waitForXPath(String xpath) throws InterruptedException {
-        return this.mainFrame().waitForXPath(xpath, new WaitForSelectorOptions());
-    }
-
-    /**
-     * 等待指定的xpath匹配的元素出现在页面中，如果调用此方法时已经有匹配的元素，那么此方法立即返回。 如果指定的xpath在超时时间后扔不出现，此方法会报错。
-     *
-     * @param xpath   要等待的元素的xpath
-     * @param options 可选参数
-     * @throws InterruptedException 打断异常
-     * @return JSHandle
-     */
-    public JSHandle waitForXPath(String xpath, WaitForSelectorOptions options) throws InterruptedException {
-        return this.mainFrame().waitForXPath(xpath, options);
-    }
-
-    /**
-     * 返回页面的地址
-     *
-     * @return 页面地址
-     */
-    private String url() {
-        return this.mainFrame().url();
-    }
-
-    public CDPSession client() {
-        return client;
-    }
-
-    /**
-     * 该方法返回所有与页面关联的 WebWorkers
-     *
-     * @return WebWorkers
-     */
-    public Map<String, Worker> workers() {
-        return this.workers;
-    }
-
-    public Mouse mouse() {
-        return mouse;
-    }
-
-    public Target target() {
-        return this.target;
-    }
-
-    public Touchscreen touchscreen() {
-        return this.touchscreen;
-    }
-
-    public Tracing tracing() {
-        return this.tracing;
-    }
-
-    public Accessibility accessibility() {
-        return this.accessibility;
-    }
-
-    /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
-     *
-     * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
-     * @param text     要输入的内容
-     * @throws InterruptedException 异常
-     */
-    public void type(String selector, String text) throws InterruptedException {
-        this.mainFrame().type(selector, text, 0);
-    }
-
-    /**
-     * 每个字符输入后都会触发 keydown, keypress/input 和 keyup 事件 要点击特殊按键，比如 Control 或 ArrowDown，用 keyboard.press
-     *
-     * @param selector 要输入内容的元素选择器。如果有多个匹配的元素，输入到第一个匹配的元素。
-     * @param text     要输入的内容
-     * @param delay    每个字符输入的延迟，单位是毫秒。默认是 0。
-     * @throws InterruptedException 异常
-     */
-    public void type(String selector, String text, int delay) throws InterruptedException {
-        this.mainFrame().type(selector, text, delay);
-    }
-
-    public boolean getJavascriptEnabled() {
-        return javascriptEnabled;
-    }
-
-    public Keyboard keyboard() {
-        return this.keyboard;
-    }
-
-    /**
-     * 获取Viewport,Viewport各个参数的含义： width 宽度，单位是像素 height 高度，单位是像素 deviceScaleFactor 定义设备缩放， (类似于 dpr)。 默认 1。 isMobile
-     * 要不要包含meta viewport 标签。 默认 false。 hasTouch 指定终端是否支持触摸。 默认 false isLandscape 指定终端是不是 landscape 模式。 默认 false。
-     *
-     * @return Viewport
-     */
-    public Viewport viewport() {
-        return this.viewport;
-    }
-
-    public Coverage coverage() {
-        return this.coverage;
-    }
-
-    static class FileChooserCallBack {
-
-        private CountDownLatch latch;
-        private FileChooser fileChooser;
-
-        public FileChooserCallBack() {
-            super();
-        }
-
-        public FileChooserCallBack(CountDownLatch latch) {
-            super();
-            this.latch = latch;
-        }
-
-        public FileChooser getFileChooser() {
-            return fileChooser;
-        }
-
-        public void setFileChooser(FileChooser fileChooser) {
-            this.fileChooser = fileChooser;
-            if (this.latch != null) {
-                this.latch.countDown();
-            }
-        }
-
-        public CountDownLatch getLatch() {
-            return latch;
-        }
-
-        public void setLatch(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        public void waitForFileChooser(int finalTimeout) throws InterruptedException {
-            if (this.latch != null) {
-                boolean await = this.latch.await(finalTimeout, TimeUnit.MILLISECONDS);
-                if (!await) {
-                    throw new TimeoutException(
-                            "waiting for file chooser failed: timeout " + finalTimeout + "ms exceeded");
-                }
-            }
-        }
-    }
+    /**
+     * Closes the page.
+     *
+     * @param options close options
+     */
+    void close(PageCloseOptions options);
 
 }

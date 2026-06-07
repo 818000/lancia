@@ -1,65 +1,180 @@
 /*
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
- ~                                                                               ~
- ~ The MIT License (MIT)                                                         ~
- ~                                                                               ~
- ~ Copyright (c) 2015-2024 miaixz.org and other contributors.                    ~
- ~                                                                               ~
- ~ Permission is hereby granted, free of charge, to any person obtaining a copy  ~
- ~ of this software and associated documentation files (the "Software"), to deal ~
- ~ in the Software without restriction, including without limitation the rights  ~
- ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     ~
- ~ copies of the Software, and to permit persons to whom the Software is         ~
- ~ furnished to do so, subject to the following conditions:                      ~
- ~                                                                               ~
- ~ The above copyright notice and this permission notice shall be included in    ~
- ~ all copies or substantial portions of the Software.                           ~
- ~                                                                               ~
- ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    ~
- ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      ~
- ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   ~
- ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        ~
- ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, ~
- ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN     ~
- ~ THE SOFTWARE.                                                                 ~
- ~                                                                               ~
- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ ~                                                                           ~
+ ~ Copyright (c) 2015-2026 miaixz.org and other contributors.                ~
+ ~                                                                           ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");           ~
+ ~ you may not use this file except in compliance with the License.          ~
+ ~ You may obtain a copy of the License at                                   ~
+ ~                                                                           ~
+ ~      https://www.apache.org/licenses/LICENSE-2.0                          ~
+ ~                                                                           ~
+ ~ Unless required by applicable law or agreed to in writing, software       ~
+ ~ distributed under the License is distributed on an "AS IS" BASIS,         ~
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  ~
+ ~ See the License for the specific language governing permissions and       ~
+ ~ limitations under the License.                                            ~
+ ~                                                                           ~
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
 package org.miaixz.lancia.nimble.network;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * Deletes browser cookies with matching name and url or domain/path pair.
+ * Represents a delete cookies parameters value.
+ *
  * @author Kimi Liu
  * @since Java 17+
  */
-@Getter
-@Setter
-@SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
 public class DeleteCookiesParameters {
 
     /**
-     * Name of the cookies to remove.
+     * Creates a delete cookies parameters.
+     */
+    public DeleteCookiesParameters() {
+        // No initialization required.
+    }
+
+    /**
+     * Current name.
      */
     private String name;
+
     /**
-     * If specified, deletes all the cookies with the given name where domain and path match provided URL.
+     * Cookie URL.
      */
     private String url;
     /**
-     * If specified, deletes only cookies with the exact domain.
+     * Current domain.
      */
     private String domain;
     /**
-     * If specified, deletes only cookies with the exact path.
+     * Current path.
      */
     private String path;
+    /**
+     * Current partition key.
+     */
+    private Object partitionKey;
+
+    /**
+     * Converts this value to protocol parameters.
+     *
+     * @return protocol parameters
+     */
+    public Map<String, Object> toMap() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        put(result, "name", name);
+        put(result, "url", url);
+        put(result, "domain", domain);
+        put(result, "path", path);
+        Cookie.putPartitionKey(result, "partitionKey", partitionKey);
+        return result;
+    }
+
+    /**
+     * Returns the name.
+     *
+     * @return name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Updates name.
+     *
+     * @param name name to use
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Returns the URL.
+     *
+     * @return URL
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * Updates URL.
+     *
+     * @param url target URL
+     */
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    /**
+     * Returns the domain.
+     *
+     * @return domain
+     */
+    public String getDomain() {
+        return domain;
+    }
+
+    /**
+     * Updates domain.
+     *
+     * @param domain domain value
+     */
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    /**
+     * Returns the path.
+     *
+     * @return path
+     */
+    public String getPath() {
+        return path;
+    }
+
+    /**
+     * Updates path.
+     *
+     * @param path file path
+     */
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    /**
+     * Returns the partition key.
+     *
+     * @return partition key
+     */
+    public Object getPartitionKey() {
+        return partitionKey;
+    }
+
+    /**
+     * Updates partition key.
+     *
+     * @param partitionKey partition key value
+     */
+    public void setPartitionKey(Object partitionKey) {
+        this.partitionKey = Cookie.normalizePartitionKey(partitionKey);
+    }
+
+    /**
+     * Handles put.
+     *
+     * @param target target object
+     * @param name   name to use
+     * @param value  value to use
+     */
+    private void put(Map<String, Object> target, String name, Object value) {
+        if (value != null) {
+            target.put(name, value);
+        }
+    }
 
 }
