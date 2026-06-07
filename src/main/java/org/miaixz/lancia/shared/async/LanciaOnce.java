@@ -374,6 +374,13 @@ public class LanciaOnce<T> {
     public static class Options {
 
         /**
+         * Creates deferred timeout options.
+         */
+        public Options() {
+            // No initialization required.
+        }
+
+        /**
          * Timeout failure message.
          */
         private String message = "Deferred timeout exceeded.";

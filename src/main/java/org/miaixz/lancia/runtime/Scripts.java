@@ -330,6 +330,7 @@ public final class Scripts {
     /**
      * Builds a script that prepares a page for A4 PDF export.
      *
+     * @param printPageSize      print page size
      * @param maxScrollPasses    maximum scroll passes
      * @param stableHeightRounds stable page height rounds required before stopping
      * @param imageTimeoutMillis image wait timeout in milliseconds

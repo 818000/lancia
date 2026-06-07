@@ -110,6 +110,13 @@ public interface Harness {
     final class Holder {
 
         /**
+         * Creates a dependency holder.
+         */
+        public Holder() {
+            // No initialization required.
+        }
+
+        /**
          * Current runtime dependencies.
          */
         private volatile Dependencies value = Dependencies.unavailable();
@@ -142,6 +149,13 @@ public interface Harness {
     @Getter
     @Setter
     final class Dependencies {
+
+        /**
+         * Creates runtime dependencies.
+         */
+        public Dependencies() {
+            // No initialization required.
+        }
 
         /**
          * Host file system dependency.

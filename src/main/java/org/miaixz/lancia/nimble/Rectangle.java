@@ -22,6 +22,11 @@ package org.miaixz.lancia.nimble;
 /**
  * Represents an element rectangle.
  *
+ * @param x      horizontal offset
+ * @param y      vertical offset
+ * @param width  rectangle width
+ * @param height rectangle height
+ *
  * @author Kimi Liu
  * @since Java 17+
  */

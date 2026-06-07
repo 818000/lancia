@@ -44,6 +44,13 @@ import org.miaixz.bus.core.xyz.ExceptionKit;
 public class ResourceStack implements AutoCloseable {
 
     /**
+     * Creates a resource stack.
+     */
+    public ResourceStack() {
+        // No initialization required.
+    }
+
+    /**
      * Resources in acquisition order.
      */
     private Deque<AutoCloseable> stack = new ArrayDeque<>();
@@ -222,6 +229,13 @@ public class ResourceStack implements AutoCloseable {
      * @since Java 17+
      */
     public static class Async implements AutoCloseable {
+
+        /**
+         * Creates an asynchronous resource stack.
+         */
+        public Async() {
+            // No initialization required.
+        }
 
         /**
          * Resources in acquisition order.

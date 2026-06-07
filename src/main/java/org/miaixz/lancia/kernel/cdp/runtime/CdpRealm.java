@@ -258,6 +258,7 @@ public class CdpRealm implements Realm, WaitTask.Runtime {
      * Returns the adopt handle.
      *
      * @param handle handle value
+     * @param <T>    handle type
      * @return adopt handle value
      */
     public <T extends CdpJSHandle> T adoptHandle(T handle) {
@@ -269,6 +270,7 @@ public class CdpRealm implements Realm, WaitTask.Runtime {
      * Returns the transfer handle.
      *
      * @param handle handle value
+     * @param <T>    handle type
      * @return transfer handle value
      */
     public <T extends CdpJSHandle> T transferHandle(T handle) {
@@ -333,6 +335,13 @@ public class CdpRealm implements Realm, WaitTask.Runtime {
      * @since Java 17+
      */
     public static final class WaitForFunctionOptions {
+
+        /**
+         * Creates wait-for-function options.
+         */
+        public WaitForFunctionOptions() {
+            // No initialization required.
+        }
 
         /**
          * Current polling.

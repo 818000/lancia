@@ -33,6 +33,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Mutex {
 
     /**
+     * Creates a mutex.
+     */
+    public Mutex() {
+        // No initialization required.
+    }
+
+    /**
      * Waiting acquirers in FIFO order.
      */
     private final Queue<Runnable> acquirers = new ArrayDeque<>();

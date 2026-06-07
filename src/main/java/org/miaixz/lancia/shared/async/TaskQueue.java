@@ -67,6 +67,7 @@ public class TaskQueue implements AutoCloseable {
      * Returns the enqueue.
      *
      * @param task task value
+     * @param <T>  task result type
      * @return completion future
      */
     public <T> CompletableFuture<T> enqueue(Callable<T> task) {
@@ -87,6 +88,7 @@ public class TaskQueue implements AutoCloseable {
      * Returns the post task.
      *
      * @param task task value
+     * @param <T>  task result type
      * @return completion future
      */
     public <T> CompletableFuture<T> postTask(Callable<T> task) {
@@ -118,6 +120,7 @@ public class TaskQueue implements AutoCloseable {
      * Returns the post task async.
      *
      * @param task task value
+     * @param <T>  task result type
      * @return completion future
      */
     public <T> CompletableFuture<T> postTaskAsync(Supplier<? extends CompletionStage<T>> task) {

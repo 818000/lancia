@@ -48,6 +48,7 @@ public final class InputAction {
      * @param key     key value
      * @param options operation options
      * @param action  action value
+     * @param <T>     payload type
      * @return completion future
      */
     public static <T extends Payload> CompletableFuture<T> down(
@@ -65,6 +66,7 @@ public final class InputAction {
      * @param y       y value
      * @param options operation options
      * @param action  action value
+     * @param <T>     payload type
      * @return completion future
      */
     public static <T extends Payload> CompletableFuture<T> move(
@@ -81,6 +83,7 @@ public final class InputAction {
      *
      * @param options operation options
      * @param action  action value
+     * @param <T>     payload type
      * @return completion future
      */
     public static <T extends Payload> CompletableFuture<T> wheel(
@@ -92,6 +95,8 @@ public final class InputAction {
 
     /**
      * Defines the KeyboardDownAction interface.
+     *
+     * @param <T> payload type
      */
     @FunctionalInterface
     public interface KeyboardDownAction<T extends Payload> {
@@ -109,6 +114,8 @@ public final class InputAction {
 
     /**
      * Defines the MouseMoveAction interface.
+     *
+     * @param <T> payload type
      */
     @FunctionalInterface
     public interface MouseMoveAction<T extends Payload> {
@@ -126,6 +133,8 @@ public final class InputAction {
 
     /**
      * Defines the MouseWheelAction interface.
+     *
+     * @param <T> payload type
      */
     @FunctionalInterface
     public interface MouseWheelAction<T extends Payload> {

@@ -47,6 +47,13 @@ import org.miaixz.lancia.shared.async.Awaitable;
 public abstract class BidiTarget implements Target {
 
     /**
+     * Creates a BiDi target base instance.
+     */
+    protected BidiTarget() {
+        // No initialization required.
+    }
+
+    /**
      * Returns the browser.
      *
      * @param browser browser instance

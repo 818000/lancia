@@ -782,6 +782,13 @@ public class CdpTargetManager {
     public static final class Options {
 
         /**
+         * Creates target manager options.
+         */
+        public Options() {
+            // No initialization required.
+        }
+
+        /**
          * Target filter.
          */
         private Predicate<CdpTarget> targetFilter;

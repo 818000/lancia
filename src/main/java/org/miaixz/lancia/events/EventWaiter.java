@@ -129,6 +129,7 @@ public class EventWaiter<E> {
      * Returns the first of.
      *
      * @param futures futures value
+     * @param <T>     completion value type
      * @return completion future
      */
     @SafeVarargs

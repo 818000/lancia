@@ -52,6 +52,9 @@ public final class LazyArg<T, C> {
      * Returns the create.
      *
      * @param resolver resolver value
+     * @param <T>      resolved value type
+     * @param <C>      execution context type
+     * @param <H>      handle type
      * @return create value
      */
     public static <T, C, H extends Handle> LazyArg<T, InjectedRuntime<C, H>> create(
@@ -91,6 +94,8 @@ public final class LazyArg<T, C> {
      * Returns the context.
      *
      * @param executionContext execution context value
+     * @param <C>              execution context type
+     * @param <H>              handle type
      * @return context value
      */
     public static <C, H extends Handle> InjectedRuntime<C, H> context(C executionContext) {
@@ -102,6 +107,8 @@ public final class LazyArg<T, C> {
      *
      * @param executionContext execution context value
      * @param puppeteerUtil    puppeteer util value
+     * @param <C>              execution context type
+     * @param <H>              handle type
      * @return context value
      */
     public static <C, H extends Handle> InjectedRuntime<C, H> context(C executionContext, H puppeteerUtil) {
@@ -110,6 +117,9 @@ public final class LazyArg<T, C> {
 
     /**
      * Defines the Resolver interface.
+     *
+     * @param <T> resolved value type
+     * @param <C> context type
      *
      * @author Kimi Liu
      * @since Java 17+
@@ -129,6 +139,9 @@ public final class LazyArg<T, C> {
 
     /**
      * Defines the InjectedRuntime class.
+     *
+     * @param <C> execution context type
+     * @param <H> handle type
      *
      * @author Kimi Liu
      * @since Java 17+

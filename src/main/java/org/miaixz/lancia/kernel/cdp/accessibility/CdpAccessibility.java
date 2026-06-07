@@ -249,6 +249,13 @@ public class CdpAccessibility implements Accessibility {
     public static final class SnapshotOptions {
 
         /**
+         * Creates snapshot options.
+         */
+        public SnapshotOptions() {
+            // No initialization required.
+        }
+
+        /**
          * Whether interesting only is enabled.
          */
         private boolean interestingOnly = true;

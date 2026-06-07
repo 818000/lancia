@@ -201,6 +201,7 @@ public class CdpFrame implements Harness, Frame {
      * @param url            target URL
      * @param referer        referer
      * @param referrerPolicy referrer policy
+     * @return main resource response
      */
     public Response goTo(String url, String referer, String referrerPolicy) {
         navigate(url, referer, referrerPolicy);

@@ -47,6 +47,7 @@ public final class Invocations {
      * Returns the awaitable.
      *
      * @param value to use
+     * @param <T>   value type
      * @return completion future
      */
     public static <T> CompletionStage<T> awaitable(T value) {
@@ -57,6 +58,7 @@ public final class Invocations {
      * Returns the awaitable.
      *
      * @param value to use
+     * @param <T>   value type
      * @return completion future
      */
     public static <T> CompletionStage<T> awaitable(CompletionStage<T> value) {
@@ -80,6 +82,8 @@ public final class Invocations {
     /**
      * Defines the AwaitablePredicate interface.
      *
+     * @param <T> predicate input type
+     *
      * @author Kimi Liu
      * @since Java 17+
      */
@@ -98,6 +102,7 @@ public final class Invocations {
          * Returns the of.
          *
          * @param predicate predicate value
+         * @param <T>       predicate input type
          * @return of value
          */
         static <T> AwaitablePredicate<T> of(Predicate<T> predicate) {
@@ -170,6 +175,8 @@ public final class Invocations {
 
     /**
      * Defines the EvaluateFuncWith interface.
+     *
+     * @param <V> receiver value type
      *
      * @author Kimi Liu
      * @since Java 17+

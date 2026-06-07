@@ -353,6 +353,13 @@ public abstract class BrowserLauncher implements Launcher {
     public static final class ResolvedLaunchArgs {
 
         /**
+         * Creates resolved launch arguments.
+         */
+        public ResolvedLaunchArgs() {
+            // No initialization required.
+        }
+
+        /**
          * Whether the user data directory was created by the launcher.
          */
         private boolean tempUserDataDir;

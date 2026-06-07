@@ -282,6 +282,13 @@ public class WaitTask {
     public static final class WaitTaskOptions {
 
         /**
+         * Creates wait task options.
+         */
+        public WaitTaskOptions() {
+            // No initialization required.
+        }
+
+        /**
          * Default timeout.
          */
         private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
@@ -443,6 +450,13 @@ public class WaitTask {
      * @since Java 17+
      */
     public static final class TaskManager {
+
+        /**
+         * Creates a task manager.
+         */
+        public TaskManager() {
+            // No initialization required.
+        }
 
         /**
          * Registered tasks values.

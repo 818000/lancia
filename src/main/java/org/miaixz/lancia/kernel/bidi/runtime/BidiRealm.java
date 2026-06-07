@@ -264,6 +264,7 @@ public class BidiRealm implements Realm {
      * Returns the adopt handle.
      *
      * @param handle handle value
+     * @param <T>    handle type
      * @return adopt handle value
      */
     public <T> T adoptHandle(T handle) {
@@ -275,6 +276,7 @@ public class BidiRealm implements Realm {
      * Returns the transfer handle.
      *
      * @param handle handle value
+     * @param <T>    handle type
      * @return transfer handle value
      */
     public <T> T transferHandle(T handle) {
