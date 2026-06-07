@@ -1246,9 +1246,10 @@ public class CdpBrowser implements Browser {
     }
 
     /**
-     * Converts browser attach options to Chrome target manager options.
+     * Converts browser attach options to CDP target manager options.
      *
-     * options browser attach options Chrome target manager options
+     * @param options browser attach options
+     * @return CDP target manager options
      */
     private CdpTargetManager.Options toTargetManagerOptions(AttachOptions options) {
         AttachOptions actualOptions = options == null ? new AttachOptions() : options;

@@ -21,8 +21,8 @@
  * Provides browser environment data shared by launch, installation, and runtime components.
  *
  * <p>
- * This package contains platform detection, archive naming, download endpoint selection, and revision constants that
- * are independent from CDP and BiDi browser implementations.
+ * This package contains platform detection, archive handling, download endpoint selection, and network helpers that are
+ * independent from CDP and BiDi browser implementations.
  *
  * @author Kimi Liu
  * @since Java 17+

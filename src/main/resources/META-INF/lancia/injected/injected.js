@@ -23,7 +23,7 @@
 */
 
 /**
- * Installs the shared injected runtime facade and base DOM primitives.
+ * Installs the shared injected runtime bridge and base DOM primitives.
  *
  * @param {typeof globalThis} globalThis Browser global object that owns the injected registry.
  */

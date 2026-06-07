@@ -139,7 +139,7 @@ public class BidiPage implements Page {
      */
     private final BidiInput input;
     /**
-     * Current CdpWebMCP facade.
+     * Current WebMCP controller.
      */
     private final CdpWebMCP webmcp = new CdpWebMCP(null);
     /**
@@ -386,34 +386,34 @@ public class BidiPage implements Page {
     }
 
     /**
-     * Returns the webmcp.
+     * Returns the WebMCP controller.
      *
-     * @return webmcp value
+     * @return WebMCP controller
      */
     public CdpWebMCP webmcp() {
         return webmcp;
     }
 
     /**
-     * Returns the keyboard input facade.
+     * Returns the keyboard input controller.
      *
-     * @return keyboard input facade
+     * @return keyboard input controller
      */
     public BidiInput.BidiKeyboard keyboard() {
         return input.keyboard();
     }
 
     /**
-     * Returns the mouse input facade.
+     * Returns the mouse input controller.
      *
-     * @return mouse input facade
+     * @return mouse input controller
      */
     public BidiInput.BidiMouse mouse() {
         return input.mouse();
     }
 
     /**
-     * Returns the touchscreen input facade.
+     * Returns the touchscreen input controller.
      *
      * @return touchscreen
      */
@@ -755,10 +755,10 @@ public class BidiPage implements Page {
     }
 
     /**
-     * Updates java script enabled.
+     * Updates whether JavaScript execution is enabled.
      *
      * @param enabled enabled
-     * @return set java script enabled value
+     * @return protocol response future
      */
     public CompletableFuture<CdpPayload> setJavaScriptEnabled(boolean enabled) {
         this.javaScriptEnabled = enabled;
@@ -768,7 +768,7 @@ public class BidiPage implements Page {
     }
 
     /**
-     * Returns whether java script is enabled.
+     * Returns whether JavaScript execution is enabled.
      *
      * @return {@code true} when the condition matches
      */

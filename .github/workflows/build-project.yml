@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to validate. Leave empty to read VERSION.'
+        description: 'Version to validate. Leave empty to read it from pom.xml.'
         required: false
         default: ''
         type: string
@@ -26,14 +26,14 @@ concurrency:
 
 jobs:
   build:
-    name: Build Modules
+    name: Build Project
     runs-on: ubuntu-latest
     steps:
       - name: Check Out Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set Up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'

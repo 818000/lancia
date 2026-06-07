@@ -53,11 +53,11 @@ public final class BrowserArchive {
      */
     private static final Duration COMMAND_TIMEOUT = Duration.ofMinutes(30L);
     /**
-     * Shared constant for remove max retries.
+     * Maximum retries for path removal.
      */
     private static final int REMOVE_MAX_RETRIES = 5;
     /**
-     * Shared constant for remove retry delay millis.
+     * Delay between path removal retries.
      */
     private static final long REMOVE_RETRY_DELAY_MILLIS = 500L;
     /**

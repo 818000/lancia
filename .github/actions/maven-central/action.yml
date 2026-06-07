@@ -1,24 +1,34 @@
 name: Maven Central
-description: 'Publishes Bus modules to Maven Central'
+description: 'Publishes the Lancia Maven project to Maven Central.'
 
 inputs:
-  modules:
-    description: 'Whitespace-separated module list in deployment order.'
+  version:
+    description: 'Release version to publish.'
     required: true
   maven-args:
     description: 'Additional Maven arguments.'
     required: false
     default: '-B -ntp -DskipTests -Djava.version=21 -Dmaven.compiler.release=21'
   goals:
-    description: 'Maven goals to execute for modules that publish themselves.'
+    description: 'Maven goals to execute.'
     required: false
     default: 'clean deploy'
+  auto-publish:
+    description: 'Whether Central should publish the deployment after validation.'
+    required: false
+    default: 'true'
+  wait-until:
+    description: 'Central deployment state to wait for.'
+    required: false
+    default: 'PUBLISHED'
 
 runs:
   using: composite
   steps:
     - name: Verify Maven Central Credentials
       shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
 
@@ -26,65 +36,46 @@ runs:
         : "${MAVEN_CENTRAL_TOKEN_PASSWORD:?Missing MAVEN_CENTRAL_TOKEN_PASSWORD secret}"
         : "${MAVEN_GPG_PASSPHRASE:?Missing MAVEN_GPG_PASSPHRASE secret}"
 
+        if [[ "$VERSION" == *SNAPSHOT* ]]; then
+          echo "::error::SNAPSHOT versions cannot be published to Maven Central: $VERSION"
+          exit 1
+        fi
+
         if ! command -v gpg >/dev/null 2>&1; then
           echo "::error::gpg command is not available"
           exit 1
         fi
 
-        gpg --batch --list-secret-keys --keyid-format LONG
+        mkdir -p "$HOME/.gnupg"
+        chmod 700 "$HOME/.gnupg"
+        grep -qxF 'pinentry-mode loopback' "$HOME/.gnupg/gpg.conf" 2>/dev/null \
+          || echo 'pinentry-mode loopback' >> "$HOME/.gnupg/gpg.conf"
+        grep -qxF 'allow-loopback-pinentry' "$HOME/.gnupg/gpg-agent.conf" 2>/dev/null \
+          || echo 'allow-loopback-pinentry' >> "$HOME/.gnupg/gpg-agent.conf"
+        gpgconf --kill gpg-agent || true
 
-    - name: Deploy Modules
+        gpg_keys="$RUNNER_TEMP/gpg-secret-keys.txt"
+        gpg --batch --list-secret-keys --keyid-format LONG | tee "$gpg_keys"
+        if ! grep -q '^sec' "$gpg_keys"; then
+          echo "::error::No GPG secret key was imported. Check MAVEN_GPG_PRIVATE_KEY."
+          exit 1
+        fi
+
+    - name: Publish Project
       shell: bash
       env:
-        MODULES: ${{ inputs.modules }}
         MAVEN_ARGS: ${{ inputs.maven-args }}
         GOALS: ${{ inputs.goals }}
+        VERSION: ${{ inputs.version }}
+        AUTO_PUBLISH: ${{ inputs.auto-publish }}
+        WAIT_UNTIL: ${{ inputs.wait-until }}
       run: |
         set -euo pipefail
 
-        SOURCE_PARENT_INSTALLED=false
-
-        requires_source_parent() {
-          awk '
-            /<parent>/ { in_parent = 1 }
-            /<\/parent>/ { in_parent = 0 }
-            in_parent && /<artifactId>bus-parent<\/artifactId>/ { found = 1 }
-            END { exit(found ? 0 : 1) }
-          ' "$1"
-        }
-
-        for module in $MODULES; do
-          case "$module" in
-            bus-*) ;;
-            *)
-              echo "::error::Non-Bus module '$module' is not supported by the Bus Maven Central action"
-              exit 1
-              ;;
-          esac
-
-          if [ "$SOURCE_PARENT_INSTALLED" = false ] && requires_source_parent "$module/pom.xml"; then
-            echo "::group::Install source bus-parent for module publishing"
-            mvn $MAVEN_ARGS -Dgpg.skip=true -Dgroom.skip=true -f bus-parent/pom.xml clean install
-            echo "::endgroup::"
-            SOURCE_PARENT_INSTALLED=true
-          fi
-
-          echo "::group::Deploy $module"
-          case "$module" in
-            bus-parent)
-              mvn $MAVEN_ARGS -Dgroom.updatePomFile=true -Dgroom.pomElements.buildPlugins=remove -f "$module/pom.xml" $GOALS
-              echo "::endgroup::"
-              echo "::group::Install source bus-parent for module publishing"
-              mvn $MAVEN_ARGS -Dgpg.skip=true -Dgroom.skip=true -f bus-parent/pom.xml clean install
-              echo "::endgroup::"
-              SOURCE_PARENT_INSTALLED=true
-              continue
-              ;;
-            *)
-              mvn $MAVEN_ARGS -Dgroom.updatePomFile=true -DautoPublish=true -DpublishingServerId=central -f "$module/pom.xml" \
-                clean install org.apache.maven.plugins:maven-gpg-plugin:sign \
-                org.sonatype.central:central-publishing-maven-plugin:publish
-              ;;
-          esac
-          echo "::endgroup::"
-        done
+        mvn $MAVEN_ARGS \
+          -Dgroom.updatePomFile=true \
+          -DpublishingServerId=central \
+          -DautoPublish="$AUTO_PUBLISH" \
+          -DwaitUntil="$WAIT_UNTIL" \
+          -DdeploymentName="org.miaixz:lancia:$VERSION" \
+          $GOALS

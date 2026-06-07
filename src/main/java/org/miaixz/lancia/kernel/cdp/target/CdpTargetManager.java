@@ -627,7 +627,7 @@ public class CdpTargetManager {
     }
 
     /**
-     * Returns the should expose.
+     * Returns whether a target should be exposed.
      *
      * @param target target object
      * @return {@code true} when the condition matches
@@ -644,7 +644,7 @@ public class CdpTargetManager {
     }
 
     /**
-     * Returns the should silent detach.
+     * Returns whether a target should be silently detached.
      *
      * @param target target object
      * @return {@code true} when the condition matches

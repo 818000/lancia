@@ -54,7 +54,7 @@ public class CdpCSSCoverage {
      */
     private boolean resetOnNavigation;
     /**
-     * Mapped stylesheet ur ls values.
+     * Mapped stylesheet URLs.
      */
     private final Map<String, String> stylesheetURLs = new LinkedHashMap<>();
     /**

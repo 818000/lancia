@@ -66,7 +66,7 @@ public class PipeTransport implements Transport {
     private final OutputStream writer;
 
     /**
-     * Connection reference used by legacy direct callbacks.
+     * Connection reference used by the public transport binding.
      */
     private final AtomicReference<Connection> connectionRef = new AtomicReference<>();
 

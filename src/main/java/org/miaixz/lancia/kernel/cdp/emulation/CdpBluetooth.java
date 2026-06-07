@@ -340,7 +340,7 @@ public class CdpBluetooth implements Bluetooth {
         }
 
         /**
-         * Adds ress.
+         * Returns the address.
          *
          * @return address value
          */

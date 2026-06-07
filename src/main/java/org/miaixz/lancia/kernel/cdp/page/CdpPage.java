@@ -234,7 +234,7 @@ public class CdpPage implements Page {
      */
     private final CdpBluetooth bluetoothEmulation;
     /**
-     * Current CdpWebMCP facade.
+     * Current WebMCP controller.
      */
     private final CdpWebMCP webmcp;
     /**
@@ -2160,9 +2160,9 @@ public class CdpPage implements Page {
     }
 
     /**
-     * Returns the webmcp.
+     * Returns the WebMCP controller.
      *
-     * @return webmcp value
+     * @return WebMCP controller
      */
     public CdpWebMCP webmcp() {
         return webmcp;
@@ -2353,25 +2353,25 @@ public class CdpPage implements Page {
     }
 
     /**
-     * Returns the keyboard input facade.
+     * Returns the keyboard input controller.
      *
-     * @return keyboard input facade
+     * @return keyboard input controller
      */
     public CdpKeyboard keyboard() {
         return keyboard;
     }
 
     /**
-     * Returns the mouse input facade.
+     * Returns the mouse input controller.
      *
-     * @return mouse input facade
+     * @return mouse input controller
      */
     public CdpMouse mouse() {
         return mouse;
     }
 
     /**
-     * Returns the touchscreen input facade.
+     * Returns the touchscreen input controller.
      *
      * @return touchscreen
      */
@@ -2481,10 +2481,10 @@ public class CdpPage implements Page {
     }
 
     /**
-     * Updates java script enabled.
+     * Updates whether JavaScript execution is enabled.
      *
      * @param enabled enabled
-     * @return set java script enabled value
+     * @return protocol response future
      */
     public CompletableFuture<CdpPayload> setJavaScriptEnabled(boolean enabled) {
         this.javaScriptEnabled = enabled;
@@ -2492,7 +2492,7 @@ public class CdpPage implements Page {
     }
 
     /**
-     * Returns the java script enabled.
+     * Returns whether JavaScript execution is enabled.
      *
      * @return {@code true} when the condition matches
      */
@@ -2501,7 +2501,7 @@ public class CdpPage implements Page {
     }
 
     /**
-     * Returns whether java script is enabled.
+     * Returns whether JavaScript execution is enabled.
      *
      * @return {@code true} when the condition matches
      */

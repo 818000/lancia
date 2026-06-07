@@ -71,7 +71,7 @@ public class SocketTransport implements Transport {
     private final WebSocket webSocket;
 
     /**
-     * Connection reference used by legacy direct callbacks.
+     * Connection reference used by the public transport binding.
      */
     private final AtomicReference<Connection> connectionRef;
 

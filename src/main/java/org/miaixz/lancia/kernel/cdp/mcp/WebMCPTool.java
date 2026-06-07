@@ -48,7 +48,7 @@ public class WebMCPTool {
      */
     private final WebMCPToolDefinition definition;
     /**
-     * Current CdpWebMCP facade.
+     * Current WebMCP controller.
      */
     private final CdpWebMCP webmcp;
     /**

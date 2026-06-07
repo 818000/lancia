@@ -247,13 +247,13 @@ public final class Puppeteer {
     }
 
     /**
-     * Creates a browser cache facade equivalent to Puppeteer's browser fetcher entry.
+     * Creates a browser cache entry equivalent to Puppeteer's browser fetcher API.
      *
      * <p>
      * Lancia runtime extension.
      * </p>
      *
-     * @return browser cache facade
+     * @return browser cache entry
      */
     public static Object createBrowserFetcher() {
         return BrowserRuntime.fetcher(configuration);

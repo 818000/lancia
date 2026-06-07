@@ -130,25 +130,25 @@ public class BidiInput {
     }
 
     /**
-     * Returns the keyboard input facade.
+     * Returns the keyboard input controller.
      *
-     * @return keyboard input facade
+     * @return keyboard input controller
      */
     public BidiKeyboard keyboard() {
         return keyboard;
     }
 
     /**
-     * Returns the mouse input facade.
+     * Returns the mouse input controller.
      *
-     * @return mouse input facade
+     * @return mouse input controller
      */
     public BidiMouse mouse() {
         return mouse;
     }
 
     /**
-     * Returns the touchscreen input facade.
+     * Returns the touchscreen input controller.
      *
      * @return touchscreen
      */

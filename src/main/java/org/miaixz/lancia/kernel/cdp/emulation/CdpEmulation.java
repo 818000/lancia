@@ -170,7 +170,7 @@ public class CdpEmulation implements Emulation {
      */
     private boolean javaScriptEnabled = true;
     /**
-     * Whether java script enabled active is enabled.
+     * Whether the JavaScript enabled state has been applied.
      */
     private boolean javaScriptEnabledActive;
     /**
@@ -421,10 +421,10 @@ public class CdpEmulation implements Emulation {
     }
 
     /**
-     * Updates java script enabled.
+     * Updates whether JavaScript execution is enabled.
      *
      * @param enabled enabled
-     * @return set java script enabled value
+     * @return protocol response future
      */
     public CompletableFuture<CdpPayload> setJavaScriptEnabled(boolean enabled) {
         this.javaScriptEnabled = enabled;
@@ -433,7 +433,7 @@ public class CdpEmulation implements Emulation {
     }
 
     /**
-     * Returns the java script enabled.
+     * Returns whether JavaScript execution is enabled.
      *
      * @return {@code true} when the condition matches
      */
@@ -731,7 +731,7 @@ public class CdpEmulation implements Emulation {
     }
 
     /**
-     * Returns the apply java script enabled.
+     * Applies the JavaScript enabled state to all clients.
      *
      * @return completion future
      */
@@ -740,7 +740,7 @@ public class CdpEmulation implements Emulation {
     }
 
     /**
-     * Returns the apply java script enabled.
+     * Applies the JavaScript enabled state to a client.
      *
      * @param client protocol client
      * @return completion future

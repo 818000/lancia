@@ -66,7 +66,7 @@ public class SimulatedPeripheral {
     }
 
     /**
-     * Adds ress.
+     * Returns the address.
      *
      * @return address value
      */

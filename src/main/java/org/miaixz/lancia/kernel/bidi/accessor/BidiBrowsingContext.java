@@ -580,10 +580,10 @@ public final class BidiBrowsingContext implements AutoCloseable {
     }
 
     /**
-     * Updates java script enabled.
+     * Updates whether JavaScript execution is enabled.
      *
      * @param enabled enabled
-     * @return set java script enabled value
+     * @return completion future
      */
     public CompletableFuture<Void> setJavaScriptEnabled(boolean enabled) {
         Map<String, Object> params = new LinkedHashMap<>();
@@ -593,7 +593,7 @@ public final class BidiBrowsingContext implements AutoCloseable {
     }
 
     /**
-     * Returns whether java script is enabled.
+     * Returns whether JavaScript execution is enabled.
      *
      * @return {@code true} when the condition matches
      */

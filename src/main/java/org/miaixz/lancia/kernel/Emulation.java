@@ -40,7 +40,7 @@ public interface Emulation {
     CompletableFuture<Void> setViewport(Viewport viewport);
 
     /**
-     * Returns the java script enabled.
+     * Returns whether JavaScript execution is enabled.
      *
      * @return {@code true} when the condition matches
      */

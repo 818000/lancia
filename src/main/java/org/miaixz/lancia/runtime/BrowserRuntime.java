@@ -89,10 +89,10 @@ public final class BrowserRuntime {
     }
 
     /**
-     * Creates the browser cache facade used by the public browser fetcher entry.
+     * Creates the browser cache entry used by the public browser fetcher API.
      *
      * @param configuration runtime configuration
-     * @return browser cache facade
+     * @return browser cache entry
      */
     public static Object fetcher(Configuration configuration) {
         return BrowserManager.cache(actual(configuration).getCacheDirectory());

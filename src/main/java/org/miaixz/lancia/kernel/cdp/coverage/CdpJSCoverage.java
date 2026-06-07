@@ -62,7 +62,7 @@ public class CdpJSCoverage {
      */
     private boolean includeRawScriptCoverage;
     /**
-     * Mapped script ur ls values.
+     * Mapped script URLs.
      */
     private final Map<String, String> scriptURLs = new LinkedHashMap<>();
     /**

@@ -1020,7 +1020,7 @@ public interface Page extends Emitter<PageEvent>, AutoCloseable {
     CompletableFuture<? extends Payload> setGeolocation(Geolocation geolocation);
 
     /**
-     * Updates java script enabled.
+     * Updates whether JavaScript execution is enabled.
      *
      * @param enabled whether the feature should be enabled
      * @return completion future
