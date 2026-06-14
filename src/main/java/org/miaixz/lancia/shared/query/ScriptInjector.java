@@ -41,7 +41,7 @@ public final class ScriptInjector {
     /**
      * Classpath root for injected runtime resources.
      */
-    private static final String RESOURCE_BASE = "META-INF/lancia/injected/";
+    public static final String RESOURCE_BASE = "META-INF/lancia/injected/";
     /**
      * Injected resource load order.
      */
@@ -96,6 +96,44 @@ public final class ScriptInjector {
      */
     public static String runtimeSource() {
         return RUNTIME_SOURCE;
+    }
+
+    /**
+     * Returns the injected runtime resource load order.
+     *
+     * @return runtime resources
+     */
+    public static List<String> runtimeResources() {
+        return RUNTIME_RESOURCES;
+    }
+
+    /**
+     * Returns the classpath path for an injected runtime resource.
+     *
+     * @param resource resource file name
+     * @return classpath resource path
+     */
+    public static String runtimeResourcePath(String resource) {
+        return RESOURCE_BASE + Assert.notBlank(resource, "resource");
+    }
+
+    /**
+     * Loads one injected runtime resource.
+     *
+     * @param resource resource file name
+     * @return resource source
+     */
+    public static String runtimeResource(String resource) {
+        String path = runtimeResourcePath(resource);
+        ClassLoader loader = ScriptInjector.class.getClassLoader();
+        try (InputStream input = loader.getResourceAsStream(path)) {
+            if (input == null) {
+                throw new InternalException("Missing injected runtime resource: " + path);
+            }
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            throw new InternalException("Failed to load injected runtime resource: " + path, ex);
+        }
     }
 
     /**
@@ -246,28 +284,9 @@ public final class ScriptInjector {
     private static String loadRuntimeSource() {
         StringBuilder builder = new StringBuilder();
         for (String resource : RUNTIME_RESOURCES) {
-            builder.append(loadResource(resource)).append('\n');
+            builder.append(runtimeResource(resource)).append('\n');
         }
         return builder.toString();
-    }
-
-    /**
-     * Loads one injected runtime resource.
-     *
-     * @param resource resource file name
-     * @return resource source
-     */
-    private static String loadResource(String resource) {
-        String path = RESOURCE_BASE + resource;
-        ClassLoader loader = ScriptInjector.class.getClassLoader();
-        try (InputStream input = loader.getResourceAsStream(path)) {
-            if (input == null) {
-                throw new InternalException("Missing injected runtime resource: " + path);
-            }
-            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException ex) {
-            throw new InternalException("Failed to load injected runtime resource: " + path, ex);
-        }
     }
 
 }
