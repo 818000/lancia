@@ -1,46 +1,63 @@
 # Lancia
 
-Lancia 是 Java 原生的 Puppeteer 兼容库，面向 Chromium CDP、pipe/WebSocket 连接、页面自动化、截图、PDF、网络、输入、模拟、Tracing、Coverage、Accessibility、Extension、BiDi 与 Firefox 启动场景。
+[English](README.md) | [中文](README_CN.md)
 
-本项目以 Puppeteer 的公开行为和协议流程为兼容目标，源码使用 Java 独立实现，不复制 Puppeteer TypeScript 源码。
+Lancia is a native Java browser automation library with a Puppeteer-compatible public surface. It launches and connects to Chrome/Chromium through CDP, supports WebDriver BiDi routes for Firefox, and provides browser/page automation, screenshots, PDF output, network control, input, emulation, tracing, coverage, accessibility, extension, and browser download/cache features.
 
-## 环境要求
+The project follows Puppeteer's public behavior and protocol flow where they fit Java. The implementation is written in Java and does not copy Puppeteer's TypeScript source code.
 
-- Java 21。
-- Maven 3.9 及以上。
-- 本机或服务器存在 Chrome/Chromium 可执行文件，或允许 Lancia 使用内置脚本安装浏览器。
-- 生产环境默认使用 `--remote-debugging-pipe`，避免开放 DevTools TCP 端口。
+## Requirements
 
-## Maven
+- Java 21 or later.
+- Maven 3.9 or later.
+- A Chrome/Chromium or Firefox executable, or permission for Lancia to download managed browser builds.
+- Linux servers and CI images may need browser system libraries installed before launching a downloaded browser.
+
+## Installation
 
 ```xml
 <dependency>
     <groupId>org.miaixz</groupId>
     <artifactId>lancia</artifactId>
-    <version>8.0.6</version>
+    <version>8.5.1</version>
 </dependency>
 ```
 
-## 快速开始
+## Quick Start
 
-### 启动浏览器
+### Download Managed Browsers
+
+`Puppeteer.downloadBrowsers()` reads Puppeteer-style environment variables and installs configured browser builds into the local cache. Chrome downloads use Chrome for Testing and can fall back to npmmirror when the Google download endpoint is unavailable.
 
 ```java
-import java.nio.file.Path;
+import org.miaixz.lancia.Puppeteer;
 
+public class InstallBrowsers {
+
+    public static void main(String[] args) {
+        Puppeteer.downloadBrowsers().forEach(System.out::println);
+    }
+}
+```
+
+### Launch a Browser
+
+```java
 import org.miaixz.lancia.Browser;
-import org.miaixz.lancia.LaunchOptions;
 import org.miaixz.lancia.Page;
 import org.miaixz.lancia.Puppeteer;
+import org.miaixz.lancia.options.LaunchOptions;
 
 public class LaunchExample {
 
     public static void main(String[] args) {
         LaunchOptions options = new LaunchOptions();
-        options.setExecutablePath(Path.of("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"));
         options.setPipe(true);
         options.setHeadless(true);
         options.addArg("--no-sandbox");
+
+        // Use a system browser when you do not want to use the managed cache.
+        // options.setExecutablePath("/path/to/chrome");
 
         try (Browser browser = Puppeteer.launch(options)) {
             Page page = browser.newPage();
@@ -51,20 +68,18 @@ public class LaunchExample {
 }
 ```
 
-### 连接已有浏览器
+### Connect to an Existing Browser
 
 ```java
-import java.net.URI;
-
 import org.miaixz.lancia.Browser;
-import org.miaixz.lancia.ConnectOptions;
 import org.miaixz.lancia.Puppeteer;
+import org.miaixz.lancia.options.ConnectOptions;
 
 public class ConnectExample {
 
     public static void main(String[] args) {
         ConnectOptions options = new ConnectOptions();
-        options.setBrowserWSEndpoint(URI.create("ws://127.0.0.1:9222/devtools/browser/<id>"));
+        options.setBrowserWSEndpoint("ws://127.0.0.1:9222/devtools/browser/<id>");
 
         try (Browser browser = Puppeteer.connect(options)) {
             System.out.println(browser.version());
@@ -73,19 +88,19 @@ public class ConnectExample {
 }
 ```
 
-### 页面操作、截图与 PDF
+### Capture Screenshot and PDF
 
 ```java
 import java.nio.file.Path;
 
 import org.miaixz.lancia.Browser;
-import org.miaixz.lancia.LaunchOptions;
-import org.miaixz.lancia.PDFOptions;
 import org.miaixz.lancia.Page;
 import org.miaixz.lancia.Puppeteer;
-import org.miaixz.lancia.ScreenshotOptions;
+import org.miaixz.lancia.options.LaunchOptions;
+import org.miaixz.lancia.options.PDFOptions;
+import org.miaixz.lancia.options.ScreenshotOptions;
 
-public class PageExample {
+public class PageOutputExample {
 
     public static void main(String[] args) {
         LaunchOptions launch = new LaunchOptions();
@@ -93,8 +108,7 @@ public class PageExample {
 
         try (Browser browser = Puppeteer.launch(launch)) {
             Page page = browser.newPage();
-            page.setContent("<!doctype html><title>Lancia</title><h1>Hello</h1>");
-            Object title = page.evaluate("document.title");
+            page.setContent("<!doctype html><title>Lancia</title><h1>Hello Lancia</h1>");
 
             ScreenshotOptions screenshot = new ScreenshotOptions();
             screenshot.setFullPage(true);
@@ -107,42 +121,60 @@ public class PageExample {
             pdf.setPath(Path.of("page.pdf"));
             page.pdf(pdf);
 
-            System.out.println(title);
+            System.out.println(page.evaluate("document.title"));
         }
     }
 }
 ```
 
-## 核心能力
+## Main APIs
 
-| 能力 | 入口 |
+| Area | APIs |
 |---|---|
-| 启动与连接 | `Puppeteer.launch`、`Puppeteer.connect`、`ChromeLauncher`、`FirefoxLauncher` |
-| 浏览器与上下文 | `Browser`、`Context`、`ContextOptions` |
-| 页面与 Frame | `Page`、`FrameManager`、`Frame`、`ExecutionContext` |
-| 网络 | `NetworkManager`、`Request`、`Response`、Cookie、Permission、Download |
-| 输入与元素 | `Keyboard`、`Mouse`、`Touchscreen`、`ElementHandle`、`Locator` |
-| 输出 | `ScreenshotOptions`、`PDFOptions`、`Page.screenshot`、`Page.pdf` |
-| 辅助域 | `Coverage`、`Tracing`、`Accessibility`、`Dialog`、`ConsoleMessage` |
-| 高级能力 | `DeviceRequestPrompt`、`WebAuthn`、`BluetoothEmulation`、`WebMCP`、`Extension`、`Screen` |
-| 协议与传输 | `Session`、`Payload`、`Connection`、`CDPSession`、`PipeTransport`、`SocketTransport` |
-| BiDi 与 Firefox | `BidiConnection`、`BidiBrowser`、`BidiBrowserContext`、`BidiPage`、`FirefoxLauncher` |
+| Entry point | `Puppeteer.launch`, `Puppeteer.connect`, `Puppeteer.downloadBrowsers` |
+| Launch and connect | `LaunchOptions`, `ConnectOptions`, `BrowserVariant` |
+| Browser model | `Browser`, `Context`, `Target`, `Page`, `Frame` |
+| Page output | `ScreenshotOptions`, `PDFOptions`, `Page.screenshot`, `Page.pdf` |
+| Page interaction | `Keyboard`, `Mouse`, `Touchscreen`, `Element`, `Locator` |
+| Network and permissions | `Request`, `Response`, cookies, downloads, permissions |
+| Advanced domains | `Coverage`, `Tracing`, `Accessibility`, dialogs, console messages |
+| Runtime utilities | `Puppeteer.executablePath`, `Puppeteer.browserVersion`, `Puppeteer.trimCache` |
+| Protocols | CDP by default, WebDriver BiDi when configured or when launching Firefox |
 
-## 文档
+## Configuration
 
-- [API 文档](docs/API.md)
-- [Puppeteer 兼容范围](docs/PUPPETEER.md)
-- [测试矩阵](docs/TEST.md)
+Lancia reads Puppeteer-style environment variables at startup:
 
-## 安全约束
+| Variable | Purpose |
+|---|---|
+| `PUPPETEER_CACHE_DIR` | Browser cache directory. Defaults to `~/.cache/puppeteer`. |
+| `PUPPETEER_EXECUTABLE_PATH` | System browser executable path. Also implies download skipping. |
+| `PUPPETEER_BROWSER` | Default browser, such as `chrome` or `firefox`. |
+| `PUPPETEER_TMP_DIR` | Temporary directory for launch/runtime files. |
+| `PUPPETEER_SKIP_DOWNLOAD` | Skips all managed browser downloads when truthy. |
+| `PUPPETEER_LOGLEVEL` | Runtime log level: `silent`, `error`, or `warn`. |
+| `PUPPETEER_CHROME_VERSION` | Chrome build or channel used for managed downloads. |
+| `PUPPETEER_CHROME_DOWNLOAD_BASE_URL` | Custom Chrome download base URL. |
+| `PUPPETEER_CHROME_SKIP_DOWNLOAD` | Skips only Chrome downloads. |
+| `PUPPETEER_CHROME_HEADLESS_SHELL_SKIP_DOWNLOAD` | Skips only Chrome Headless Shell downloads. |
+| `PUPPETEER_FIREFOX_SKIP_DOWNLOAD` | Enables or skips managed Firefox downloads. Firefox is skipped by default. |
 
-- 生产默认使用 pipe，不直接暴露 Chrome DevTools HTTP 端口。
-- URL、资源大小和并发限制由 `SecurityPolicy` 与 `ResourceLimits` 承担。
-- 不允许把可执行任意 JavaScript 的浏览器调试能力直接暴露到公网。
+Browser-specific variables also support `_VERSION`, `_DOWNLOAD_BASE_URL`, `_EXPECTED_ARCHIVE_SHA256`, and `_ALLOW_UNVERIFIED_DOWNLOAD` suffixes.
 
-## 验收
+## Security Notes
+
+- Prefer `LaunchOptions#setPipe(true)` for local Chrome/CDP launches so DevTools is not exposed through a TCP port.
+- Do not expose a browser debugging endpoint directly to the public internet.
+- Treat `Page.evaluate` input as privileged JavaScript.
+- Use `SecurityPolicy` and `ResourceLimits` when handling untrusted URLs, headers, downloads, or protocol payloads.
+
+## Build
 
 ```bash
-mvn test
+mvn verify
 mvn -DskipTests package
 ```
+
+## License
+
+Lancia is released under the Apache License 2.0. See [LICENSE](LICENSE) for details.
