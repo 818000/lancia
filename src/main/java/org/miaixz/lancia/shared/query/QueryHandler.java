@@ -537,7 +537,7 @@ public final class QueryHandler {
      */
     private static Optional<QuerySelector> parsePSelector(String selector, String rawSelector) {
         PSelectorParser.ParseResult result = PSelectorParser.parse(selector);
-        if (result.isPureCss()) {
+        if (result.selectors().isEmpty() || result.isPureCss()) {
             return Optional.empty();
         }
         PollingMode polling = result.hasAria() ? PollingMode.RAF : PollingMode.MUTATION;

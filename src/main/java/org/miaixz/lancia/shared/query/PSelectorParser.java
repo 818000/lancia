@@ -45,6 +45,10 @@ public final class PSelectorParser {
      */
     public static final String CHILD_COMBINATOR = ">>>>";
     /**
+     * CSS nesting token recognized by Puppeteer's selector tokenizer.
+     */
+    public static final String NESTING_TOKEN = "&";
+    /**
      * Puppeteer pseudo selector prefix.
      */
     private static final String PSEUDO_PREFIX = "::-p-";
@@ -63,7 +67,11 @@ public final class PSelectorParser {
      * @return parse result
      */
     public static ParseResult parse(String selector) {
-        return new Parser(selector == null ? Normal.EMPTY : selector).parse();
+        String actualSelector = selector == null ? Normal.EMPTY : selector;
+        if (StringKit.isBlank(actualSelector)) {
+            return new ParseResult(List.of(), true, false, false, false);
+        }
+        return new Parser(actualSelector).parse();
     }
 
     /**
@@ -138,6 +146,10 @@ public final class PSelectorParser {
          * Whether ARIA pseudo selectors exist.
          */
         private boolean hasAria;
+        /**
+         * Whether CSS nesting token exists.
+         */
+        private boolean hasNesting;
 
         /**
          * Creates a parser.
@@ -203,6 +215,10 @@ public final class PSelectorParser {
                     finishComplexSelector();
                     continue;
                 }
+                if (squareDepth == Normal._0 && parenthesisDepth == Normal._0
+                        && current == NESTING_TOKEN.charAt(Normal._0)) {
+                    hasNesting = true;
+                }
                 if (current == Symbol.C_BRACKET_LEFT) {
                     squareDepth++;
                 } else if (current == Symbol.C_BRACKET_RIGHT && squareDepth > Normal._0) {
@@ -217,7 +233,7 @@ public final class PSelectorParser {
                 css.append(current);
             }
             finishComplexSelector();
-            return new ParseResult(List.copyOf(selectors), pureCss, hasPseudoClasses, hasAria);
+            return new ParseResult(List.copyOf(selectors), pureCss, hasPseudoClasses, hasAria, hasNesting);
         }
 
         /**
@@ -357,6 +373,10 @@ public final class PSelectorParser {
          * Whether ARIA pseudo selector exists.
          */
         private final boolean hasAria;
+        /**
+         * Whether CSS nesting token exists.
+         */
+        private final boolean hasNesting;
 
         /**
          * Creates a parse result.
@@ -367,10 +387,25 @@ public final class PSelectorParser {
          * @param hasAria          has ARIA
          */
         public ParseResult(List<Object> selectors, boolean pureCss, boolean hasPseudoClasses, boolean hasAria) {
+            this(selectors, pureCss, hasPseudoClasses, hasAria, false);
+        }
+
+        /**
+         * Creates a parse result.
+         *
+         * @param selectors        selectors
+         * @param pureCss          pure CSS
+         * @param hasPseudoClasses has pseudo-classes
+         * @param hasAria          has ARIA
+         * @param hasNesting       has nesting token
+         */
+        public ParseResult(List<Object> selectors, boolean pureCss, boolean hasPseudoClasses, boolean hasAria,
+                boolean hasNesting) {
             this.selectors = selectors == null ? List.of() : List.copyOf(selectors);
             this.pureCss = pureCss;
             this.hasPseudoClasses = hasPseudoClasses;
             this.hasAria = hasAria;
+            this.hasNesting = hasNesting;
         }
 
         /**
@@ -407,6 +442,15 @@ public final class PSelectorParser {
          */
         public boolean hasAria() {
             return hasAria;
+        }
+
+        /**
+         * Returns whether CSS nesting token exists.
+         *
+         * @return whether nesting token exists
+         */
+        public boolean hasNesting() {
+            return hasNesting;
         }
 
         /**
