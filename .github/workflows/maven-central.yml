@@ -77,7 +77,7 @@ jobs:
   publish:
     name: Publish to Maven Central
     needs: build
-    if: ${{ github.repository == '839128/lancia' }}
+    if: ${{ github.repository == '818000/lancia' }}
     runs-on: ubuntu-latest
     environment:
       name: release
