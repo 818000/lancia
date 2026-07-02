@@ -35,6 +35,7 @@ import org.miaixz.lancia.nimble.screen.AddScreenParams;
 import org.miaixz.lancia.nimble.screen.ScreenInfo;
 import org.miaixz.lancia.options.BrowserContextOptions;
 import org.miaixz.lancia.options.CreatePageOptions;
+import org.miaixz.lancia.options.ExtensionInstallOptions;
 import org.miaixz.lancia.options.PermissionOptions;
 
 /**
@@ -123,7 +124,18 @@ public interface Browser extends Emitter<BrowserEvent>, AutoCloseable {
      * @param path extension path
      * @return extension id future
      */
-    CompletableFuture<String> installExtension(String path);
+    default CompletableFuture<String> installExtension(String path) {
+        return installExtension(path, null);
+    }
+
+    /**
+     * Installs an extension.
+     *
+     * @param path    extension path
+     * @param options install options
+     * @return extension id future
+     */
+    CompletableFuture<String> installExtension(String path, ExtensionInstallOptions options);
 
     /**
      * Installs an extension.
@@ -131,7 +143,18 @@ public interface Browser extends Emitter<BrowserEvent>, AutoCloseable {
      * @param path extension path
      * @return extension id future
      */
-    CompletableFuture<String> installExtension(Path path);
+    default CompletableFuture<String> installExtension(Path path) {
+        return installExtension(path, null);
+    }
+
+    /**
+     * Installs an extension.
+     *
+     * @param path    extension path
+     * @param options install options
+     * @return extension id future
+     */
+    CompletableFuture<String> installExtension(Path path, ExtensionInstallOptions options);
 
     /**
      * Uninstalls an extension.

@@ -50,6 +50,7 @@ import org.miaixz.lancia.kernel.cdp.transport.SocketTransportFactory;
 import org.miaixz.lancia.nimble.browser.TargetType;
 import org.miaixz.lancia.options.AttachOptions;
 import org.miaixz.lancia.options.ConnectOptions;
+import org.miaixz.lancia.options.ExtensionInstallOptions;
 import org.miaixz.lancia.options.LaunchOptions;
 
 /**
@@ -343,7 +344,9 @@ public class Runner {
         if (options.isEnableExtensions()) {
             for (Path extensionPath : options.getExtensionPaths()) {
                 ensureLaunchNotCancelled(options);
-                browser.installExtension(extensionPath);
+                ExtensionInstallOptions installOptions = new ExtensionInstallOptions();
+                installOptions.setEnabledInIncognito(options.getExtensionsEnabledInIncognito().contains(extensionPath));
+                browser.installExtension(extensionPath, installOptions);
             }
         }
         if (options.isWaitForInitialPage()) {

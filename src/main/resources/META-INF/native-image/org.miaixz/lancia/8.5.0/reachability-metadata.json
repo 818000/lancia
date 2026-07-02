@@ -1,0 +1,381 @@
+{
+  "reflection": [
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.Launcher"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.Puppeteer"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.BrowserArchive"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.BrowserNetwork"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.bundle.BrowserCache"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.bundle.BrowserFetcher"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.bundle.BrowserInstaller"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.launch.BrowserLauncher"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.launch.ChromeLauncher"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.launch.FirefoxLauncher"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.browser.supervisor.BrowserProcess"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.BidiConnector"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.accessor.BidiConnection"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.browser.BidiBrowser"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.browser.BidiBrowserContext"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.input.BidiInput"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.input.BidiInput$BidiKeyboard"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.input.BidiInput$BidiMouse"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.input.BidiInput$BidiPointer"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.input.BidiInput$Touchscreen"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.network.BidiRequest"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.network.BidiResponse"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.page.BidiFrame"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.page.BidiPage"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.session.BidiCDPSession"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.session.BidiConnection"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.session.BidiProtocolSession"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$BrowserTarget"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$FrameTarget"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$PageTarget"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$WorkerTarget"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.transport.BidiWebSocketTransport"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.bidi.worker.BidiWorker"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.CdpConnector"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.accessibility.CdpAccessibility"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.browser.CdpBrowser"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.browser.CdpBrowserContext"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.input.CdpInput"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.input.CdpKeyboard"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.input.CdpMouse"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.input.CdpTouchscreen"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.input.CdpTouchscreen$CdpPointer"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.network.CdpNetworkManager"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.network.CdpRequest"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.network.CdpResponse"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.page.CdpFrame"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.page.CdpFrameManager"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.page.CdpLifecycleWatcher"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.page.CdpPage"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.runtime.CdpExecutionContext"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.session.CDPSession"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.session.Connection"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.target.CdpTargetManager"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.tracing.CdpTracing"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.transport.PipeTransport"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.transport.SocketTransport"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.transport.SocketTransport$MessageListener"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.transport.SocketTransportFactory"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.kernel.cdp.worker.CdpWorker"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.runtime.BrowserRuntime"
+    },
+    {
+      "condition": {
+        "typeReached": "org.miaixz.bus.logger.Logger"
+      },
+      "type": "org.miaixz.lancia.shared.runtime.WaitTask"
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/lancia/injected/*.js"
+    }
+  ]
+}

@@ -64,15 +64,15 @@ public final class BrowserData {
      */
     private static final Map<Browser, String> DEFAULT_BUILD_IDS = Map.of(
             Browser.CHROME,
-            "149.0.7827.22",
+            "150.0.7871.24",
             Browser.CHROME_HEADLESS_SHELL,
-            "149.0.7827.22",
+            "150.0.7871.24",
             Browser.CHROMEDRIVER,
-            "149.0.7827.22",
+            "150.0.7871.24",
             Browser.CHROMIUM,
             "1500000",
             Browser.FIREFOX,
-            "stable_151.0");
+            "stable_152.0.3");
 
     /**
      * Creates a browser data.

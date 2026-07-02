@@ -1,12 +1,20 @@
 [
   {
     "latest": true,
-    "override": true,
-    "module": "org.miaixz:bus-crypto",
-    "default-for": "8\\.([5-9]|[1-9][0-9])\\.[0-9]{1,2}",
     "metadata-version": "8.5.0",
+    "source-code-url": "https://repo.maven.apache.org/maven2/org/miaixz/lancia/$version$/lancia-$version$-sources.jar",
+    "repository-url": "https://github.com/818000/lancia",
+    "test-code-url": "https://github.com/818000/abarth/tree/main/bus-testing/src/test",
+    "documentation-url": "https://repo.maven.apache.org/maven2/org/miaixz/lancia/$version$/lancia-$version$-javadoc.jar",
+    "description": "Lancia provides Java browser automation and Puppeteer-compatible runtime support.",
     "tested-versions": [
-      "8.5.0"
+      "8.5.0",
+      "8.5.1",
+      "8.5.2",
+      "8.5.3"
+    ],
+    "allowed-packages": [
+      "org.miaixz"
     ]
   }
 ]

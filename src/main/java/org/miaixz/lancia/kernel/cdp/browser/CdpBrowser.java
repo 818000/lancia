@@ -71,6 +71,7 @@ import org.miaixz.lancia.nimble.screen.ScreenInfo;
 import org.miaixz.lancia.options.AttachOptions;
 import org.miaixz.lancia.options.BrowserContextOptions;
 import org.miaixz.lancia.options.CreatePageOptions;
+import org.miaixz.lancia.options.ExtensionInstallOptions;
 import org.miaixz.lancia.options.PermissionOptions;
 import org.miaixz.lancia.shared.async.Awaitable;
 import org.miaixz.lancia.shared.page.PageExtension;
@@ -614,6 +615,17 @@ public class CdpBrowser implements Browser {
      * @return completion future
      */
     public CompletableFuture<String> installExtension(String path) {
+        return installExtension(path, null);
+    }
+
+    /**
+     * Returns the install extension.
+     *
+     * @param path    file path
+     * @param options install options
+     * @return completion future
+     */
+    public CompletableFuture<String> installExtension(String path, ExtensionInstallOptions options) {
         Assert.notNull(path, "path");
         Logger.debug(true, "Browser", "Extension install requested: path={}", path);
         if (!connection.hasConfiguredTransport()) {
@@ -623,7 +635,10 @@ public class CdpBrowser implements Browser {
             return CompletableFuture.completedFuture(info.id());
         }
         try {
-            return connection.send("Extensions.loadUnpacked", Map.of("path", path)).thenApply(payload -> {
+            Map<String, Object> params = new LinkedHashMap<>();
+            params.put("path", path);
+            params.put("enableInIncognito", options != null && options.isEnabledInIncognito());
+            return connection.send("Extensions.loadUnpacked", params).thenApply(payload -> {
                 PayloadExtensionInfo info = PayloadExtensionInfo.fromInstallResult(payload, path);
                 registerExtension(info);
                 Logger.debug(false, "Browser", "Extension installed: id={}", info.id());
@@ -644,7 +659,18 @@ public class CdpBrowser implements Browser {
      * @return completion future
      */
     public CompletableFuture<String> installExtension(Path path) {
-        return installExtension(Assert.notNull(path, "path").toString());
+        return installExtension(path, null);
+    }
+
+    /**
+     * Returns the install extension.
+     *
+     * @param path    file path
+     * @param options install options
+     * @return completion future
+     */
+    public CompletableFuture<String> installExtension(Path path, ExtensionInstallOptions options) {
+        return installExtension(Assert.notNull(path, "path").toString(), options);
     }
 
     /**

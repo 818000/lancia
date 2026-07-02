@@ -21,6 +21,7 @@ package org.miaixz.lancia.kernel.bidi.network;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -31,6 +32,7 @@ import org.miaixz.bus.core.xyz.StringKit;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.Response;
 import org.miaixz.lancia.kernel.Frame;
+import org.miaixz.lancia.kernel.cdp.network.CdpHeaders;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.nimble.network.SecurityDetails;
 import org.miaixz.lancia.shared.async.Awaitable;
@@ -342,15 +344,16 @@ public class BidiResponse extends Response {
         Map<String, String> result = new LinkedHashMap<>();
         if (payload.isObject()) {
             for (Map.Entry<String, CdpPayload> entry : payload.fields().entrySet()) {
-                result.put(entry.getKey().toLowerCase(), PayloadReader.text(entry.getValue()));
+                String name = entry.getKey().toLowerCase(Locale.ROOT);
+                result.put(name, CdpHeaders.normalizeHeaderValue(name, PayloadReader.text(entry.getValue())));
             }
         } else if (payload.isArray()) {
             for (CdpPayload header : payload.elements()) {
-                String name = PayloadReader.text(header.get("name")).toLowerCase();
+                String name = PayloadReader.text(header.get("name")).toLowerCase(Locale.ROOT);
                 String value = PayloadReader.text(
                         PayloadReader.first(CdpPayload.NULL, header.get("value").get("value"), header.get("value")));
                 if (StringKit.isNotBlank(name)) {
-                    result.put(name, value);
+                    result.put(name, CdpHeaders.normalizeHeaderValue(name, value));
                 }
             }
         }

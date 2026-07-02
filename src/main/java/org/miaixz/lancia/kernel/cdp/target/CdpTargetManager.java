@@ -528,7 +528,7 @@ public class CdpTargetManager {
             silentDetach(session, target);
             return false;
         }
-        maybeSetupNetworkConditions(session);
+        maybeSetupNetworkConditions(session, targetInfo);
         Logger.debug(
                 false,
                 "Target",
@@ -675,13 +675,18 @@ public class CdpTargetManager {
                 "Chrome target silent detach requested: targetId={}, type={}",
                 targetInfo.getTargetId(),
                 targetInfo.getType());
-        session.send("Runtime.runIfWaitingForDebugger").exceptionally(error -> {
-            Logger.debug(false, "Target", "Silent target run-if-waiting failed: targetId={}", targetInfo.getTargetId());
-            return null;
-        }).thenCompose(ignored -> session.detach()).exceptionally(error -> {
-            Logger.debug(false, "Target", "Silent target detach failed: targetId={}", targetInfo.getTargetId());
-            return null;
-        });
+        maybeSetupNetworkConditions(session, targetInfo)
+                .thenCompose(ignored -> session.send("Runtime.runIfWaitingForDebugger")).exceptionally(error -> {
+                    Logger.debug(
+                            false,
+                            "Target",
+                            "Silent target run-if-waiting failed: targetId={}",
+                            targetInfo.getTargetId());
+                    return null;
+                }).thenCompose(ignored -> session.detach()).exceptionally(error -> {
+                    Logger.debug(false, "Target", "Silent target detach failed: targetId={}", targetInfo.getTargetId());
+                    return null;
+                });
         CdpTarget.Internal.setSession(target, null);
     }
 
@@ -731,9 +736,9 @@ public class CdpTargetManager {
      *
      * @param session protocol session
      */
-    private void maybeSetupNetworkConditions(CDPSession session) {
+    private CompletableFuture<Void> maybeSetupNetworkConditions(CDPSession session, TargetInfo targetInfo) {
         if (blocklist.isEmpty() && allowlist.isEmpty()) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
         List<Map<String, Object>> matchedNetworkConditions = new ArrayList<>();
         for (String rule : blocklist) {
@@ -750,10 +755,26 @@ public class CdpTargetManager {
             params.put("offline", true);
         }
         params.put("matchedNetworkConditions", matchedNetworkConditions);
-        session.send("Network.emulateNetworkConditionsByRule", params).exceptionally(error -> {
+        List<CompletableFuture<?>> commands = new ArrayList<>();
+        if (needsNetworkEnabled(targetInfo)) {
+            commands.add(session.send("Network.enable"));
+        }
+        commands.add(session.send("Network.emulateNetworkConditionsByRule", params));
+        return CompletableFuture.allOf(commands.toArray(CompletableFuture[]::new)).exceptionally(error -> {
             Logger.warn(false, "Target", error, "Chrome target URL network rule initialization failed.");
             return null;
         });
+    }
+
+    /**
+     * Returns whether Network.enable is required before applying URL network rules.
+     *
+     * @param targetInfo target metadata
+     * @return {@code true} when the target can issue worker fetches
+     */
+    private boolean needsNetworkEnabled(TargetInfo targetInfo) {
+        String type = targetInfo == null ? Normal.EMPTY : targetInfo.getType();
+        return "worker".equals(type) || "service_worker".equals(type) || "shared_worker".equals(type);
     }
 
     /**

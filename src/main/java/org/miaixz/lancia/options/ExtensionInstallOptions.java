@@ -17,61 +17,44 @@
  ~                                                                           ~
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
-package org.miaixz.lancia.kernel.cdp.network;
-
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
+package org.miaixz.lancia.options;
 
 /**
- * Provides shared CDP header helpers.
+ * Options used when installing an unpacked browser extension.
  *
  * @author Kimi Liu
  * @since Java 17+
  */
-public final class CdpHeaders {
+public class ExtensionInstallOptions {
 
     /**
-     * Hides the headers constructor.
+     * Whether the extension should be enabled in Incognito or off-the-record profiles.
      */
-    private CdpHeaders() {
+    private boolean enabledInIncognito;
+
+    /**
+     * Creates default extension install options.
+     */
+    public ExtensionInstallOptions() {
         // No initialization required.
     }
 
     /**
-     * Normalizes headers.
+     * Returns whether the extension should be enabled in Incognito profiles.
      *
-     * @param headers headers
-     * @return normalized headers
+     * @return {@code true} when Incognito support should be enabled
      */
-    public static Map<String, String> normalize(Map<String, String> headers) {
-        if (headers == null || headers.isEmpty()) {
-            return Map.of();
-        }
-        Map<String, String> result = new LinkedHashMap<>();
-        for (Map.Entry<String, String> entry : headers.entrySet()) {
-            if (entry.getKey() != null && entry.getValue() != null) {
-                String name = entry.getKey().toLowerCase(Locale.ROOT);
-                result.put(name, normalizeHeaderValue(name, entry.getValue()));
-            }
-        }
-        return result;
+    public boolean isEnabledInIncognito() {
+        return enabledInIncognito;
     }
 
     /**
-     * Normalizes a single HTTP header value.
+     * Updates whether the extension should be enabled in Incognito profiles.
      *
-     * @param name  lower-case header name
-     * @param value header value
-     * @return normalized header value
+     * @param enabledInIncognito whether Incognito support should be enabled
      */
-    public static String normalizeHeaderValue(String name, String value) {
-        if (value == null || !value.contains("\n")) {
-            return value;
-        }
-        String separator = "set-cookie".equals(name) ? "\n " : ", ";
-        return value.lines().map(String::trim).filter(line -> !line.isEmpty())
-                .reduce((left, right) -> left + separator + right).orElse("");
+    public void setEnabledInIncognito(boolean enabledInIncognito) {
+        this.enabledInIncognito = enabledInIncognito;
     }
 
 }

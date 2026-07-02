@@ -19,13 +19,22 @@
 */
 package org.miaixz.lancia.browser;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -64,6 +73,30 @@ public final class BrowserArchive {
      * TAR block size.
      */
     private static final int TAR_BLOCK_SIZE = 512;
+    /**
+     * ZIP central directory header signature.
+     */
+    private static final int ZIP_CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50;
+    /**
+     * ZIP end of central directory signature.
+     */
+    private static final int ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50;
+    /**
+     * ZIP general purpose bit flag for UTF-8 file names.
+     */
+    private static final int ZIP_UTF8_FLAG = 1 << 11;
+    /**
+     * POSIX file type mask.
+     */
+    private static final int POSIX_FILE_TYPE_MASK = 0170000;
+    /**
+     * POSIX directory file type.
+     */
+    private static final int POSIX_DIRECTORY_TYPE = 0040000;
+    /**
+     * POSIX symbolic link file type.
+     */
+    private static final int POSIX_SYMLINK_TYPE = 0120000;
 
     /**
      * Creates a browser archive.
@@ -202,19 +235,31 @@ public final class BrowserArchive {
      * @param folderPath  folder path value
      */
     private static void extractZip(Path archivePath, Path folderPath) {
+        Map<String, ZipEntryMetadata> metadata = readZipMetadata(archivePath);
         try (ZipInputStream source = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry entry;
             byte[] buffer = new byte[Normal._8192];
             while ((entry = source.getNextEntry()) != null) {
+                ZipEntryMetadata entryMetadata = metadata.getOrDefault(entry.getName(), ZipEntryMetadata.EMPTY);
                 Path outputPath = safeOutputPath(folderPath, entry.getName());
-                if (entry.isDirectory()) {
+                if (entry.isDirectory() || entryMetadata.isDirectory()) {
                     FileKit.mkdir(outputPath.toFile());
+                    applyPosixPermissions(outputPath, entryMetadata.permissions());
                     source.closeEntry();
                     continue;
                 }
                 Path parent = outputPath.getParent();
                 if (parent != null) {
                     FileKit.mkdir(parent.toFile());
+                }
+                if (entryMetadata.isSymlink()) {
+                    Path target = safeSymlinkTarget(
+                            folderPath,
+                            outputPath,
+                            StringKit.toString(readZipEntry(source), Charset.UTF_8));
+                    Files.createSymbolicLink(outputPath, target);
+                    source.closeEntry();
+                    continue;
                 }
                 try (OutputStream target = Files.newOutputStream(outputPath)) {
                     int read;
@@ -224,6 +269,7 @@ public final class BrowserArchive {
                         }
                     }
                 }
+                applyPosixPermissions(outputPath, entryMetadata.permissions());
                 source.closeEntry();
             }
         } catch (IOException ex) {
@@ -307,6 +353,182 @@ public final class BrowserArchive {
             throw new IllegalStateException("Archive entry escapes output folder: " + entryName);
         }
         return outputPath;
+    }
+
+    /**
+     * Resolves and validates a ZIP symbolic link target.
+     *
+     * @param folderPath output folder
+     * @param linkPath   symbolic link path
+     * @param linkTarget target text stored in the ZIP entry
+     * @return relative link target
+     */
+    private static Path safeSymlinkTarget(Path folderPath, Path linkPath, String linkTarget) {
+        if (StringKit.isBlank(linkTarget)) {
+            throw new IllegalStateException("ZIP symlink target must not be blank: " + linkPath);
+        }
+        Path target = Path.of(linkTarget);
+        Path resolved = linkPath.getParent().resolve(target).normalize().toAbsolutePath();
+        Path actualFolderPath = folderPath.toAbsolutePath().normalize();
+        if (!resolved.startsWith(actualFolderPath)) {
+            throw new IllegalStateException("ZIP symlink would point outside of the target directory: " + linkPath);
+        }
+        return target;
+    }
+
+    /**
+     * Reads the remaining bytes of a ZIP entry.
+     *
+     * @param source ZIP stream
+     * @return entry bytes
+     * @throws IOException if reading fails
+     */
+    private static byte[] readZipEntry(InputStream source) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[Normal._8192];
+        int read;
+        while ((read = source.read(buffer)) >= Normal._0) {
+            if (read > Normal._0) {
+                output.write(buffer, Normal._0, read);
+            }
+        }
+        return output.toByteArray();
+    }
+
+    /**
+     * Reads ZIP entry metadata that is only available from the central directory.
+     *
+     * @param archivePath archive path
+     * @return metadata by entry name
+     */
+    private static Map<String, ZipEntryMetadata> readZipMetadata(Path archivePath) {
+        try {
+            byte[] bytes = Files.readAllBytes(archivePath);
+            int eocd = findZipEndOfCentralDirectory(bytes);
+            if (eocd < Normal._0) {
+                return Map.of();
+            }
+            ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+            long directorySize = Integer.toUnsignedLong(buffer.getInt(eocd + 12));
+            long directoryOffset = Integer.toUnsignedLong(buffer.getInt(eocd + 16));
+            if (directoryOffset > Integer.MAX_VALUE || directorySize > Integer.MAX_VALUE
+                    || directoryOffset + directorySize > bytes.length) {
+                return Map.of();
+            }
+            Map<String, ZipEntryMetadata> result = new HashMap<>();
+            int offset = (int) directoryOffset;
+            int end = (int) (directoryOffset + directorySize);
+            while (offset + 46 <= end && buffer.getInt(offset) == ZIP_CENTRAL_DIRECTORY_SIGNATURE) {
+                int versionMadeBy = Short.toUnsignedInt(buffer.getShort(offset + 4));
+                int flags = Short.toUnsignedInt(buffer.getShort(offset + 8));
+                int nameLength = Short.toUnsignedInt(buffer.getShort(offset + 28));
+                int extraLength = Short.toUnsignedInt(buffer.getShort(offset + 30));
+                int commentLength = Short.toUnsignedInt(buffer.getShort(offset + 32));
+                int externalAttributes = buffer.getInt(offset + 38);
+                int nameOffset = offset + 46;
+                int next = nameOffset + nameLength + extraLength + commentLength;
+                if (nameOffset + nameLength > end || next > end) {
+                    break;
+                }
+                String name = zipEntryName(bytes, nameOffset, nameLength, flags);
+                result.put(name, ZipEntryMetadata.from(versionMadeBy, externalAttributes, name));
+                offset = next;
+            }
+            return result;
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to read ZIP metadata: " + archivePath, ex);
+        }
+    }
+
+    /**
+     * Finds the end of central directory record.
+     *
+     * @param bytes ZIP archive bytes
+     * @return record offset, or {@code -1}
+     */
+    private static int findZipEndOfCentralDirectory(byte[] bytes) {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        int minimum = Math.max(0, bytes.length - 65_557);
+        for (int offset = bytes.length - 22; offset >= minimum; offset--) {
+            if (buffer.getInt(offset) == ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE) {
+                return offset;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Decodes a ZIP entry name according to its general purpose bit flags.
+     *
+     * @param bytes  archive bytes
+     * @param offset name offset
+     * @param length name length
+     * @param flags  general purpose bit flags
+     * @return decoded name
+     */
+    private static String zipEntryName(byte[] bytes, int offset, int length, int flags) {
+        if ((flags & ZIP_UTF8_FLAG) != 0) {
+            return new String(bytes, offset, length, StandardCharsets.UTF_8);
+        }
+        return new String(bytes, offset, length, java.nio.charset.Charset.forName("CP437"));
+    }
+
+    /**
+     * Applies POSIX permissions when the current file system supports them.
+     *
+     * @param path        extracted path
+     * @param permissions POSIX permissions
+     */
+    private static void applyPosixPermissions(Path path, Set<PosixFilePermission> permissions) {
+        if (permissions.isEmpty()) {
+            return;
+        }
+        try {
+            Files.setPosixFilePermissions(path, permissions);
+        } catch (IOException | UnsupportedOperationException ignored) {
+            Logger.debug(false, "Browser", "ZIP entry POSIX permissions could not be applied: {}", path);
+        }
+    }
+
+    /**
+     * Converts POSIX mode bits to Java permissions.
+     *
+     * @param mode POSIX mode
+     * @return Java POSIX permissions
+     */
+    private static Set<PosixFilePermission> posixPermissions(int mode) {
+        if (mode <= Normal._0) {
+            return Set.of();
+        }
+        EnumSet<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
+        if ((mode & 0400) != 0) {
+            permissions.add(PosixFilePermission.OWNER_READ);
+        }
+        if ((mode & 0200) != 0) {
+            permissions.add(PosixFilePermission.OWNER_WRITE);
+        }
+        if ((mode & 0100) != 0) {
+            permissions.add(PosixFilePermission.OWNER_EXECUTE);
+        }
+        if ((mode & 0040) != 0) {
+            permissions.add(PosixFilePermission.GROUP_READ);
+        }
+        if ((mode & 0020) != 0) {
+            permissions.add(PosixFilePermission.GROUP_WRITE);
+        }
+        if ((mode & 0010) != 0) {
+            permissions.add(PosixFilePermission.GROUP_EXECUTE);
+        }
+        if ((mode & 0004) != 0) {
+            permissions.add(PosixFilePermission.OTHERS_READ);
+        }
+        if ((mode & 0002) != 0) {
+            permissions.add(PosixFilePermission.OTHERS_WRITE);
+        }
+        if ((mode & 0001) != 0) {
+            permissions.add(PosixFilePermission.OTHERS_EXECUTE);
+        }
+        return permissions;
     }
 
     /**
@@ -721,6 +943,60 @@ public final class BrowserArchive {
     private static void sleepBeforeRemoveRetry() {
         if (!ThreadKit.sleep(REMOVE_RETRY_DELAY_MILLIS)) {
             throw new IllegalStateException("Interrupted while waiting to retry deletion.");
+        }
+    }
+
+    /**
+     * Carries ZIP entry metadata from the central directory.
+     *
+     * @param directory   whether the entry is a directory
+     * @param symlink     whether the entry is a symbolic link
+     * @param permissions POSIX permissions
+     *
+     * @author Kimi Liu
+     * @since Java 17+
+     */
+    private record ZipEntryMetadata(boolean directory, boolean symlink, Set<PosixFilePermission> permissions) {
+
+        /**
+         * Empty metadata.
+         */
+        private static final ZipEntryMetadata EMPTY = new ZipEntryMetadata(false, false, Set.of());
+
+        /**
+         * Creates metadata from ZIP central directory attributes.
+         *
+         * @param versionMadeBy      version-made-by field
+         * @param externalAttributes external attributes
+         * @param name               entry name
+         * @return metadata
+         */
+        private static ZipEntryMetadata from(int versionMadeBy, int externalAttributes, String name) {
+            int unixMode = externalAttributes >>> 16;
+            int fileType = unixMode & POSIX_FILE_TYPE_MASK;
+            boolean directory = fileType == POSIX_DIRECTORY_TYPE || name.endsWith("/")
+                    || (versionMadeBy >> 8 == Normal._0 && externalAttributes == 0x10);
+            boolean symlink = fileType == POSIX_SYMLINK_TYPE;
+            int permissionsMode = unixMode == Normal._0 ? directory ? 0755 : 0644 : unixMode & 0777;
+            return new ZipEntryMetadata(directory, symlink, posixPermissions(permissionsMode));
+        }
+
+        /**
+         * Returns whether this entry is a directory.
+         *
+         * @return {@code true} when this entry is a directory
+         */
+        boolean isDirectory() {
+            return directory;
+        }
+
+        /**
+         * Returns whether this entry is a symbolic link.
+         *
+         * @return {@code true} when this entry is a symbolic link
+         */
+        boolean isSymlink() {
+            return symlink;
         }
     }
 

@@ -76,6 +76,11 @@ public class LaunchOptions extends ConnectOptions {
     private List<Path> extensionPaths = List.of();
 
     /**
+     * Extension paths that should be enabled in Incognito or off-the-record profiles.
+     */
+    private List<Path> extensionsEnabledInIncognito = List.of();
+
+    /**
      * Whether the browser process should be closed on SIGINT.
      */
     private boolean handleSIGINT = true;
@@ -324,6 +329,25 @@ public class LaunchOptions extends ConnectOptions {
      */
     public void setExtensionPaths(List<Path> extensionPaths) {
         this.extensionPaths = extensionPaths == null ? List.of() : List.copyOf(extensionPaths);
+    }
+
+    /**
+     * Returns extension paths that should be enabled in Incognito profiles.
+     *
+     * @return immutable extension path list
+     */
+    public List<Path> getExtensionsEnabledInIncognito() {
+        return extensionsEnabledInIncognito;
+    }
+
+    /**
+     * Updates extension paths that should be enabled in Incognito profiles.
+     *
+     * @param extensionsEnabledInIncognito extension paths value
+     */
+    public void setExtensionsEnabledInIncognito(List<Path> extensionsEnabledInIncognito) {
+        this.extensionsEnabledInIncognito = extensionsEnabledInIncognito == null ? List.of()
+                : List.copyOf(extensionsEnabledInIncognito);
     }
 
     /**

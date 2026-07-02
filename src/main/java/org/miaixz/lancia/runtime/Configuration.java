@@ -432,12 +432,6 @@ public class Configuration {
             Browser defaultSettings,
             Map<String, String> environment,
             Boolean globalSkipDownload) {
-        if (Boolean.TRUE.equals(globalSkipDownload)) {
-            settings.setSkipDownload(Boolean.TRUE);
-            settings.setDownloadBaseUrl(null);
-            settings.setVersion(null);
-            return;
-        }
         String browserEnvName = browser.replace(Symbol.C_MINUS, Symbol.C_UNDERLINE).toUpperCase(Locale.ROOT);
         String envPrefix = "PUPPETEER_" + browserEnvName;
         if (environment.containsKey(envPrefix + "_VERSION")) {
@@ -468,7 +462,8 @@ public class Configuration {
         if (skipDownload != null) {
             settings.setSkipDownload(skipDownload);
         } else if (settings.getSkipDownload() == null) {
-            settings.setSkipDownload(defaultSettings.getSkipDownload());
+            settings.setSkipDownload(
+                    globalSkipDownload != null ? globalSkipDownload : defaultSettings.getSkipDownload());
         }
     }
 

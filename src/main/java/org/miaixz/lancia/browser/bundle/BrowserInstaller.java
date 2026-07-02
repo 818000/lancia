@@ -148,15 +148,6 @@ public final class BrowserInstaller {
                 actualOptions.getCacheDirectory(),
                 actualOptions.getSkipDownload());
         List<String> messages = new ArrayList<>();
-        if (Boolean.TRUE.equals(actualOptions.getSkipDownload())) {
-            messages.add("**INFO** Skipping downloading browsers as instructed.");
-            Logger.debug(
-                    false,
-                    "Browser",
-                    "Download orchestration skipped by configuration: cacheDir={}",
-                    actualOptions.getCacheDirectory());
-            return messages;
-        }
         try {
             BrowserPlatform platform = BrowserPlatform.detectBrowserPlatform()
                     .orElseThrow(() -> new InternalException("Invalid current platform."));
@@ -165,6 +156,7 @@ public final class BrowserInstaller {
             downloadBrowserIfNeeded(
                     BrowserDataTypes.Browser.CHROME,
                     actualOptions.getChrome(),
+                    actualOptions.getSkipDownload(),
                     cacheDir,
                     platform,
                     "**INFO** Skipping Chrome download as instructed.",
@@ -173,6 +165,7 @@ public final class BrowserInstaller {
             downloadBrowserIfNeeded(
                     BrowserDataTypes.Browser.CHROME_HEADLESS_SHELL,
                     actualOptions.getChromeHeadlessShell(),
+                    actualOptions.getSkipDownload(),
                     cacheDir,
                     platform,
                     "**INFO** Skipping Chrome download as instructed.",
@@ -181,6 +174,7 @@ public final class BrowserInstaller {
             downloadBrowserIfNeeded(
                     BrowserDataTypes.Browser.FIREFOX,
                     actualOptions.getFirefox(),
+                    actualOptions.getSkipDownload(),
                     cacheDir,
                     platform,
                     "**INFO** Skipping Firefox download as instructed.",
@@ -572,6 +566,7 @@ public final class BrowserInstaller {
      *
      * @param browser     browser type
      * @param settings    browser settings
+     * @param globalSkip  global skip-download value
      * @param cacheDir    cache directory
      * @param platform    browser platform
      * @param skipMessage skip message
@@ -581,13 +576,15 @@ public final class BrowserInstaller {
     private static void downloadBrowserIfNeeded(
             BrowserDataTypes.Browser browser,
             BrowserSettings settings,
+            Boolean globalSkip,
             Path cacheDir,
             BrowserPlatform platform,
             String skipMessage,
             List<String> messages,
             List<RuntimeException> failures) {
         BrowserSettings actualSettings = settings == null ? new BrowserSettings() : settings;
-        if (Boolean.TRUE.equals(actualSettings.getSkipDownload())) {
+        Boolean skipDownload = actualSettings.getSkipDownload() == null ? globalSkip : actualSettings.getSkipDownload();
+        if (Boolean.TRUE.equals(skipDownload)) {
             messages.add(skipMessage);
             return;
         }

@@ -61,6 +61,7 @@ import org.miaixz.lancia.nimble.screen.AddScreenParams;
 import org.miaixz.lancia.nimble.screen.ScreenInfo;
 import org.miaixz.lancia.options.BrowserContextOptions;
 import org.miaixz.lancia.options.CreatePageOptions;
+import org.miaixz.lancia.options.ExtensionInstallOptions;
 import org.miaixz.lancia.options.PermissionOptions;
 import org.miaixz.lancia.shared.async.Awaitable;
 import org.miaixz.lancia.shared.page.PageExtension;
@@ -425,6 +426,17 @@ public class BidiBrowser implements Browser {
      * @return completion future
      */
     public CompletableFuture<String> installExtension(String path) {
+        return installExtension(path, null);
+    }
+
+    /**
+     * Returns the install extension.
+     *
+     * @param path    file path
+     * @param options install options
+     * @return completion future
+     */
+    public CompletableFuture<String> installExtension(String path, ExtensionInstallOptions options) {
         String actualPath = Assert.notBlank(path, "path");
         Logger.debug(
                 true,
@@ -433,14 +445,15 @@ public class BidiBrowser implements Browser {
                 actualPath,
                 hasCdpTransport());
         if (hasCdpTransport()) {
-            return guard(
-                    cdpConnection.send("Extensions.loadUnpacked", Map.of("path", actualPath)).thenApply(payload -> {
-                        PayloadExtensionInfo info = PayloadExtensionInfo.fromInstallResult(payload, actualPath);
-                        registerExtension(info);
-                        Logger.debug(false, "Browser", "BiDi extension installed: id={}, cdp=true", info.id());
-                        return info.id();
-                    }),
-                    "BiDi browser extension installation failed.");
+            Map<String, Object> params = new LinkedHashMap<>();
+            params.put("path", actualPath);
+            params.put("enableInIncognito", options != null && options.isEnabledInIncognito());
+            return guard(cdpConnection.send("Extensions.loadUnpacked", params).thenApply(payload -> {
+                PayloadExtensionInfo info = PayloadExtensionInfo.fromInstallResult(payload, actualPath);
+                registerExtension(info);
+                Logger.debug(false, "Browser", "BiDi extension installed: id={}, cdp=true", info.id());
+                return info.id();
+            }), "BiDi browser extension installation failed.");
         }
         return guard(accessor.installExtension(actualPath).thenApply(id -> {
             PayloadExtensionInfo info = installedPayloadExtensionInfo(id, actualPath);
@@ -687,7 +700,18 @@ public class BidiBrowser implements Browser {
      * @return extension id future
      */
     public CompletableFuture<String> installExtension(Path path) {
-        return installExtension(path == null ? null : path.toString());
+        return installExtension(path, null);
+    }
+
+    /**
+     * Installs an extension.
+     *
+     * @param path    extension path
+     * @param options install options
+     * @return extension id future
+     */
+    public CompletableFuture<String> installExtension(Path path, ExtensionInstallOptions options) {
+        return installExtension(path == null ? null : path.toString(), options);
     }
 
     /**
