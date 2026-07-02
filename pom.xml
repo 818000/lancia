@@ -6,17 +6,17 @@
     <parent>
         <groupId>org.miaixz</groupId>
         <artifactId>bus-parent</artifactId>
-        <version>8.8.0</version>
+        <version>8.8.2</version>
     </parent>
 
     <groupId>org.miaixz</groupId>
     <artifactId>lancia</artifactId>
-    <version>8.5.2</version>
+    <version>8.5.3</version>
     <packaging>jar</packaging>
 
     <name>lancia</name>
     <description>Lancia</description>
-    <url>https://github.com/839128/lancia</url>
+    <url>https://github.com/818000/lancia</url>
 
     <licenses>
         <license>
@@ -28,19 +28,19 @@
     <developers>
         <developer>
             <name>Kimi Liu</name>
-            <url>https://github.com/839128/lancia.git</url>
+            <url>https://github.com/818000/lancia.git</url>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git@github.com:839128/lancia.git</connection>
-        <developerConnection>scm:git@github.com:839128/lancia.git</developerConnection>
-        <url>git@github.com:839128/lancia.git</url>
+        <connection>scm:git@github.com:818000/lancia.git</connection>
+        <developerConnection>scm:git@github.com:818000/lancia.git</developerConnection>
+        <url>git@github.com:818000/lancia.git</url>
     </scm>
 
     <issueManagement>
         <system>Github Issue</system>
-        <url>https://github.com/839128/lancia/issues</url>
+        <url>https://github.com/818000/lancia/issues</url>
     </issueManagement>
 
     <properties>
