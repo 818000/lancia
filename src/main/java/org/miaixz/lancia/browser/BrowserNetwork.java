@@ -39,12 +39,11 @@ import org.miaixz.bus.core.net.HTTP;
 import org.miaixz.bus.core.xyz.FileKit;
 import org.miaixz.bus.core.xyz.IoKit;
 import org.miaixz.bus.core.xyz.StringKit;
-import org.miaixz.bus.http.Headers;
-import org.miaixz.bus.http.Httpd;
-import org.miaixz.bus.http.Request;
-import org.miaixz.bus.http.Response;
-import org.miaixz.bus.http.bodys.RequestBody;
-import org.miaixz.bus.http.bodys.ResponseBody;
+import org.miaixz.bus.fabric.Context;
+import org.miaixz.bus.fabric.Fabric;
+import org.miaixz.bus.fabric.protocol.http.HttpResponse;
+import org.miaixz.bus.fabric.protocol.http.HttpX;
+import org.miaixz.bus.fabric.protocol.http.body.HttpBody;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.runtime.ResourceLimits;
@@ -79,11 +78,9 @@ public final class BrowserNetwork {
     private static final String CONNECTION_CLOSE = "close";
 
     /**
-     * Shared HTTP client.
+     * Shared Fabric context.
      */
-    private static final Httpd CLIENT = new Httpd.Builder().callTimeout(REQUEST_TIMEOUT).connectTimeout(REQUEST_TIMEOUT)
-            .readTimeout(REQUEST_TIMEOUT).writeTimeout(REQUEST_TIMEOUT).followRedirects(false).followSslRedirects(false)
-            .build();
+    private static final Context FABRIC = Context.create();
 
     /**
      * Creates a browser network.
@@ -100,7 +97,7 @@ public final class BrowserNetwork {
      */
     public static boolean headHttpRequest(URI url) {
         URI actualUrl = Assert.notNull(url, "url");
-        Response response = null;
+        HttpResponse response = null;
         Logger.debug(
                 true,
                 "Browser",
@@ -137,7 +134,7 @@ public final class BrowserNetwork {
      * @param method request method
      * @return response
      */
-    public static Response httpRequest(URI url, String method) {
+    public static HttpResponse httpRequest(URI url, String method) {
         return httpRequest(url, method, true);
     }
 
@@ -145,7 +142,7 @@ public final class BrowserNetwork {
      * Sends an HTTP request and returns an input stream response.
      *
      * <p>
-     * {@link Httpd} manages connection reuse. The {@code keepAlive} flag preserves Puppeteer API call semantics.
+     * Fabric manages connection reuse. The {@code keepAlive} flag preserves Puppeteer API call semantics.
      * </p>
      *
      * @param url       request URL
@@ -153,7 +150,7 @@ public final class BrowserNetwork {
      * @param keepAlive whether to preserve keep-alive semantics
      * @return response
      */
-    public static Response httpRequest(URI url, String method, boolean keepAlive) {
+    public static HttpResponse httpRequest(URI url, String method, boolean keepAlive) {
         return send(url, method, keepAlive, Normal._0);
     }
 
@@ -178,7 +175,7 @@ public final class BrowserNetwork {
      */
     public static void httpRequest(URI url, String method, ResponseHandler response, boolean keepAlive) {
         Assert.notNull(response, "response");
-        Response httpResponse = httpRequest(url, method, keepAlive);
+        HttpResponse httpResponse = httpRequest(url, method, keepAlive);
         try {
             response.accept(httpResponse);
         } catch (IOException ex) {
@@ -232,7 +229,7 @@ public final class BrowserNetwork {
                 "Download started: url={}, destination={}",
                 requestUri(actualUrl).toString().replaceAll("[?#].*$", "?<redacted>"),
                 actualDestinationPath);
-        Response response = send(actualUrl, HTTP.GET, true, Normal._0, actualSecurityPolicy, actualResourceLimits);
+        HttpResponse response = send(actualUrl, HTTP.GET, true, Normal._0, actualSecurityPolicy, actualResourceLimits);
         try {
             if (response.code() != HTTP.HTTP_OK) {
                 throw new InternalException(
@@ -358,7 +355,7 @@ public final class BrowserNetwork {
                 "Browser",
                 "Text read started: url={}",
                 requestUri(actualUrl).toString().replaceAll("[?#].*$", "?<redacted>"));
-        Response response = send(actualUrl, HTTP.GET, false, Normal._0, actualSecurityPolicy, actualResourceLimits);
+        HttpResponse response = send(actualUrl, HTTP.GET, false, Normal._0, actualSecurityPolicy, actualResourceLimits);
         try {
             if (response.code() >= HTTP.HTTP_BAD_REQUEST) {
                 throw new InternalException("Got status code " + response.code());
@@ -422,7 +419,7 @@ public final class BrowserNetwork {
      * @param redirectCount current redirect count
      * @return response
      */
-    private static Response send(URI url, String method, boolean keepAlive, int redirectCount) {
+    private static HttpResponse send(URI url, String method, boolean keepAlive, int redirectCount) {
         return send(url, method, keepAlive, redirectCount, SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
     }
 
@@ -437,7 +434,7 @@ public final class BrowserNetwork {
      * @param resourceLimits resource limits
      * @return response
      */
-    private static Response send(
+    private static HttpResponse send(
             URI url,
             String method,
             boolean keepAlive,
@@ -453,9 +450,7 @@ public final class BrowserNetwork {
         }
         try {
             String actualMethod = normalizeMethod(method);
-            Request request = requestBuilder(actualUrl, actualMethod, keepAlive)
-                    .method(actualMethod, requestBody(actualMethod)).build();
-            Response response = CLIENT.newCall(request).execute();
+            HttpResponse response = requestBuilder(actualUrl, actualMethod, keepAlive).method(actualMethod).execute();
             Optional<String> location = redirectLocation(response);
             if (location.isPresent()) {
                 closeResponseBody(response);
@@ -470,7 +465,10 @@ public final class BrowserNetwork {
                         actualResourceLimits);
             }
             return response;
-        } catch (IOException ex) {
+        } catch (RuntimeException ex) {
+            if (ex instanceof InternalException) {
+                throw ex;
+            }
             throw new InternalException("HTTP request failed: " + actualUrl, ex);
         }
     }
@@ -483,8 +481,9 @@ public final class BrowserNetwork {
      * @param keepAlive whether to preserve keep-alive semantics
      * @return HTTP request builder
      */
-    private static Request.Builder requestBuilder(URI url, String method, boolean keepAlive) {
-        Request.Builder builder = new Request.Builder().url(requestUri(url).toString());
+    private static HttpX.Builder requestBuilder(URI url, String method, boolean keepAlive) {
+        HttpX.Builder builder = Fabric.http(FABRIC).url(requestUri(url).toString()).method(method)
+                .timeout(REQUEST_TIMEOUT);
         authHeader(url).ifPresent(value -> builder.header(HTTP.AUTHORIZATION, value));
         if (keepAlive) {
             Logger.debug(
@@ -497,19 +496,6 @@ public final class BrowserNetwork {
             builder.header(HTTP.CONNECTION, CONNECTION_CLOSE);
         }
         return builder;
-    }
-
-    /**
-     * Returns an empty request body when the HTTP method requires one.
-     *
-     * @param method normalized request method
-     * @return request body, or {@code null} when the method does not require one
-     */
-    private static RequestBody requestBody(String method) {
-        if (HTTP.requiresRequestBody(method)) {
-            return RequestBody.of(null, Normal.EMPTY_BYTE_ARRAY);
-        }
-        return null;
     }
 
     /**
@@ -585,10 +571,10 @@ public final class BrowserNetwork {
      * @param response response
      * @return redirect location
      */
-    private static Optional<String> redirectLocation(Response response) {
+    private static Optional<String> redirectLocation(HttpResponse response) {
         int statusCode = response.code();
         if (statusCode >= HTTP.HTTP_MULT_CHOICE && statusCode < HTTP.HTTP_BAD_REQUEST) {
-            return Optional.ofBlankAble(response.header(HTTP.LOCATION));
+            return Optional.ofBlankAble(response.headers().get(HTTP.LOCATION));
         }
         return Optional.empty();
     }
@@ -598,10 +584,8 @@ public final class BrowserNetwork {
      *
      * @param response response
      */
-    private static void closeResponseBody(Response response) {
-        if (response != null && response.body() != null) {
-            IoKit.close(response.body());
-        }
+    private static void closeResponseBody(HttpResponse response) {
+        IoKit.close(response);
     }
 
     /**
@@ -610,13 +594,13 @@ public final class BrowserNetwork {
      * @param response response
      * @return response body length, or {@code 0} when unknown
      */
-    private static long contentLength(Response response) {
-        long headerLength = Headers.contentLength(response);
+    private static long contentLength(HttpResponse response) {
+        long headerLength = response.headers().contentLength();
         if (headerLength >= Normal.LONG_ZERO) {
             return headerLength;
         }
-        ResponseBody body = response.body();
-        return body == null || body.contentLength() < Normal.LONG_ZERO ? Normal.LONG_ZERO : body.contentLength();
+        HttpBody body = response.body();
+        return body == null || body.length() < Normal.LONG_ZERO ? Normal.LONG_ZERO : body.length();
     }
 
     /**
@@ -665,9 +649,9 @@ public final class BrowserNetwork {
      * @param response response
      * @return response body stream
      */
-    private static InputStream bodyStream(Response response) {
-        ResponseBody body = response.body();
-        return body == null ? InputStream.nullInputStream() : body.byteStream();
+    private static InputStream bodyStream(HttpResponse response) {
+        HttpBody body = response.body();
+        return body == null ? InputStream.nullInputStream() : body.stream();
     }
 
     /**
@@ -677,7 +661,7 @@ public final class BrowserNetwork {
      * @return response body text
      * @throws IOException when reading fails
      */
-    private static String bodyString(Response response, ResourceLimits resourceLimits) throws IOException {
+    private static String bodyString(HttpResponse response, ResourceLimits resourceLimits) throws IOException {
         ResourceLimits actualResourceLimits = limits(resourceLimits);
         byte[] buffer = new byte[BUFFER_SIZE];
         int size = Normal._0;
@@ -747,7 +731,7 @@ public final class BrowserNetwork {
          * @param response response
          * @throws IOException when handling fails
          */
-        void accept(Response response) throws IOException;
+        void accept(HttpResponse response) throws IOException;
     }
 
     /**
