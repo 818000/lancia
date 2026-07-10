@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.miaixz</groupId>
         <artifactId>bus-parent</artifactId>
-        <version>8.8.2</version>
+        <version>8.8.3</version>
     </parent>
 
     <groupId>org.miaixz</groupId>
     <artifactId>lancia</artifactId>
-    <version>8.5.3</version>
+    <version>8.5.5</version>
     <packaging>jar</packaging>
 
     <name>lancia</name>
@@ -52,6 +52,7 @@
         <dependency>
             <groupId>org.miaixz</groupId>
             <artifactId>bus-all</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
