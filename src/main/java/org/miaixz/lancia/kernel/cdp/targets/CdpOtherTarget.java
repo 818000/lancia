@@ -17,57 +17,26 @@
  ~                                                                           ~
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
-package org.miaixz.lancia.kernel.cdp.target;
+package org.miaixz.lancia.kernel.cdp.targets;
 
-import org.miaixz.bus.core.lang.Optional;
-import org.miaixz.lancia.Worker;
-import org.miaixz.lancia.kernel.cdp.session.CDPSession;
 import org.miaixz.lancia.kernel.cdp.session.TargetInfo;
-import org.miaixz.lancia.kernel.cdp.worker.CdpWorker;
 
 /**
- * CDP worker target.
+ * Represents a other target.
  *
  * @author Kimi Liu
  * @since Java 17+
  */
-public class CdpWorkerTarget extends CdpTarget {
+public class CdpOtherTarget extends CdpTarget {
 
     /**
-     * Current worker.
-     */
-    private final CdpWorker worker;
-
-    /**
-     * Creates a worker target.
+     * Creates an CdpOtherTarget instance.
      *
      * @param targetInfo target info
      * @param opener     opener
      */
-    public CdpWorkerTarget(TargetInfo targetInfo, CdpTarget opener) {
+    public CdpOtherTarget(TargetInfo targetInfo, CdpTarget opener) {
         super(targetInfo, opener);
-        this.worker = new CdpWorker(targetInfo.getUrl(), null, targetInfo.getTargetId(), targetInfo.getType());
-    }
-
-    /**
-     * Returns the worker.
-     *
-     * @return optional value
-     */
-    @Override
-    public Optional<Worker> worker() {
-        return Optional.of(worker);
-    }
-
-    /**
-     * Updates session.
-     *
-     * @param session protocol session
-     */
-    @Override
-    protected void setSession(CDPSession session) {
-        super.setSession(session);
-        worker.setSession(session);
     }
 
 }

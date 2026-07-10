@@ -43,7 +43,7 @@ import org.miaixz.lancia.browser.metadata.BrowserDataTypes.ChromeReleaseChannel;
 import org.miaixz.lancia.kernel.cdp.browser.CdpBrowser;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.kernel.cdp.session.Connection;
-import org.miaixz.lancia.kernel.cdp.target.UrlRestrictionRule;
+import org.miaixz.lancia.kernel.cdp.targets.UrlRestrictionRule;
 import org.miaixz.lancia.kernel.cdp.transport.SocketTransportFactory;
 import org.miaixz.lancia.options.AttachOptions;
 import org.miaixz.lancia.options.ConnectOptions;

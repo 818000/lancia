@@ -166,31 +166,31 @@
       "condition": {
         "typeReached": "org.miaixz.bus.logger.Logger"
       },
-      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget"
+      "type": "org.miaixz.lancia.kernel.bidi.targets.BidiTarget"
     },
     {
       "condition": {
         "typeReached": "org.miaixz.bus.logger.Logger"
       },
-      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$BrowserTarget"
+      "type": "org.miaixz.lancia.kernel.bidi.targets.BidiTarget$BrowserTarget"
     },
     {
       "condition": {
         "typeReached": "org.miaixz.bus.logger.Logger"
       },
-      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$FrameTarget"
+      "type": "org.miaixz.lancia.kernel.bidi.targets.BidiTarget$FrameTarget"
     },
     {
       "condition": {
         "typeReached": "org.miaixz.bus.logger.Logger"
       },
-      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$PageTarget"
+      "type": "org.miaixz.lancia.kernel.bidi.targets.BidiTarget$PageTarget"
     },
     {
       "condition": {
         "typeReached": "org.miaixz.bus.logger.Logger"
       },
-      "type": "org.miaixz.lancia.kernel.bidi.target.BidiTarget$WorkerTarget"
+      "type": "org.miaixz.lancia.kernel.bidi.targets.BidiTarget$WorkerTarget"
     },
     {
       "condition": {
@@ -322,7 +322,7 @@
       "condition": {
         "typeReached": "org.miaixz.bus.logger.Logger"
       },
-      "type": "org.miaixz.lancia.kernel.cdp.target.CdpTargetManager"
+      "type": "org.miaixz.lancia.kernel.cdp.targets.CdpTargetManager"
     },
     {
       "condition": {

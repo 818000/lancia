@@ -39,7 +39,7 @@ import org.miaixz.lancia.Page;
 import org.miaixz.lancia.Target;
 import org.miaixz.lancia.kernel.bidi.page.BidiPage;
 import org.miaixz.lancia.kernel.bidi.protocol.message.BidiBrowsingContextInfoMessage;
-import org.miaixz.lancia.kernel.bidi.target.BidiTarget;
+import org.miaixz.lancia.kernel.bidi.targets.BidiTarget;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.nimble.browser.PageCreateType;
 import org.miaixz.lancia.nimble.network.CookieParam;

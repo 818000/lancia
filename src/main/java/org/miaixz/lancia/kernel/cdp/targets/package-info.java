@@ -17,26 +17,14 @@
  ~                                                                           ~
  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 */
-package org.miaixz.lancia.kernel.cdp.target;
-
-import org.miaixz.lancia.kernel.cdp.session.TargetInfo;
-
 /**
- * Represents a other target.
+ * Provides Chrome DevTools Protocol target discovery and target implementations.
+ *
+ * <p>
+ * This package maps CDP target metadata into page, worker, DevTools, and other target objects while managing target
+ * creation, changes, and restrictions.
  *
  * @author Kimi Liu
  * @since Java 17+
  */
-public class CdpOtherTarget extends CdpTarget {
-
-    /**
-     * Creates an CdpOtherTarget instance.
-     *
-     * @param targetInfo target info
-     * @param opener     opener
-     */
-    public CdpOtherTarget(TargetInfo targetInfo, CdpTarget opener) {
-        super(targetInfo, opener);
-    }
-
-}
+package org.miaixz.lancia.kernel.cdp.targets;

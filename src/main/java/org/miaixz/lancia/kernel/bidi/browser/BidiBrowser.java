@@ -48,7 +48,7 @@ import org.miaixz.lancia.kernel.bidi.accessor.BidiSession;
 import org.miaixz.lancia.kernel.bidi.page.BidiPage;
 import org.miaixz.lancia.kernel.bidi.session.BidiConnection;
 import org.miaixz.lancia.kernel.bidi.session.BidiProtocolSession;
-import org.miaixz.lancia.kernel.bidi.target.BidiTarget;
+import org.miaixz.lancia.kernel.bidi.targets.BidiTarget;
 import org.miaixz.lancia.kernel.bidi.worker.BidiWorker;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.kernel.cdp.session.Connection;

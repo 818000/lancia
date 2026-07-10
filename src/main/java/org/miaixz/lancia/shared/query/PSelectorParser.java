@@ -211,6 +211,15 @@ public final class PSelectorParser {
                     index += DESCENDENT_COMBINATOR.length() - 1;
                     continue;
                 }
+                if (squareDepth == Normal._0 && parenthesisDepth == Normal._0 && isStandardCssCombinator(current)) {
+                    appendStandardCssCombinator(current);
+                    index = skipWhitespace(selector, index + 1) - 1;
+                    continue;
+                }
+                if (squareDepth == Normal._0 && parenthesisDepth == Normal._0 && Character.isWhitespace(current)) {
+                    appendTopLevelWhitespace(index);
+                    continue;
+                }
                 if (squareDepth == Normal._0 && parenthesisDepth == Normal._0 && current == Symbol.C_COMMA) {
                     finishComplexSelector();
                     continue;
@@ -234,6 +243,67 @@ public final class PSelectorParser {
             }
             finishComplexSelector();
             return new ParseResult(List.copyOf(selectors), pureCss, hasPseudoClasses, hasAria, hasNesting);
+        }
+
+        /**
+         * Returns whether a character is a regular CSS combinator.
+         *
+         * @param value character
+         * @return whether character is a CSS combinator
+         */
+        private static boolean isStandardCssCombinator(char value) {
+            return value == Symbol.C_GT || value == Symbol.C_PLUS || value == Symbol.C_TILDE;
+        }
+
+        /**
+         * Appends a top-level CSS combinator using Puppeteer's normalized selector form.
+         *
+         * @param combinator combinator
+         */
+        private void appendStandardCssCombinator(char combinator) {
+            trimTrailingCssWhitespace();
+            css.append(combinator);
+        }
+
+        /**
+         * Appends or skips top-level whitespace according to Puppeteer's selector stringification.
+         *
+         * @param index current index
+         */
+        private void appendTopLevelWhitespace(int index) {
+            int next = skipWhitespace(selector, index + 1);
+            if (next >= selector.length() || selector.startsWith(DESCENDENT_COMBINATOR, next)
+                    || selector.startsWith(CHILD_COMBINATOR, next) || isStandardCssCombinator(selector.charAt(next))
+                    || selector.charAt(next) == Symbol.C_COMMA || css.length() == Normal._0) {
+                return;
+            }
+            if (!Character.isWhitespace(css.charAt(css.length() - 1))) {
+                css.append(Symbol.C_SPACE);
+            }
+        }
+
+        /**
+         * Removes trailing whitespace from the buffered CSS selector.
+         */
+        private void trimTrailingCssWhitespace() {
+            while (css.length() > Normal._0 && Character.isWhitespace(css.charAt(css.length() - 1))) {
+                css.setLength(css.length() - 1);
+            }
+        }
+
+        /**
+         * Skips whitespace.
+         *
+         * @param value value
+         * @param index index
+         * @return next non-whitespace index
+         */
+        private static int skipWhitespace(String value, int index) {
+            int current = index;
+            while (current < value.length() && Character.isWhitespace(value.charAt(current))) {
+                current++;
+            }
+            return current;
         }
 
         /**

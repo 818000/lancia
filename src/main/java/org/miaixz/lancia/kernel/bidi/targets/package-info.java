@@ -27,4 +27,4 @@
  * @author Kimi Liu
  * @since Java 17+
  */
-package org.miaixz.lancia.kernel.bidi.target;
+package org.miaixz.lancia.kernel.bidi.targets;

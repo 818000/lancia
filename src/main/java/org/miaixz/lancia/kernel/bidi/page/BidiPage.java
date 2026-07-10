@@ -70,7 +70,7 @@ import org.miaixz.lancia.kernel.bidi.input.BidiInput;
 import org.miaixz.lancia.kernel.bidi.network.BidiRequest;
 import org.miaixz.lancia.kernel.bidi.runtime.BidiRealm;
 import org.miaixz.lancia.kernel.bidi.session.BidiCDPSession;
-import org.miaixz.lancia.kernel.bidi.target.BidiTarget;
+import org.miaixz.lancia.kernel.bidi.targets.BidiTarget;
 import org.miaixz.lancia.kernel.bidi.worker.BidiWorker;
 import org.miaixz.lancia.kernel.cdp.mcp.CdpWebMCP;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;

@@ -40,7 +40,7 @@ import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.kernel.cdp.runtime.CdpExecutionContext;
 import org.miaixz.lancia.kernel.cdp.runtime.CdpRealm;
 import org.miaixz.lancia.kernel.cdp.session.CDPSession;
-import org.miaixz.lancia.kernel.cdp.target.CdpTarget;
+import org.miaixz.lancia.kernel.cdp.targets.CdpTarget;
 import org.miaixz.lancia.shared.async.Awaitable;
 import org.miaixz.lancia.shared.frame.FrameManager;
 import org.miaixz.lancia.shared.frame.FrameTree;
