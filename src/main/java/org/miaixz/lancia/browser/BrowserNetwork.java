@@ -29,6 +29,8 @@ import java.time.Duration;
 import java.util.Locale;
 
 import org.miaixz.bus.core.codec.binary.Base64;
+import org.miaixz.bus.core.io.buffer.Buffer;
+import org.miaixz.bus.core.io.source.Source;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Charset;
 import org.miaixz.bus.core.lang.Normal;
@@ -43,7 +45,7 @@ import org.miaixz.bus.fabric.Context;
 import org.miaixz.bus.fabric.Fabric;
 import org.miaixz.bus.fabric.protocol.http.HttpResponse;
 import org.miaixz.bus.fabric.protocol.http.HttpX;
-import org.miaixz.bus.fabric.protocol.http.body.HttpBody;
+import org.miaixz.bus.fabric.protocol.http.body.PayloadBody;
 import org.miaixz.bus.logger.Logger;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.runtime.ResourceLimits;
@@ -599,7 +601,7 @@ public final class BrowserNetwork {
         if (headerLength >= Normal.LONG_ZERO) {
             return headerLength;
         }
-        HttpBody body = response.body();
+        PayloadBody body = response.body();
         return body == null || body.length() < Normal.LONG_ZERO ? Normal.LONG_ZERO : body.length();
     }
 
@@ -650,8 +652,8 @@ public final class BrowserNetwork {
      * @return response body stream
      */
     private static InputStream bodyStream(HttpResponse response) {
-        HttpBody body = response.body();
-        return body == null ? InputStream.nullInputStream() : body.stream();
+        PayloadBody body = response.body();
+        return body == null ? InputStream.nullInputStream() : new SourceInputStream(body.source());
     }
 
     /**
@@ -750,6 +752,84 @@ public final class BrowserNetwork {
          * @param totalBytes      total bytes, or {@code 0} when unknown
          */
         void onProgress(long downloadedBytes, long totalBytes);
+    }
+
+    /**
+     * Adapts a Fabric source to the stream contract used by download and metadata reads.
+     *
+     * @author Kimi Liu
+     * @since Java 17+
+     */
+    private static final class SourceInputStream extends InputStream {
+
+        /**
+         * Source buffer size.
+         */
+        private static final int SOURCE_BUFFER_SIZE = BUFFER_SIZE;
+
+        /**
+         * Single-byte read buffer.
+         */
+        private final byte[] single = new byte[Normal._1];
+
+        /**
+         * Fabric source.
+         */
+        private final Source source;
+
+        /**
+         * Read buffer.
+         */
+        private final Buffer buffer = new Buffer();
+
+        /**
+         * Closed flag.
+         */
+        private boolean closed;
+
+        /**
+         * Creates a stream adapter.
+         *
+         * @param source Fabric source
+         */
+        private SourceInputStream(Source source) {
+            this.source = Assert.notNull(source, "source");
+        }
+
+        @Override
+        public int read() throws IOException {
+            int read = read(single, Normal._0, Normal._1);
+            return read < Normal._0 ? Normal.__1 : single[Normal._0] & 0xff;
+        }
+
+        @Override
+        public int read(byte[] target, int offset, int length) throws IOException {
+            if (closed) {
+                throw new IOException("Source is closed.");
+            }
+            Assert.notNull(target, "target");
+            if (offset < Normal._0 || length < Normal._0 || length > target.length - offset) {
+                throw new IndexOutOfBoundsException();
+            }
+            if (length == Normal._0) {
+                return Normal._0;
+            }
+            if (buffer.size() == Normal.LONG_ZERO) {
+                long read = source.read(buffer, Math.min(length, SOURCE_BUFFER_SIZE));
+                if (read < Normal.LONG_ZERO) {
+                    return Normal.__1;
+                }
+            }
+            return buffer.read(target, offset, (int) Math.min(length, buffer.size()));
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (!closed) {
+                closed = true;
+                source.close();
+            }
+        }
     }
 
 }
