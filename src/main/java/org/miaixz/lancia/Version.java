@@ -25,7 +25,7 @@ package org.miaixz.lancia;
  * @author Kimi Liu
  * @since Java 17+
  */
-public final class Version extends org.miaixz.bus.Version {
+public final class Version extends org.miaixz.bus.core.Version {
 
     /**
      * Creates an instance.
@@ -41,7 +41,6 @@ public final class Version extends org.miaixz.bus.Version {
      *
      * @return package name
      */
-    @Override
     public String name() {
         return Builder.PRODUCT_NAME;
     }

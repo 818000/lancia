@@ -37,7 +37,7 @@ import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.lang.Optional;
 import org.miaixz.bus.core.lang.Symbol;
 import org.miaixz.bus.core.lang.exception.InternalException;
-import org.miaixz.bus.core.net.HTTP;
+import org.miaixz.bus.core.net.Http;
 import org.miaixz.bus.core.xyz.FileKit;
 import org.miaixz.bus.core.xyz.IoKit;
 import org.miaixz.bus.core.xyz.StringKit;
@@ -106,8 +106,8 @@ public final class BrowserNetwork {
                 "HEAD request started: url={}",
                 requestUri(actualUrl).toString().replaceAll("[?#].*$", "?<redacted>"));
         try {
-            response = httpRequest(actualUrl, HTTP.HEAD, false);
-            boolean result = response.code() == HTTP.HTTP_OK;
+            response = httpRequest(actualUrl, Http.Method.HEAD.value(), false);
+            boolean result = response.code() == Http.Status.OK;
             Logger.debug(
                     false,
                     "Browser",
@@ -231,9 +231,15 @@ public final class BrowserNetwork {
                 "Download started: url={}, destination={}",
                 requestUri(actualUrl).toString().replaceAll("[?#].*$", "?<redacted>"),
                 actualDestinationPath);
-        HttpResponse response = send(actualUrl, HTTP.GET, true, Normal._0, actualSecurityPolicy, actualResourceLimits);
+        HttpResponse response = send(
+                actualUrl,
+                Http.Method.GET.value(),
+                true,
+                Normal._0,
+                actualSecurityPolicy,
+                actualResourceLimits);
         try {
-            if (response.code() != HTTP.HTTP_OK) {
+            if (response.code() != Http.Status.OK) {
                 throw new InternalException(
                         "Download failed: server returned code " + response.code() + ". URL: " + actualUrl);
             }
@@ -357,9 +363,15 @@ public final class BrowserNetwork {
                 "Browser",
                 "Text read started: url={}",
                 requestUri(actualUrl).toString().replaceAll("[?#].*$", "?<redacted>"));
-        HttpResponse response = send(actualUrl, HTTP.GET, false, Normal._0, actualSecurityPolicy, actualResourceLimits);
+        HttpResponse response = send(
+                actualUrl,
+                Http.Method.GET.value(),
+                false,
+                Normal._0,
+                actualSecurityPolicy,
+                actualResourceLimits);
         try {
-            if (response.code() >= HTTP.HTTP_BAD_REQUEST) {
+            if (response.code() >= Http.Status.BAD_REQUEST) {
                 throw new InternalException("Got status code " + response.code());
             }
             long totalBytes = contentLength(response);
@@ -486,7 +498,7 @@ public final class BrowserNetwork {
     private static HttpX.Builder requestBuilder(URI url, String method, boolean keepAlive) {
         HttpX.Builder builder = Fabric.http(FABRIC).url(requestUri(url).toString()).method(method)
                 .timeout(REQUEST_TIMEOUT);
-        authHeader(url).ifPresent(value -> builder.header(HTTP.AUTHORIZATION, value));
+        authHeader(url).ifPresent(value -> builder.header(Http.Header.AUTHORIZATION, value));
         if (keepAlive) {
             Logger.debug(
                     false,
@@ -495,7 +507,7 @@ public final class BrowserNetwork {
                     normalizeMethod(method),
                     requestUri(url).toString().replaceAll("[?#].*$", "?<redacted>"));
         } else {
-            builder.header(HTTP.CONNECTION, CONNECTION_CLOSE);
+            builder.header(Http.Header.CONNECTION, CONNECTION_CLOSE);
         }
         return builder;
     }
@@ -575,8 +587,8 @@ public final class BrowserNetwork {
      */
     private static Optional<String> redirectLocation(HttpResponse response) {
         int statusCode = response.code();
-        if (statusCode >= HTTP.HTTP_MULT_CHOICE && statusCode < HTTP.HTTP_BAD_REQUEST) {
-            return Optional.ofBlankAble(response.headers().get(HTTP.LOCATION));
+        if (statusCode >= Http.Status.MULTIPLE_CHOICES && statusCode < Http.Status.BAD_REQUEST) {
+            return Optional.ofBlankAble(response.headers().get(Http.Header.LOCATION));
         }
         return Optional.empty();
     }
@@ -612,6 +624,8 @@ public final class BrowserNetwork {
      * @param destinationPath  target file path
      * @param totalBytes       total bytes
      * @param progressCallback progress callback
+     * @param resourceLimits   resource limits
+     * @return copied byte count
      * @throws IOException when copying fails
      */
     private static long copyToFile(
@@ -659,7 +673,8 @@ public final class BrowserNetwork {
     /**
      * Reads a response body as text.
      *
-     * @param response response
+     * @param response       response
+     * @param resourceLimits resource limits
      * @return response body text
      * @throws IOException when reading fails
      */
@@ -796,12 +811,27 @@ public final class BrowserNetwork {
             this.source = Assert.notNull(source, "source");
         }
 
+        /**
+         * Reads one byte from the source.
+         *
+         * @return byte value, or {@code -1} when the source is exhausted
+         * @throws IOException when reading fails
+         */
         @Override
         public int read() throws IOException {
             int read = read(single, Normal._0, Normal._1);
             return read < Normal._0 ? Normal.__1 : single[Normal._0] & 0xff;
         }
 
+        /**
+         * Reads bytes from the source into the target buffer.
+         *
+         * @param target target buffer
+         * @param offset write offset
+         * @param length maximum bytes to read
+         * @return read byte count, or {@code -1} when the source is exhausted
+         * @throws IOException when reading fails
+         */
         @Override
         public int read(byte[] target, int offset, int length) throws IOException {
             if (closed) {
@@ -823,6 +853,11 @@ public final class BrowserNetwork {
             return buffer.read(target, offset, (int) Math.min(length, buffer.size()));
         }
 
+        /**
+         * Closes the source.
+         *
+         * @throws IOException when closing fails
+         */
         @Override
         public void close() throws IOException {
             if (!closed) {

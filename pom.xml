@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.miaixz</groupId>
         <artifactId>bus-parent</artifactId>
-        <version>8.8.5</version>
+        <version>8.8.8</version>
     </parent>
 
     <groupId>org.miaixz</groupId>
     <artifactId>lancia</artifactId>
-    <version>8.5.6</version>
+    <version>8.5.8</version>
     <packaging>jar</packaging>
 
     <name>lancia</name>
@@ -43,15 +43,36 @@
         <url>https://github.com/818000/lancia/issues</url>
     </issueManagement>
 
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.miaixz</groupId>
-            <artifactId>bus-all</artifactId>
+            <artifactId>bus-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.miaixz</groupId>
+            <artifactId>bus-fabric</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.miaixz</groupId>
+            <artifactId>bus-health</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.miaixz</groupId>
+            <artifactId>bus-logger</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -64,28 +85,76 @@
             <artifactId>slf4j-api</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna-platform</artifactId>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
+                <groupId>org.miaixz.maven</groupId>
+                <artifactId>groom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>module-publish-pom</id>
+                        <goals>
+                            <goal>normalize</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <groomedPomFilename>${project.artifactId}-${project.version}.pom</groomedPomFilename>
+                            <resolveProjectVersion>true</resolveProjectVersion>
+                            <resolveProjectExpressions>true</resolveProjectExpressions>
+                            <groomMode>oss</groomMode>
+                            <groomDependencyMode>inherited</groomDependencyMode>
+                            <applyProjectElementRemovalsToPomPackaging>false</applyProjectElementRemovalsToPomPackaging>
+                            <pomElements>
+                                <parent>remove</parent>
+                                <properties>remove</properties>
+                                <dependencyManagement>remove</dependencyManagement>
+                                <distributionManagement>remove</distributionManagement>
+                                <repositories>remove</repositories>
+                                <pluginManagement>remove</pluginManagement>
+                                <pluginRepositories>remove</pluginRepositories>
+                                <compileScope>remove</compileScope>
+                                <reporting>remove</reporting>
+                                <build>remove</build>
+                                <profiles>remove</profiles>
+                            </pomElements>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>parent-publish-pom</id>
+                        <goals>
+                            <goal>normalize</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <groomedPomFilename>${project.artifactId}-${project.version}.pom</groomedPomFilename>
+                            <resolveProjectVersion>true</resolveProjectVersion>
+                            <resolveProjectExpressions>true</resolveProjectExpressions>
+                            <groomMode>resolveCiFriendliesOnly</groomMode>
+                            <pomElements>
+                                <parent>keep</parent>
+                                <properties>remove</properties>
+                                <dependencies>keep</dependencies>
+                                <compileScope>remove</compileScope>
+                                <build>keep</build>
+                                <buildPlugins>keep</buildPlugins>
+                                <pluginManagement>keep</pluginManagement>
+                                <dependencyManagement>keep</dependencyManagement>
+                                <distributionManagement>remove</distributionManagement>
+                                <pluginRepositories>remove</pluginRepositories>
+                                <repositories>remove</repositories>
+                                <reporting>remove</reporting>
+                                <profiles>remove</profiles>
+                            </pomElements>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-            </plugin>
+
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
@@ -179,71 +248,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.miaixz.maven</groupId>
-                <artifactId>groom-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>module-publish-pom</id>
-                        <goals>
-                            <goal>normalize</goal>
-                        </goals>
-                        <phase>process-resources</phase>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <groomedPomFilename>${project.artifactId}-${project.version}.pom</groomedPomFilename>
-                            <resolveProjectVersion>true</resolveProjectVersion>
-                            <resolveProjectExpressions>true</resolveProjectExpressions>
-                            <groomMode>oss</groomMode>
-                            <groomDependencyMode>inherited</groomDependencyMode>
-                            <applyProjectElementRemovalsToPomPackaging>false</applyProjectElementRemovalsToPomPackaging>
-                            <pomElements>
-                                <parent>remove</parent>
-                                <properties>remove</properties>
-                                <dependencyManagement>remove</dependencyManagement>
-                                <distributionManagement>remove</distributionManagement>
-                                <repositories>remove</repositories>
-                                <pluginManagement>remove</pluginManagement>
-                                <pluginRepositories>remove</pluginRepositories>
-                                <compileScope>remove</compileScope>
-                                <reporting>remove</reporting>
-                                <build>remove</build>
-                                <profiles>remove</profiles>
-                            </pomElements>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>parent-publish-pom</id>
-                        <goals>
-                            <goal>normalize</goal>
-                        </goals>
-                        <phase>process-resources</phase>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <groomedPomFilename>${project.artifactId}-${project.version}.pom</groomedPomFilename>
-                            <resolveProjectVersion>true</resolveProjectVersion>
-                            <resolveProjectExpressions>true</resolveProjectExpressions>
-                            <groomMode>resolveCiFriendliesOnly</groomMode>
-                            <pomElements>
-                                <parent>keep</parent>
-                                <properties>remove</properties>
-                                <dependencies>keep</dependencies>
-                                <compileScope>remove</compileScope>
-                                <build>keep</build>
-                                <buildPlugins>keep</buildPlugins>
-                                <pluginManagement>keep</pluginManagement>
-                                <dependencyManagement>keep</dependencyManagement>
-                                <distributionManagement>remove</distributionManagement>
-                                <pluginRepositories>remove</pluginRepositories>
-                                <repositories>remove</repositories>
-                                <reporting>remove</reporting>
-                                <profiles>remove</profiles>
-                            </pomElements>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <inherited>false</inherited>
@@ -256,6 +260,14 @@
                         <phase>verify</phase>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.central</groupId>
