@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Map;
 
 import org.miaixz.bus.core.codec.binary.Base64;
 import org.miaixz.bus.core.io.buffer.Buffer;
@@ -296,7 +297,18 @@ public final class BrowserNetwork {
      * @return JSON payload
      */
     public static CdpPayload getJSON(URI url) {
-        return getJSON(url, SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
+        return getJSON(url, Map.of(), SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
+    }
+
+    /**
+     * Reads a JSON payload from a URL.
+     *
+     * @param url     request URL
+     * @param headers request headers
+     * @return JSON payload
+     */
+    public static CdpPayload getJSON(URI url, Map<String, String> headers) {
+        return getJSON(url, headers, SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
     }
 
     /**
@@ -308,13 +320,30 @@ public final class BrowserNetwork {
      * @return JSON payload
      */
     public static CdpPayload getJSON(URI url, SecurityPolicy securityPolicy, ResourceLimits resourceLimits) {
+        return getJSON(url, Map.of(), securityPolicy, resourceLimits);
+    }
+
+    /**
+     * Reads a JSON payload from a URL.
+     *
+     * @param url            request URL
+     * @param headers        request headers
+     * @param securityPolicy security policy
+     * @param resourceLimits resource limits
+     * @return JSON payload
+     */
+    public static CdpPayload getJSON(
+            URI url,
+            Map<String, String> headers,
+            SecurityPolicy securityPolicy,
+            ResourceLimits resourceLimits) {
         URI actualUrl = Assert.notNull(url, "url");
         Logger.debug(
                 true,
                 "Browser",
                 "JSON read started: url={}",
                 requestUri(actualUrl).toString().replaceAll("[?#].*$", "?<redacted>"));
-        String text = getText(actualUrl, securityPolicy, resourceLimits);
+        String text = getText(actualUrl, headers, securityPolicy, resourceLimits);
         try {
             CdpPayload payload = CdpPayload.parse(text);
             Logger.debug(
@@ -343,7 +372,18 @@ public final class BrowserNetwork {
      * @return response text
      */
     public static String getText(URI url) {
-        return getText(url, SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
+        return getText(url, Map.of(), SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
+    }
+
+    /**
+     * Reads text from a URL.
+     *
+     * @param url     request URL
+     * @param headers request headers
+     * @return response text
+     */
+    public static String getText(URI url, Map<String, String> headers) {
+        return getText(url, headers, SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
     }
 
     /**
@@ -355,6 +395,23 @@ public final class BrowserNetwork {
      * @return response text
      */
     public static String getText(URI url, SecurityPolicy securityPolicy, ResourceLimits resourceLimits) {
+        return getText(url, Map.of(), securityPolicy, resourceLimits);
+    }
+
+    /**
+     * Reads text from a URL.
+     *
+     * @param url            request URL
+     * @param headers        request headers
+     * @param securityPolicy security policy
+     * @param resourceLimits resource limits
+     * @return response text
+     */
+    public static String getText(
+            URI url,
+            Map<String, String> headers,
+            SecurityPolicy securityPolicy,
+            ResourceLimits resourceLimits) {
         URI actualUrl = Assert.notNull(url, "url");
         SecurityPolicy actualSecurityPolicy = policy(securityPolicy);
         ResourceLimits actualResourceLimits = limits(resourceLimits);
@@ -368,6 +425,7 @@ public final class BrowserNetwork {
                 Http.Method.GET.value(),
                 false,
                 Normal._0,
+                headers,
                 actualSecurityPolicy,
                 actualResourceLimits);
         try {
@@ -434,7 +492,14 @@ public final class BrowserNetwork {
      * @return response
      */
     private static HttpResponse send(URI url, String method, boolean keepAlive, int redirectCount) {
-        return send(url, method, keepAlive, redirectCount, SecurityPolicy.defaultPolicy(), ResourceLimits.defaults());
+        return send(
+                url,
+                method,
+                keepAlive,
+                redirectCount,
+                Map.of(),
+                SecurityPolicy.defaultPolicy(),
+                ResourceLimits.defaults());
     }
 
     /**
@@ -455,6 +520,29 @@ public final class BrowserNetwork {
             int redirectCount,
             SecurityPolicy securityPolicy,
             ResourceLimits resourceLimits) {
+        return send(url, method, keepAlive, redirectCount, Map.of(), securityPolicy, resourceLimits);
+    }
+
+    /**
+     * Sends a request and handles redirects.
+     *
+     * @param url            request URL
+     * @param method         request method
+     * @param keepAlive      whether to preserve keep-alive semantics
+     * @param redirectCount  current redirect count
+     * @param headers        request headers
+     * @param securityPolicy security policy
+     * @param resourceLimits resource limits
+     * @return response
+     */
+    private static HttpResponse send(
+            URI url,
+            String method,
+            boolean keepAlive,
+            int redirectCount,
+            Map<String, String> headers,
+            SecurityPolicy securityPolicy,
+            ResourceLimits resourceLimits) {
         URI actualUrl = Assert.notNull(url, "url");
         SecurityPolicy actualSecurityPolicy = policy(securityPolicy);
         ResourceLimits actualResourceLimits = limits(resourceLimits);
@@ -464,7 +552,8 @@ public final class BrowserNetwork {
         }
         try {
             String actualMethod = normalizeMethod(method);
-            HttpResponse response = requestBuilder(actualUrl, actualMethod, keepAlive).method(actualMethod).execute();
+            HttpResponse response = requestBuilder(actualUrl, actualMethod, keepAlive, headers).method(actualMethod)
+                    .execute();
             Optional<String> location = redirectLocation(response);
             if (location.isPresent()) {
                 closeResponseBody(response);
@@ -475,6 +564,7 @@ public final class BrowserNetwork {
                         method,
                         keepAlive,
                         redirectCount + Normal._1,
+                        headers,
                         actualSecurityPolicy,
                         actualResourceLimits);
             }
@@ -496,9 +586,32 @@ public final class BrowserNetwork {
      * @return HTTP request builder
      */
     private static HttpX.Builder requestBuilder(URI url, String method, boolean keepAlive) {
+        return requestBuilder(url, method, keepAlive, Map.of());
+    }
+
+    /**
+     * Creates an HTTP request builder.
+     *
+     * @param url       request URL
+     * @param method    request method
+     * @param keepAlive whether to preserve keep-alive semantics
+     * @param headers   request headers
+     * @return HTTP request builder
+     */
+    private static HttpX.Builder requestBuilder(
+            URI url,
+            String method,
+            boolean keepAlive,
+            Map<String, String> headers) {
         HttpX.Builder builder = Fabric.http(FABRIC).url(requestUri(url).toString()).method(method)
                 .timeout(REQUEST_TIMEOUT);
         authHeader(url).ifPresent(value -> builder.header(Http.Header.AUTHORIZATION, value));
+        Map<String, String> actualHeaders = headers == null ? Map.of() : headers;
+        actualHeaders.forEach((name, value) -> {
+            if (StringKit.isNotBlank(name) && value != null) {
+                builder.header(name, value);
+            }
+        });
         if (keepAlive) {
             Logger.debug(
                     false,

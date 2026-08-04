@@ -72,7 +72,7 @@ public final class BrowserData {
             Browser.CHROMIUM,
             "1500000",
             Browser.FIREFOX,
-            "stable_152.0.5");
+            "stable_153.0");
 
     /**
      * Creates a browser data.

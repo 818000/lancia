@@ -19,6 +19,7 @@
 */
 package org.miaixz.lancia.kernel.cdp.page;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.lang.exception.InternalException;
+import org.miaixz.lancia.Binding;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.kernel.cdp.session.CDPSession;
 
@@ -58,6 +60,10 @@ public class CdpDialog {
      * Thread-safe handled state.
      */
     private final AtomicBoolean handled = new AtomicBoolean();
+    /**
+     * Dialog close event binding.
+     */
+    private final Binding closedBinding;
 
     /**
      * Creates a dialog.
@@ -72,6 +78,7 @@ public class CdpDialog {
         this.type = type == null ? Normal.EMPTY : type;
         this.message = message == null ? Normal.EMPTY : message;
         this.defaultValue = defaultValue == null ? Normal.EMPTY : defaultValue;
+        this.closedBinding = this.session.once("Page.javascriptDialogClosed", payload -> handled.set(true));
     }
 
     /**
@@ -151,13 +158,15 @@ public class CdpDialog {
             rejected.completeExceptionally(new InternalException("CdpDialog has already been handled."));
             return rejected;
         }
-        if (!accept) {
-            return session.send("Page.handleJavaScriptDialog", Map.of("accept", false));
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("accept", accept);
+        if (accept && promptText != null) {
+            params.put("promptText", promptText);
         }
-        if (promptText == null) {
-            return session.send("Page.handleJavaScriptDialog", Map.of("accept", true));
-        }
-        return session.send("Page.handleJavaScriptDialog", Map.of("accept", true, "promptText", promptText));
+        return session.send("Page.handleJavaScriptDialog", params).thenApply(payload -> {
+            closedBinding.unbind();
+            return payload;
+        });
     }
 
 }

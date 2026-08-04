@@ -230,6 +230,8 @@ public class ChromeLauncher extends BrowserLauncher {
         disabledFeatures.add("MediaRouter");
         disabledFeatures.add("OptimizationHints");
         disabledFeatures.add("WebUIReloadButton");
+        disabledFeatures.add("WebUIOmniboxPopup");
+        disabledFeatures.add("WebUIOmniboxAimPopup");
         if (!isExperimentalChromeFeaturesEnabled()) {
             disabledFeatures.add("ProcessPerSiteUpToMainFrameThreshold");
             disabledFeatures.add("IsolateSandboxedIframes");

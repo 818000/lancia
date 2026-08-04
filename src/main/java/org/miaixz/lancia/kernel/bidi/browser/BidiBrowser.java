@@ -52,6 +52,7 @@ import org.miaixz.lancia.kernel.bidi.targets.BidiTarget;
 import org.miaixz.lancia.kernel.bidi.worker.BidiWorker;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.kernel.cdp.session.Connection;
+import org.miaixz.lancia.nimble.browser.PWAState;
 import org.miaixz.lancia.nimble.browser.WindowBounds;
 import org.miaixz.lancia.nimble.browser.WindowState;
 import org.miaixz.lancia.nimble.network.Cookie;
@@ -62,7 +63,11 @@ import org.miaixz.lancia.nimble.screen.ScreenInfo;
 import org.miaixz.lancia.options.BrowserContextOptions;
 import org.miaixz.lancia.options.CreatePageOptions;
 import org.miaixz.lancia.options.ExtensionInstallOptions;
+import org.miaixz.lancia.options.GetPWAStateOptions;
+import org.miaixz.lancia.options.InstallPWAOptions;
+import org.miaixz.lancia.options.LaunchPWAOptions;
 import org.miaixz.lancia.options.PermissionOptions;
+import org.miaixz.lancia.options.UninstallPWAOptions;
 import org.miaixz.lancia.shared.async.Awaitable;
 import org.miaixz.lancia.shared.page.PageExtension;
 import org.miaixz.lancia.shared.payload.PayloadExtensionInfo;
@@ -484,6 +489,46 @@ public class BidiBrowser implements Browser {
             Logger.debug(false, "Browser", "BiDi extension uninstalled: id={}, cdp=false", actualId);
             return null;
         }), "BiDi browser extension uninstall failed.");
+    }
+
+    /**
+     * Installs a Progressive Web App.
+     *
+     * @param options install options
+     * @return rejected future
+     */
+    public CompletableFuture<String> installPWA(InstallPWAOptions options) {
+        return Awaitable.failed(new UnsupportedOperationException("PWA APIs are not supported over WebDriver BiDi."));
+    }
+
+    /**
+     * Uninstalls a Progressive Web App.
+     *
+     * @param options uninstall options
+     * @return rejected future
+     */
+    public CompletableFuture<Void> uninstallPWA(UninstallPWAOptions options) {
+        return Awaitable.failed(new UnsupportedOperationException("PWA APIs are not supported over WebDriver BiDi."));
+    }
+
+    /**
+     * Launches a Progressive Web App.
+     *
+     * @param options launch options
+     * @return rejected future
+     */
+    public CompletableFuture<Page> launchPWA(LaunchPWAOptions options) {
+        return Awaitable.failed(new UnsupportedOperationException("PWA APIs are not supported over WebDriver BiDi."));
+    }
+
+    /**
+     * Returns the OS integration state for a Progressive Web App.
+     *
+     * @param options state options
+     * @return rejected future
+     */
+    public CompletableFuture<PWAState> getPWAState(GetPWAStateOptions options) {
+        return Awaitable.failed(new UnsupportedOperationException("PWA APIs are not supported over WebDriver BiDi."));
     }
 
     /**

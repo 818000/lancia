@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.miaixz.lancia.events.BrowserEvent;
+import org.miaixz.lancia.nimble.browser.PWAState;
 import org.miaixz.lancia.nimble.browser.WindowBounds;
 import org.miaixz.lancia.nimble.network.Cookie;
 import org.miaixz.lancia.nimble.network.CookieParam;
@@ -36,7 +37,11 @@ import org.miaixz.lancia.nimble.screen.ScreenInfo;
 import org.miaixz.lancia.options.BrowserContextOptions;
 import org.miaixz.lancia.options.CreatePageOptions;
 import org.miaixz.lancia.options.ExtensionInstallOptions;
+import org.miaixz.lancia.options.GetPWAStateOptions;
+import org.miaixz.lancia.options.InstallPWAOptions;
+import org.miaixz.lancia.options.LaunchPWAOptions;
 import org.miaixz.lancia.options.PermissionOptions;
+import org.miaixz.lancia.options.UninstallPWAOptions;
 
 /**
  * Public browser API for contexts, pages, targets, extensions, and connection lifecycle.
@@ -163,6 +168,38 @@ public interface Browser extends Emitter<BrowserEvent>, AutoCloseable {
      * @return completion future
      */
     CompletableFuture<Void> uninstallExtension(String id);
+
+    /**
+     * Installs a Progressive Web App and returns its manifest id.
+     *
+     * @param options install options
+     * @return manifest id future
+     */
+    CompletableFuture<String> installPWA(InstallPWAOptions options);
+
+    /**
+     * Uninstalls a Progressive Web App.
+     *
+     * @param options uninstall options
+     * @return completion future
+     */
+    CompletableFuture<Void> uninstallPWA(UninstallPWAOptions options);
+
+    /**
+     * Launches an installed Progressive Web App and returns its backing page.
+     *
+     * @param options launch options
+     * @return page future
+     */
+    CompletableFuture<Page> launchPWA(LaunchPWAOptions options);
+
+    /**
+     * Returns the OS integration state for an installed Progressive Web App.
+     *
+     * @param options state options
+     * @return PWA state future
+     */
+    CompletableFuture<PWAState> getPWAState(GetPWAStateOptions options);
 
     /**
      * Returns installed extensions.

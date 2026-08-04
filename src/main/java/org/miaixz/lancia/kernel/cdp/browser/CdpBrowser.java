@@ -60,6 +60,9 @@ import org.miaixz.lancia.kernel.cdp.targets.CdpPageTarget;
 import org.miaixz.lancia.kernel.cdp.targets.CdpTarget;
 import org.miaixz.lancia.kernel.cdp.targets.CdpTargetManager;
 import org.miaixz.lancia.kernel.cdp.targets.CdpTargetManagerEvent;
+import org.miaixz.lancia.nimble.browser.PWADisplayMode;
+import org.miaixz.lancia.nimble.browser.PWAState;
+import org.miaixz.lancia.nimble.browser.TargetType;
 import org.miaixz.lancia.nimble.browser.WindowBounds;
 import org.miaixz.lancia.nimble.emulation.Viewport;
 import org.miaixz.lancia.nimble.network.Cookie;
@@ -72,10 +75,15 @@ import org.miaixz.lancia.options.AttachOptions;
 import org.miaixz.lancia.options.BrowserContextOptions;
 import org.miaixz.lancia.options.CreatePageOptions;
 import org.miaixz.lancia.options.ExtensionInstallOptions;
+import org.miaixz.lancia.options.GetPWAStateOptions;
+import org.miaixz.lancia.options.InstallPWAOptions;
+import org.miaixz.lancia.options.LaunchPWAOptions;
 import org.miaixz.lancia.options.PermissionOptions;
+import org.miaixz.lancia.options.UninstallPWAOptions;
 import org.miaixz.lancia.shared.async.Awaitable;
 import org.miaixz.lancia.shared.page.PageExtension;
 import org.miaixz.lancia.shared.payload.PayloadExtensionInfo;
+import org.miaixz.lancia.shared.payload.PayloadReader;
 import org.miaixz.lancia.shared.payload.PayloadScreenInfo;
 
 /**
@@ -124,6 +132,10 @@ public class CdpBrowser implements Browser {
      * Whether issues is enabled.
      */
     private final boolean issuesEnabled;
+    /**
+     * Whether URL network restrictions are configured.
+     */
+    private volatile boolean hasNetworkRestrictions;
     /**
      * Current default viewport.
      */
@@ -340,6 +352,9 @@ public class CdpBrowser implements Browser {
         }
         AttachOptions actualOptions = options == null ? new AttachOptions() : options;
         this.defaultViewport = actualOptions.getDefaultViewport();
+        this.hasNetworkRestrictions = !actualOptions.getBlocklist().isEmpty()
+                || !actualOptions.getAllowlist().isEmpty();
+        connection.setRejectEmulateNetworkConditionsCalls(hasNetworkRestrictions);
         targetManager.on(CdpTargetManagerEvent.TARGET_AVAILABLE, payload -> bindAvailableTarget((CdpTarget) payload));
         targetManager.on(CdpTargetManagerEvent.TARGET_GONE, payload -> removeAvailableTarget((CdpTarget) payload));
         targetManager.on(CdpTargetManagerEvent.TARGET_CHANGED, payload -> {
@@ -698,6 +713,93 @@ public class CdpBrowser implements Browser {
             rejected.completeExceptionally(ex);
             return rejected;
         }
+    }
+
+    /**
+     * Installs a Progressive Web App and returns its manifest id.
+     *
+     * @param options install options
+     * @return completion future
+     */
+    public CompletableFuture<String> installPWA(InstallPWAOptions options) {
+        InstallPWAOptions actualOptions = Assert.notNull(options, "options");
+        String manifestId = Assert.notBlank(actualOptions.getManifestId(), "manifestId");
+        String installUrlOrBundleUrl = Assert
+                .notBlank(actualOptions.getInstallUrlOrBundleUrl(), "installUrlOrBundleUrl");
+        assertPwaSupported();
+        Logger.debug(true, "Browser", "PWA install requested: manifestId={}", manifestId);
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("manifestId", manifestId);
+        params.put("installUrlOrBundleUrl", installUrlOrBundleUrl);
+        CompletableFuture<CdpPayload> installed = connection.send("PWA.install", params);
+        PWADisplayMode displayMode = actualOptions.getDisplayMode();
+        if (displayMode == null) {
+            return installed.thenApply(payload -> manifestId);
+        }
+        return installed
+                .thenCompose(
+                        payload -> connection.send(
+                                "PWA.changeAppUserSettings",
+                                Map.of("manifestId", manifestId, "displayMode", displayMode.value())))
+                .thenApply(payload -> manifestId);
+    }
+
+    /**
+     * Uninstalls a Progressive Web App.
+     *
+     * @param options uninstall options
+     * @return completion future
+     */
+    public CompletableFuture<Void> uninstallPWA(UninstallPWAOptions options) {
+        UninstallPWAOptions actualOptions = Assert.notNull(options, "options");
+        String manifestId = Assert.notBlank(actualOptions.getManifestId(), "manifestId");
+        assertPwaSupported();
+        Logger.debug(true, "Browser", "PWA uninstall requested: manifestId={}", manifestId);
+        return connection.send("PWA.uninstall", Map.of("manifestId", manifestId)).thenApply(payload -> null);
+    }
+
+    /**
+     * Launches a Progressive Web App and returns its backing page.
+     *
+     * @param options launch options
+     * @return completion future
+     */
+    public CompletableFuture<Page> launchPWA(LaunchPWAOptions options) {
+        LaunchPWAOptions actualOptions = Assert.notNull(options, "options");
+        String manifestId = Assert.notBlank(actualOptions.getManifestId(), "manifestId");
+        assertPwaSupported();
+        Logger.debug(true, "Browser", "PWA launch requested: manifestId={}", manifestId);
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("manifestId", manifestId);
+        if (StringKit.isNotBlank(actualOptions.getUrl())) {
+            params.put("url", actualOptions.getUrl());
+        }
+        return connection.send("PWA.launch", params).thenApply(payload -> {
+            String tabTargetId = PayloadReader.text(payload.get("targetId"));
+            CdpTarget target = waitForTarget(
+                    candidate -> isPwaPageTarget(tabTargetId, candidate),
+                    Duration.ofMillis(actualOptions.getTimeoutMillis()));
+            Page page = target.page().orElse(null);
+            if (page == null) {
+                throw new InternalException(
+                        "Failed to create a page for the launched PWA (manifestId = " + manifestId + ").");
+            }
+            return page;
+        });
+    }
+
+    /**
+     * Returns the OS integration state for an installed Progressive Web App.
+     *
+     * @param options state options
+     * @return completion future
+     */
+    public CompletableFuture<PWAState> getPWAState(GetPWAStateOptions options) {
+        GetPWAStateOptions actualOptions = Assert.notNull(options, "options");
+        String manifestId = Assert.notBlank(actualOptions.getManifestId(), "manifestId");
+        assertPwaSupported();
+        Logger.debug(true, "Browser", "PWA state read requested: manifestId={}", manifestId);
+        return connection.send("PWA.getOsAppState", Map.of("manifestId", manifestId)).thenApply(PWAState::from);
     }
 
     /**
@@ -1123,6 +1225,39 @@ public class CdpBrowser implements Browser {
      */
     private void removeLocalScreen(String screenId) {
         ScreenInfo.unregisterLocal(screenId, localScreens);
+    }
+
+    /**
+     * Verifies that PWA browser APIs can be used.
+     */
+    private void assertPwaSupported() {
+        if (!connection.hasConfiguredTransport()) {
+            throw new InternalException("PWA APIs require a CDP connection.");
+        }
+        if (hasNetworkRestrictions) {
+            throw new InternalException("PWA APIs are not supported when network restrictions are configured.");
+        }
+    }
+
+    /**
+     * Returns whether a target is the page child of a launched PWA tab target.
+     *
+     * @param tabTargetId tab target id returned by PWA.launch
+     * @param candidate   candidate target
+     * @return {@code true} when the candidate is the PWA page target
+     */
+    private boolean isPwaPageTarget(String tabTargetId, Object candidate) {
+        if (StringKit.isBlank(tabTargetId) || !(candidate instanceof CdpTarget target)) {
+            return false;
+        }
+        Optional<CdpTarget> tab = targetManager.target(tabTargetId);
+        if (tab.isEmpty() || tab.getOrThrow().type() != TargetType.TAB) {
+            return false;
+        }
+        if (CdpTarget.Internal.childTargets(tab.getOrThrow()).contains(target)) {
+            return true;
+        }
+        return tabTargetId.equals(CdpTarget.Internal.targetInfo(target).getOpenerId());
     }
 
     /**

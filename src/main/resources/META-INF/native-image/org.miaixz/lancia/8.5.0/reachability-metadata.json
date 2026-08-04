@@ -1,6 +1,9 @@
 {
   "resources": [
     {
+      "condition": {
+        "typeReached": "org.miaixz.lancia.shared.query.ScriptInjector"
+      },
       "glob": "META-INF/lancia/injected/*.js"
     }
   ]

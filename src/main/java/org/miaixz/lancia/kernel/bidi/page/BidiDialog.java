@@ -28,6 +28,7 @@ import org.miaixz.bus.core.lang.Assert;
 import org.miaixz.bus.core.lang.Normal;
 import org.miaixz.bus.core.lang.exception.InternalException;
 import org.miaixz.lancia.kernel.bidi.accessor.BidiSession;
+import org.miaixz.lancia.kernel.bidi.accessor.BidiUserPrompt;
 import org.miaixz.lancia.kernel.bidi.session.BidiProtocolSession;
 import org.miaixz.lancia.kernel.cdp.protocol.CdpPayload;
 import org.miaixz.lancia.shared.payload.PayloadReader;
@@ -70,6 +71,10 @@ public class BidiDialog {
      * Thread-safe handled state.
      */
     private final AtomicBoolean handled;
+    /**
+     * Prompt accessor, when the dialog is backed by a BiDi user prompt.
+     */
+    private final BidiUserPrompt prompt;
 
     /**
      * Returns the from.
@@ -82,6 +87,16 @@ public class BidiDialog {
         return new BidiDialog(session, PayloadReader.text(params.get("context")),
                 PayloadReader.text(params.get("type")), PayloadReader.text(params.get("message")),
                 PayloadReader.text(params.get("defaultValue")), false);
+    }
+
+    /**
+     * Returns the from.
+     *
+     * @param prompt user prompt
+     * @return from value
+     */
+    public static BidiDialog from(BidiUserPrompt prompt) {
+        return new BidiDialog(prompt);
     }
 
     /**
@@ -133,12 +148,42 @@ public class BidiDialog {
      */
     public BidiDialog(BidiSession session, String contextId, String type, String message, String defaultValue,
             boolean handled) {
+        this(session, contextId, type, message, defaultValue, handled, null);
+    }
+
+    /**
+     * Creates a bidi dialog from a user prompt.
+     *
+     * @param prompt user prompt
+     */
+    private BidiDialog(BidiUserPrompt prompt) {
+        this(BidiSession.wrap(Assert.notNull(prompt, "prompt").browsingContext().browser().session()),
+                PayloadReader.text(prompt.info().get("context")), PayloadReader.text(prompt.info().get("type")),
+                PayloadReader.text(prompt.info().get("message")), PayloadReader.text(prompt.info().get("defaultValue")),
+                prompt.handled(), prompt);
+        prompt.once(BidiUserPrompt.HANDLED, value -> this.handled.set(true));
+    }
+
+    /**
+     * Creates a bidi dialog.
+     *
+     * @param session      protocol session
+     * @param contextId    context id
+     * @param type         type name
+     * @param message      message text
+     * @param defaultValue default value
+     * @param handled      handled
+     * @param prompt       user prompt
+     */
+    private BidiDialog(BidiSession session, String contextId, String type, String message, String defaultValue,
+            boolean handled, BidiUserPrompt prompt) {
         this.session = Assert.notNull(session, "session");
         this.contextId = Assert.notBlank(contextId, "contextId");
         this.type = type == null ? Normal.EMPTY : type;
         this.message = message == null ? Normal.EMPTY : message;
         this.defaultValue = defaultValue == null ? Normal.EMPTY : defaultValue;
         this.handled = new AtomicBoolean(handled);
+        this.prompt = prompt;
     }
 
     /**
@@ -187,6 +232,9 @@ public class BidiDialog {
         params.put("accept", accept);
         if (accept && promptText != null) {
             params.put("userText", promptText);
+        }
+        if (prompt != null) {
+            return prompt.handle(params);
         }
         return session.send(HANDLE_USER_PROMPT, params);
     }

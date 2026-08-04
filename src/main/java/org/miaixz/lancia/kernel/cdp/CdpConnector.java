@@ -245,7 +245,7 @@ public class CdpConnector {
         if (options.getBrowserWSEndpoint() != null) {
             endpoint = options.getBrowserWSEndpoint().toString();
         } else if (options.getBrowserURL() != null) {
-            endpoint = webSocketEndpoint(options.getBrowserURL());
+            endpoint = webSocketEndpoint(options.getBrowserURL(), options.getHeaders());
         } else {
             endpoint = webSocketEndpoint(options.getChannel());
         }
@@ -264,6 +264,17 @@ public class CdpConnector {
      * @return web socket endpoint value
      */
     private String webSocketEndpoint(URI browserURL) {
+        return webSocketEndpoint(browserURL, Map.of());
+    }
+
+    /**
+     * Returns the web socket endpoint.
+     *
+     * @param browserURL browser URL value
+     * @param headers    HTTP headers
+     * @return web socket endpoint value
+     */
+    private String webSocketEndpoint(URI browserURL, Map<String, String> headers) {
         URI endpointURL = Assert.notNull(browserURL, "browserURL").resolve("/json/version");
         Logger.debug(
                 true,
@@ -271,7 +282,7 @@ public class CdpConnector {
                 "Resolving CDP endpoint from browser URL: {}",
                 browserURL.toString().replaceAll("[?#].*$", "?<redacted>"));
         try {
-            String endpoint = BrowserNetwork.getJSON(endpointURL).get("webSocketDebuggerUrl").asText();
+            String endpoint = BrowserNetwork.getJSON(endpointURL, headers).get("webSocketDebuggerUrl").asText();
             Logger.debug(
                     false,
                     "Browser",
