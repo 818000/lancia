@@ -20,7 +20,7 @@ inputs:
   wait-until:
     description: 'Central deployment state to wait for.'
     required: false
-    default: 'PUBLISHED'
+    default: 'VALIDATED'
 
 runs:
   using: composite
