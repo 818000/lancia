@@ -6,21 +6,17 @@
     <parent>
         <groupId>org.miaixz</groupId>
         <artifactId>bus-parent</artifactId>
-        <version>8.8.10</version>
+        <version>8.8.13</version>
     </parent>
 
     <groupId>org.miaixz</groupId>
     <artifactId>lancia</artifactId>
-    <version>8.5.10</version>
+    <version>8.5.13</version>
     <packaging>jar</packaging>
 
     <name>lancia</name>
     <description>Lancia - Java browser automation library with Puppeteer-compatible APIs and Chrome DevTools Protocol support.</description>
     <url>https://github.com/818000/lancia</url>
-
-    <properties>
-        <maven.compiler.release>21</maven.compiler.release>
-    </properties>
 
     <licenses>
         <license>
@@ -46,6 +42,10 @@
         <system>Github Issue</system>
         <url>https://github.com/818000/lancia/issues</url>
     </issueManagement>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+    </properties>
 
     <dependencies>
         <dependency>
