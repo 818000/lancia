@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.miaixz</groupId>
         <artifactId>bus-parent</artifactId>
-        <version>8.8.13</version>
+        <version>8.8.15</version>
     </parent>
 
     <groupId>org.miaixz</groupId>
     <artifactId>lancia</artifactId>
-    <version>8.5.13</version>
+    <version>8.5.15</version>
     <packaging>jar</packaging>
 
     <name>lancia</name>
